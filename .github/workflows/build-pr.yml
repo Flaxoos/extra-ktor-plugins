@@ -25,15 +25,12 @@ jobs:
         id: detect_changes
         run: |
           # Get the list of modified directories under "ktor-plugins"
-          git fetch
-          git log
           changed_dirs=$(git diff --name-only origin/main..$GITHUB_SHA | grep '^ktor-' | cut -d/ -f1 | sort -u)
           echo "Changed subprojects: $changed_dirs"
           echo "::set-output name=changed_subprojects::$changed_dirs"
 
       - name: Build modified subprojects
         run: |
-          for subproject in ${{ steps.detect_changes.outputs.changed_subprojects }}; do
-            echo "Running ./gradlew :"$subproject":clean :"$subproject":build --stacktrace &"
-            ./gradlew :"$subproject":clean :"$subproject":build --stacktrace &
-          done
+          ./gradlew \
+          ${{ steps.detect_changes.outputs.changed_subprojects// /:clean }} \
+          ${{ steps.detect_changes.outputs.changed_subprojects// /:build }} --stacktrace

@@ -26,6 +26,7 @@ jobs:
         run: |
           # Get the list of modified directories under "ktor-plugins"
           git fetch
+          git log
           changed_dirs=$(git diff --name-only origin/main...$(git rev-parse HEAD) | grep '^ktor-' | cut -d/ -f1 | sort -u)
           echo "Changed subprojects: $changed_dirs"
           echo "::set-output name=changed_subprojects::$changed_dirs"

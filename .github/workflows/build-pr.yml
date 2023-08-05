@@ -1,0 +1,40 @@
+name: Build Pull Request
+on:
+  pull_request:
+    paths:
+      - "**"
+    branches:
+      - '*'
+
+jobs:
+  build:
+    name: Build PR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+
+      - name: Detect modified subprojects
+        id: detect_changes
+        run: |
+          # Get the list of modified directories under "ktor-plugins"
+          git fetch
+          changed_dirs=$(git diff --name-only origin/main...$GITHUB_SHA | grep '^ktor-' | cut -d/ -f1 | sort -u)
+          echo "Changed subprojects: $changed_dirs"
+          echo "::set-output name=changed_subprojects::$changed_dirs"
+
+      - name: Build modified subprojects
+        run: |
+          for subproject in ${{ steps.detect_changes.outputs.changed_subprojects }}; do
+            echo "Building $subproject"
+            cd ktor-plugins/"$subproject"
+            ./gradlew :"$subproject":clean :"$subproject":build --stacktrace
+          done

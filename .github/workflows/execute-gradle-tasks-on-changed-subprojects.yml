@@ -21,7 +21,7 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - name: Detect modified subprojects and buildSrc
+      - name: Detect modified subprojects
         id: detect_changes
         run: |
           # Get the list of modified directories under "ktor-plugins" and "buildSrc"
@@ -36,7 +36,7 @@ jobs:
           echo "Changed subprojects: $changed_dirs"
           echo "::set-output name=changed_subprojects::$changed_dirs"
 
-      - name: Build root project if buildSrc changes, otherwise build subprojects
+      - name: Run ${{ inputs.build_tasks }} on ${{ steps.detect_changes.outputs.changed_subprojects }}
         run: |
           tasks="${{ inputs.build_tasks }}"
           projects="${{ steps.detect_changes.outputs.changed_subprojects }}"
@@ -49,5 +49,5 @@ jobs:
           command+=":${proj_arr[$i]}:${task_arr[$i]} "
           done
           
-          echo "./gradlew $command --stacktrace"
-          ./gradlew $command --stacktrace
+          echo "./gradlew $command--stacktrace"
+          ./gradlew $command--stacktrace

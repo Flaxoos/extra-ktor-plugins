@@ -21,14 +21,6 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - name: Detect modified subprojects
-        id: detect_changes
-        run: |
-          # Get the list of modified directories under "ktor-plugins"
-          changed_dirs=$(git diff --name-only origin/main..$GITHUB_SHA | grep '^ktor-' | cut -d/ -f1 | sort -u)
-          echo "Changed subprojects: $changed_dirs"
-          echo "::set-output name=changed_subprojects::$changed_dirs"
-
       - name: Detect modified subprojects and buildSrc
         id: detect_changes
         run: |

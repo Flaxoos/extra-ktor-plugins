@@ -1,0 +1,13 @@
+name: Build Pull Request
+on:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build-pull-request:
+    name: Build Pull Request
+    uses: ./.github/workflows/execute-gradle-tasks-on-changed-subprojects.yml
+    with:
+      build_tasks: clean build
+

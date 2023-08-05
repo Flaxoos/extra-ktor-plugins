@@ -1,37 +1,12 @@
 name: Build and Publish Main
 on:
   push:
-    paths:
-      - "**"
     branches:
       - main
 
 jobs:
-  build:
-    name: Build PR
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Detect modified subprojects
-        id: detect_changes
-        run: |
-          # Get the list of modified directories under "ktor-plugins"
-          changed_dirs=$(git diff --name-only origin/main..$GITHUB_SHA | grep '^ktor-' | cut -d/ -f1 | sort -u)
-          echo "Changed subprojects: $changed_dirs"
-          echo "::set-output name=changed_subprojects::$changed_dirs"
-
-      - name: Publish modified subprojects
-        run: |
-          ./gradlew \
-          ${{ steps.detect_changes.outputs.changed_subprojects// /:clean }} \
-          ${{ steps.detect_changes.outputs.changed_subprojects// /:clean }} \
-          ${{ steps.detect_changes.outputs.changed_subprojects// /:publish }} --stacktrace
+  build-and-publish-main:
+    name: Build and Publish Main
+    uses: ./.github/workflows/execute-gradle-tasks-on-changed-subprojects.yml
+    with:
+      build_tasks: clean build publish

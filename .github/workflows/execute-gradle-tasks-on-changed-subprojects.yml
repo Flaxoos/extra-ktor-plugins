@@ -1,0 +1,52 @@
+name: Execute gradle tasks on changed subprojects
+on:
+  workflow_call:
+    inputs:
+      build_tasks:
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Execute gradle tasks on changed subprojects
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Detect modified subprojects and buildSrc
+        id: detect_changes
+        run: |
+          # Get the list of modified directories under "ktor-plugins" and "buildSrc"
+          changed_dirs=$(git diff --name-only origin/main..$GITHUB_SHA)
+          if echo "$changed_dirs" | grep -q '^buildSrc/'; then
+            echo "buildSrc has changed"
+            changed_dirs=""
+          else
+            changed_dirs=$(echo "$changed_dirs" | grep '^ktor-' | cut -d/ -f1 | sort -u)
+          fi
+          echo "Changed subprojects: $changed_dirs"
+          echo "::set-output name=changed_subprojects::$changed_dirs"
+
+      - name: Build root project if buildSrc changes, otherwise build subprojects
+        run: |
+          tasks="${{ inputs.build_tasks }}"
+          projects="${{ steps.detect_changes.outputs.changed_subprojects }}"
+          
+          command=""
+          IFS=' ' read -ra proj_arr <<< "$projects"
+          IFS=' ' read -ra task_arr <<< "$tasks"
+          
+          for ((i=0; i<${#proj_arr[@]}; i++)); do
+          command+=":${proj_arr[$i]}:${task_arr[$i]} "
+          done
+          
+          echo "./gradlew $command --stacktrace"
+          ./gradlew $command --stacktrace

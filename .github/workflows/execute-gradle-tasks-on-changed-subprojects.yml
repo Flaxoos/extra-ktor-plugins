@@ -25,6 +25,7 @@ jobs:
         id: detect_changes
         run: |
           # Get the list of modified directories under "ktor-plugins" and "buildSrc"
+          git fetch
           changed_dirs=$(git diff --name-only origin/main..$(git rev-parse HEAD))
           if echo "$changed_dirs" | grep -q '^buildSrc/'; then
             echo "buildSrc has changed"

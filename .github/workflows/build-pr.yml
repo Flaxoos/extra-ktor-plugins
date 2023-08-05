@@ -21,6 +21,8 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
+      - name: Fetch latest changes
+        run: git fetch origin
 
       - name: Detect modified subprojects
         id: detect_changes

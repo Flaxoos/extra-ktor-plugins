@@ -1,4 +1,4 @@
-package io.flax.ktor
+package io.flax.plugins
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
@@ -79,7 +79,7 @@ class RateLimitingTest : FunSpec() {
                     testRateLimiting {
                         client.call(
                             times = LIMIT + EXCEED,
-                            path = UNLIMITED_PATH,
+                            path = UNLIMITED_PATH
                         ).shouldNotBeLimited()
                     }
                 }
@@ -92,14 +92,14 @@ class RateLimitingTest : FunSpec() {
                                 encodeBasicAuth(
                                     (callIndex % callers).toString()
                                 )
-                            },
+                            }
                         ).shouldNotBeLimited()
                     }
                 }
                 test("Following requests should pass") {
                     testRateLimiting { testClient ->
                         testClient.call(
-                            times = LIMIT + EXCEED,
+                            times = LIMIT + EXCEED
                         ).shouldBeLimited()
 
                         delay(window)
@@ -116,7 +116,7 @@ class RateLimitingTest : FunSpec() {
                             limit = LIMIT
                             timeWindow = window
                             burstLimit = LIMIT * 2
-                        },
+                        }
                     ) {
                         client.call(times = LIMIT + EXCEED).shouldNotBeLimited()
                     }
@@ -127,7 +127,7 @@ class RateLimitingTest : FunSpec() {
                             limit = LIMIT
                             timeWindow = window
                             burstLimit = LIMIT * 2
-                        },
+                        }
                     ) {
                         client.call(times = LIMIT + 10).shouldBeLimited()
                     }
@@ -140,7 +140,7 @@ class RateLimitingTest : FunSpec() {
                         whiteListedPrincipals = setOf(UserIdPrincipal(BASIC_AUTH_NAME))
                     }) { testClient ->
                         testClient.call(
-                            times = LIMIT + EXCEED,
+                            times = LIMIT + EXCEED
                         ).shouldNotBeLimited()
                     }
                 }
@@ -149,7 +149,7 @@ class RateLimitingTest : FunSpec() {
                         whiteListedHosts = setOf(LOCALHOST)
                     }) { testClient ->
                         testClient.call(
-                            times = LIMIT + EXCEED,
+                            times = LIMIT + EXCEED
                         ).shouldNotBeLimited()
                     }
                 }
@@ -159,7 +159,7 @@ class RateLimitingTest : FunSpec() {
                     }) { testClient ->
                         testClient.call(
                             times = LIMIT + EXCEED,
-                            userAgent = USER_AGENT,
+                            userAgent = USER_AGENT
                         ).shouldNotBeLimited()
                     }
                 }
@@ -171,7 +171,7 @@ class RateLimitingTest : FunSpec() {
                         blackListedPrincipals = setOf(UserIdPrincipal(BASIC_AUTH_NAME))
                     }) { testClient ->
                         testClient.call(
-                            times = 1,
+                            times = 1
                         ).shouldBeForbidden()
                     }
                 }
@@ -180,7 +180,7 @@ class RateLimitingTest : FunSpec() {
                         blackListedHosts = setOf(LOCALHOST)
                     }) { testClient ->
                         testClient.call(
-                            times = 1,
+                            times = 1
                         ).shouldBeForbidden()
                     }
                 }
@@ -190,7 +190,7 @@ class RateLimitingTest : FunSpec() {
                     }) { testClient ->
                         testClient.call(
                             times = 1,
-                            userAgent = USER_AGENT,
+                            userAgent = USER_AGENT
                         ).shouldBeForbidden()
                     }
                 }
@@ -201,7 +201,7 @@ class RateLimitingTest : FunSpec() {
     private fun testRateLimiting(
         modifyConfiguration: RateLimitConfiguration.() -> Unit = {},
         callShouldFail: Boolean = false,
-        test: suspend ApplicationTestBuilder.(HttpClient) -> Unit,
+        test: suspend ApplicationTestBuilder.(HttpClient) -> Unit
     ) {
         testApplication {
             install(Authentication) {
@@ -250,7 +250,7 @@ class RateLimitingTest : FunSpec() {
         times: Int = LIMIT,
         delay: Duration = DELAY_MS.milliseconds,
         basicAuthFn: (Int) -> String = { _ -> encodedBasicAuth },
-        userAgent: String? = null,
+        userAgent: String? = null
     ) =
         coroutineScope {
             (1..times).map { index ->

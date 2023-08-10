@@ -1,5 +1,5 @@
 plugins {
-    id("conventions")
+    id("ktor-server-plugin-conventions")
 }
 
 kotlin {

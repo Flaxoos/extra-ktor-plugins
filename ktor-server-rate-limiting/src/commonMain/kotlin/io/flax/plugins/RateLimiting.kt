@@ -1,6 +1,6 @@
-package io.flax.ktor
+package io.flax.plugins
 
-import io.flax.ktor.Caller.Companion.extractCaller
+import io.flax.plugins.Caller.Companion.extractCaller
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.createRouteScopedPlugin
@@ -119,7 +119,7 @@ class RateLimitConfiguration {
  */
 val RateLimitingPlugin = createRouteScopedPlugin(
     name = "RateLimitingPlugin",
-    createConfiguration = ::RateLimitConfiguration,
+    createConfiguration = ::RateLimitConfiguration
 ) {
     val callStore = mutableMapOf<Caller, Pair<ReentrantLock, CallCount>>()
     val callStoreLock = reentrantLock()
@@ -164,7 +164,7 @@ val RateLimitingPlugin = createRouteScopedPlugin(
                                     rateLimitConfiguration = this@createRouteScopedPlugin.pluginConfig,
                                     callCount = this,
                                     isBurst = isBurst,
-                                    limited = true,
+                                    limited = true
                                 )
                             )
                             rateLimitExceededCallHandler.invoke(call, count)
@@ -174,7 +174,7 @@ val RateLimitingPlugin = createRouteScopedPlugin(
                                     caller = caller,
                                     rateLimitConfiguration = this@createRouteScopedPlugin.pluginConfig,
                                     callCount = this,
-                                    isBurst = isBurst,
+                                    isBurst = isBurst
                                 )
                             )
                             count++
@@ -204,7 +204,7 @@ val RateLimitingPlugin = createRouteScopedPlugin(
 
 private fun CallStore.release(
     lock: ReentrantLock,
-    call: ApplicationCall,
+    call: ApplicationCall
 ) {
     val (ipCallCountLock, ipCallCount) = lock.withLock {
         get(call.extractCaller()) ?: return
@@ -220,20 +220,20 @@ private fun debugDetails(
     rateLimitConfiguration: RateLimitConfiguration,
     callCount: CallCount,
     isBurst: Boolean,
-    limited: Boolean = false,
+    limited: Boolean = false
 ) =
     "call from $caller ${if (limited) "" else "not"} limited, limit: ${rateLimitConfiguration.limit}, count: ${callCount.count}, " +
-            "last reset time: ${callCount.lastResetTime}, is burst: $isBurst"
+        "last reset time: ${callCount.lastResetTime}, is burst: $isBurst"
 
 private data class CallCount(
     var count: Int = 0,
-    var lastResetTime: Long = now().toEpochMilliseconds(),
+    var lastResetTime: Long = now().toEpochMilliseconds()
 )
 
 private data class Caller(
     val remoteHost: String,
     val userAgent: String?,
-    val principal: Principal?,
+    val principal: Principal?
 ) {
     companion object {
         fun ApplicationCall.extractCaller(): Caller {
@@ -244,7 +244,7 @@ private data class Caller(
                     if (it == null) {
                         this.application.log.debug(
                             "No authenticated principal found in call, identification " +
-                                    "is based on http headers X-Forwarded-For and User-Agent"
+                                "is based on http headers X-Forwarded-For and User-Agent"
                         )
                     }
                 }

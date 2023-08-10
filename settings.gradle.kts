@@ -1,4 +1,5 @@
 rootProject.name = "flax-ktor-plugins"
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     repositories {
@@ -12,4 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-include("ktor-rate-limiting", "ktor-graphql")
+include("ktor-server-rate-limiting")
+include("ktor-client-circuit-breaker")

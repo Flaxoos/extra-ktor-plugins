@@ -21,11 +21,11 @@ import java.net.URI
 
 fun Project.libs() = project.the<VersionCatalogsExtension>()
 
-fun Project.findVersionOf(version: String): String =
+fun Project.versionOf(version: String): String =
     this.libs().find("libs").get().findVersion(version).get().toString()
 
 open class Conventions : Plugin<Project> {
-    open fun KotlinMultiplatformExtension.specifics() {}
+    open fun KotlinMultiplatformExtension.conventionSpecifics() {}
     override fun apply(project: Project) {
         with(project) {
             with(plugins) {
@@ -47,7 +47,7 @@ open class Conventions : Plugin<Project> {
 
             extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
                 jvm {
-                    jvmToolchain(17)
+                    jvmToolchain(versionOf("java").toInt())
                 }
                 val hostOs = System.getProperty("os.name")
                 val arch = System.getProperty("os.arch")
@@ -68,30 +68,30 @@ open class Conventions : Plugin<Project> {
                 this.sourceSets.apply {
                     commonMain {
                         dependencies {
-                            implementation("org.jetbrains.kotlinx:kotlinx-datetime:${findVersionOf("kotlinx-datetime")}")
-                            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${findVersionOf("kotlinx_coroutines")}")
-                            implementation("io.arrow-kt:arrow-core:${findVersionOf("arrow")}")
-                            implementation("io.arrow-kt:arrow-fx-coroutines:${findVersionOf("arrow")}")
+                            implementation("org.jetbrains.kotlinx:kotlinx-datetime:${versionOf("kotlinx-datetime")}")
+                            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${versionOf("kotlinx_coroutines")}")
+                            implementation("io.arrow-kt:arrow-core:${versionOf("arrow")}")
+                            implementation("io.arrow-kt:arrow-fx-coroutines:${versionOf("arrow")}")
                         }
                     }
 
                     commonTest {
                         dependencies {
                             implementation(kotlin("test"))
-                            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${findVersionOf("kotlinx_coroutines")}")
-                            implementation("io.kotest:kotest-framework-engine:${findVersionOf("kotest")}")
-                            implementation("io.kotest:kotest-framework-datatest:${findVersionOf("kotest")}")
-                            implementation("io.kotest:kotest-assertions-core:${findVersionOf("kotest")}")
+                            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${versionOf("kotlinx_coroutines")}")
+                            implementation("io.kotest:kotest-framework-engine:${versionOf("kotest")}")
+                            implementation("io.kotest:kotest-framework-datatest:${versionOf("kotest")}")
+                            implementation("io.kotest:kotest-assertions-core:${versionOf("kotest")}")
                         }
                     }
 
                     jvmTest {
                         dependencies {
-                            implementation("io.kotest:kotest-runner-junit5:${findVersionOf("kotest")}")
+                            implementation("io.kotest:kotest-runner-junit5:${versionOf("kotest")}")
                         }
                     }
                 }
-                this.specifics()
+                this.conventionSpecifics()
             }
 
             tasks.withType(Test::class) {
@@ -131,7 +131,7 @@ open class Conventions : Plugin<Project> {
             }
 
             extensions.findByType(AtomicFUPluginExtension::class)?.apply {
-                dependenciesVersion = findVersionOf("atomicFu") // set to null to turn-off auto dependencies
+                dependenciesVersion = versionOf("atomicFu") // set to null to turn-off auto dependencies
                 transformJvm = true // set to false to turn off JVM transformation
                 jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH
             }
@@ -141,7 +141,7 @@ open class Conventions : Plugin<Project> {
 
 class KtorServerPluginConventions : Conventions() {
 
-    override fun KotlinMultiplatformExtension.specifics() {
+    override fun KotlinMultiplatformExtension.conventionSpecifics() {
         sourceSets.apply {
             commonMain {
                 with(this.project) {
@@ -165,7 +165,7 @@ class KtorServerPluginConventions : Conventions() {
 }
 
 class KtorClientPluginConventions : Conventions() {
-    override fun KotlinMultiplatformExtension.specifics() {
+    override fun KotlinMultiplatformExtension.conventionSpecifics() {
         sourceSets.apply {
             commonMain {
                 dependencies {
@@ -200,7 +200,7 @@ private fun NamedDomainObjectCollection<KotlinSourceSet>.commonTest(configure: K
 private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTest(configure: KotlinSourceSet.() -> Unit) =
     get("jvmTest").apply { configure() }
 
-private fun Project.ktorVersion() = findVersionOf("ktor")
+private fun Project.ktorVersion() = versionOf("ktor")
 
 /**
  * Deletes the current tag and recreates it

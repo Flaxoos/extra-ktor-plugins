@@ -6,24 +6,12 @@ on:
 
 jobs:
   build-and-publish-main:
-    if: ${{ !github.event.act }
     name: Build and Publish Main
     uses: ./.github/workflows/execute-gradle-tasks-on-changed-subprojects.yml
     with:
-      sub_projects_tasks: clean
+      sub_projects_tasks: clean build publish
       parent_project_task: koverPrintCoverage
-      gradle_output_handler: |
-        IFS=$'\n' read -rd '' -a lines <<<"$GRADLE_OUTPUT"
-        for index in "${!lines[@]}"; do
-        line=${lines[index]}
-        if [[ $line == "Task :koverPrintCoverage" ]]; then
-        COVERAGE_LINE=${lines[index+1]}
-        break
-        fi
-        done
-        ROOT_COVERAGE=$(echo "$COVERAGE_LINE" | awk -F 'application line coverage: ' '{print $2}'
-        echo root_coverage: ROOT_COVERAGE
-        echo "::set-output name=root_coverage::ROOT_COVERAGE"
+      gradle_output_handler_path: ./.github/workflows/bash-scripts/find-kover-coverage.sh
 
   add-kover-badge:
     name: Create Coverage Badge

@@ -8,5 +8,4 @@ for index in "${!lines[@]}"; do
   fi
 done
 ROOT_COVERAGE=$(echo "$COVERAGE_LINE" | awk -F 'application line coverage: ' '{print $2}')
-echo root_coverage: $ROOT_COVERAGE
-echo "::set-output name=root_coverage::$ROOT_COVERAGE"
+echo $ROOT_COVERAGE

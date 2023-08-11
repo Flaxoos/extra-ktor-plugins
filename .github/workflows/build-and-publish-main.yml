@@ -10,7 +10,7 @@ jobs:
     name: Build and Publish Main
     uses: ./.github/workflows/execute-gradle-tasks-on-changed-subprojects.yml
     with:
-      sub_projects_tasks: clean build publish
+      sub_projects_tasks: clean
       parent_project_task: koverPrintCoverage
       gradle_output_handler: |
         IFS=$'\n' read -rd '' -a lines <<<"$GRADLE_OUTPUT"

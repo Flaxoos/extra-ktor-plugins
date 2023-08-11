@@ -2,8 +2,17 @@ name: Execute gradle tasks on changed subprojects
 on:
   workflow_call:
     inputs:
-      build_tasks:
+      sub_projects_tasks:
         required: true
+        type: string
+      parent_project_task:
+        required: false
+        type: string
+      gradle_output_handler:
+        required: false
+        type: string
+      gradle_output_handler_name:
+        required: false
         type: string
 
 jobs:
@@ -27,27 +36,50 @@ jobs:
           # Get the list of modified directories under "ktor-plugins" and "buildSrc"
           git fetch
           changed_dirs=$(git diff --name-only origin/main..$GITHUB_SHA)
-          if echo "$changed_dirs" | grep -q '^buildSrc/'; then
-            echo "buildSrc has changed"
-            changed_dirs=""
+          if echo "$changed_dirs" | grep -q '^buildSrc/' && ! echo "$changed_dirs" | grep -q '^ktor-'; then
+            echo "only buildSrc has changed"
+            changed_dirs="buildSrc"
           else
-            changed_dirs=$(echo "$changed_dirs" | grep '^ktor-' | cut -d/ -f1 | sort -u)
+            changed_dirs=$(echo "$changed_dirs" | grep '^ktor-' | cut -d/ -f1 | sort -u | tr '\n' ' ')
           fi
           echo "Changed subprojects: $changed_dirs"
           echo "::set-output name=changed_subprojects::$changed_dirs"
 
-      - name: Run ${{ inputs.build_tasks }} on ${{ steps.detect_changes.outputs.changed_subprojects }}
+      - name: Run ${{ inputs.sub_projects_tasks }} on ${{ steps.detect_changes.outputs.changed_subprojects }}
         run: |
-          tasks="${{ inputs.build_tasks }}"
+          tasks="${{ inputs.sub_projects_tasks }}"
           projects="${{ steps.detect_changes.outputs.changed_subprojects }}"
-          
-          command=""
+          echo "Projects: $projects"
+          echo "Tasks: $tasks"
           IFS=' ' read -ra proj_arr <<< "$projects"
           IFS=' ' read -ra task_arr <<< "$tasks"
           
-          for ((i=0; i<${#proj_arr[@]}; i++)); do
-          command+=":${proj_arr[$i]}:${task_arr[$i]} "
+          command=""
+          for proj in "${proj_arr[@]}"; do
+              for task in "${task_arr[@]}"; do
+              command+=":$proj:$task "
+            done
           done
+
+          if [[ -n "$parent_project_task" ]]; then
+            command+="$parent_project_task "
+          fi
+          
+          echo "Projects: $projects"
+          echo "Tasks: $tasks"
+          if [[ $projects == "buildSrc" ]]; then
+            echo "only buildSrc has changed, setting command to tasks"
+            command="$tasks"
+          fi
           
           echo "./gradlew $command--stacktrace"
-          ./gradlew $command--stacktrace
+          GRADLE_OUTPUT=$(./gradlew $command--stacktrace)
+          echo "::set-output name=gradle_output::GRADLE_OUTPUT"
+
+      - name: Gradle output handler":" ${{ inputs.gradle_output_handler_name }}
+        if: ${{ inputs.gradle_output_handler != '' }}
+        env:
+          GRADLE_OUTPUT: ${{ steps.gradle.outputs.gradle_output }}
+          GRADLE_OUTPUT_HANDLER: ${{ inputs.gradle_output_handler }}
+        run: |
+          echo $GRADLE_OUTPUT_HANDLER | bash

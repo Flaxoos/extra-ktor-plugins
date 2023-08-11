@@ -6,7 +6,32 @@ on:
 
 jobs:
   build-and-publish-main:
+    if: ${{ !github.event.act }
     name: Build and Publish Main
     uses: ./.github/workflows/execute-gradle-tasks-on-changed-subprojects.yml
     with:
-      build_tasks: clean build publish
+      sub_projects_tasks: clean build publish
+      parent_project_task: koverPrintCoverage
+      gradle_output_handler: |
+        IFS=$'\n' read -rd '' -a lines <<<"$GRADLE_OUTPUT"
+        for index in "${!lines[@]}"; do
+        line=${lines[index]}
+        if [[ $line == "Task :koverPrintCoverage" ]]; then
+        COVERAGE_LINE=${lines[index+1]}
+        break
+        fi
+        done
+        ROOT_COVERAGE=$(echo "$COVERAGE_LINE" | awk -F 'application line coverage: ' '{print $2}'
+        echo root_coverage: ROOT_COVERAGE
+        echo "::set-output name=root_coverage::ROOT_COVERAGE"
+
+  add-kover-badge:
+    name: Create Coverage Badge
+    uses: Schneegans/dynamic-badges-action/.github/workflows/badges.yml@1.6.0
+    with:
+      auth: ${{ secrets.GIST_TOKEN }}
+      gistID: 2e4bf8a120b7dd025243ba081ee72bb6
+      filename: coverage-badge.json
+      label: Kover
+      message: ${{ steps.build-and-publish-main.outputs.root_coverage }}
+      color: green

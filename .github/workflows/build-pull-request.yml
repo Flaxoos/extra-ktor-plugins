@@ -9,4 +9,4 @@ jobs:
     name: Build Pull Request
     uses: ./.github/workflows/execute-gradle-tasks-on-changed-subprojects.yml
     with:
-      build_tasks: clean build
+      sub_projects_tasks: clean build

@@ -40,7 +40,7 @@ jobs:
             echo "only buildSrc has changed"
             changed_dirs="buildSrc"
           else
-            changed_dirs=$(echo "$changed_dirs" | grep '^ktor-' | cut -d/ -f1 | sort -u | tr '\n' ' ')
+            changed_dirs=$(echo "$changed_dirs" | grep -E '^ktor-(server|client)-' | cut -d/ -f1 | sort -u | tr '\n' ' ')
           fi
           echo "Changed subprojects: $changed_dirs"
           echo "::set-output name=changed_subprojects::$changed_dirs"

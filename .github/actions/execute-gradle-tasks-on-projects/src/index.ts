@@ -27,14 +27,14 @@ function run() {
             }, '');
         }
         gradleProjectsTasks += `${parentProjectTask} `;
-        const gradleCommand = `./gradlew --stacktrace --console=plain ${gradleProjectsTasks.trim()}`;
-        core.debug(`Executing: ${gradleCommand}`);
+        const gradleCommand = `./gradlew --info --stacktrace --console=plain ${gradleProjectsTasks.trim()}`;
+        core.info(`Executing: ${gradleCommand}`);
 
         const gradleArgs = gradleCommand.split(' ');
         const gradleChild = spawn(gradleArgs[0], gradleArgs.slice(1));
 
-        gradleChild.on('message', (message) => {
-            core.debug(message.toString())
+        gradleChild.stdout.on('data', (data) => {
+            core.info(data.toString())
         })
         gradleChild.stderr.on('data', (data) => {
             core.error(data.toString())

@@ -1,0 +1,5 @@
+FROM catthehacker/ubuntu:act-latest
+
+COPY ~/.gradle /home/grade_home
+
+ENV GRADLE_USER_HOME /home/grade_home

@@ -50,11 +50,11 @@ function run() {
         }
         gradleProjectsTasks += `${parentProjectTask} `;
         const gradleCommand = `./gradlew --info --stacktrace --console=plain ${gradleProjectsTasks.trim()}`;
-        core.debug(`Executing: ${gradleCommand}`);
+        core.info(`Executing: ${gradleCommand}`);
         const gradleArgs = gradleCommand.split(' ');
         const gradleChild = (0, child_process_1.spawn)(gradleArgs[0], gradleArgs.slice(1));
-        gradleChild.on('message', (message) => {
-            core.debug(message.toString());
+        gradleChild.stdout.on('data', (data) => {
+            core.info(data.toString());
         });
         gradleChild.stderr.on('data', (data) => {
             core.error(data.toString());

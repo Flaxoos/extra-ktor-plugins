@@ -40,8 +40,8 @@ function run() {
         }
         else {
             core.debug(`building gradleProjectsTasks`);
-            const projArr = projects.split(',');
-            const taskArr = tasks.split(',');
+            const projArr = projects.trim().split(',');
+            const taskArr = tasks.trim().split(',');
             gradleProjectsTasks = projArr.reduce((acc1, proj) => {
                 return acc1 + taskArr.reduce((acc2, task) => {
                     return acc2 + `:${proj}:${task} `;

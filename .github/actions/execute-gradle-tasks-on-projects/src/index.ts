@@ -17,8 +17,8 @@ function run() {
             gradleProjectsTasks = `${tasks} `;
         } else {
             core.debug(`building gradleProjectsTasks`);
-            const projArr: string[] = projects.split(',');
-            const taskArr: string[] = tasks.split(',');
+            const projArr: string[] = projects.trim().split(',');
+            const taskArr: string[] = tasks.trim().split(',');
 
             gradleProjectsTasks = projArr.reduce((acc1, proj) => {
                 return acc1 + taskArr.reduce((acc2, task) => {
@@ -27,7 +27,7 @@ function run() {
             }, '');
         }
         gradleProjectsTasks += `${parentProjectTask} `;
-        const gradleCommand = `./gradlew --info --stacktrace --console=plain ${gradleProjectsTasks.trim()}`;
+        const gradleCommand = `./gradlew --stacktrace --console=plain ${gradleProjectsTasks.trim()}`;
         core.debug(`Executing: ${gradleCommand}`);
 
         const gradleArgs = gradleCommand.split(' ');

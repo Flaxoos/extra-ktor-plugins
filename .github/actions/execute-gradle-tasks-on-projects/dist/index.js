@@ -25,7 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
 const child_process_1 = require("child_process");
-function run() {
+async function run() {
     try {
         const projects = core.getInput('projects');
         const tasks = core.getInput('tasks');
@@ -49,24 +49,28 @@ function run() {
             }, '');
         }
         gradleProjectsTasks += `${parentProjectTask} `;
-        const gradleCommand = `./gradlew --info --stacktrace --console=plain ${gradleProjectsTasks.trim()}`;
+        const gradleCommand = `./gradlew --stacktrace ${gradleProjectsTasks.trim()}`;
         core.info(`Executing: ${gradleCommand}`);
         const gradleArgs = gradleCommand.split(' ');
         const gradleChild = (0, child_process_1.spawn)(gradleArgs[0], gradleArgs.slice(1));
-        gradleChild.stdout.on('data', (data) => {
-            core.info(data.toString());
+        const processPromise = new Promise((resolve, reject) => {
+            gradleChild.stdout.on('data', (data) => {
+                core.info(data.toString());
+            });
+            gradleChild.stderr.on('data', (data) => {
+                core.error(data.toString());
+            });
+            gradleChild.on('exit', (code, signal) => {
+                if (code !== 0) {
+                    reject(new Error(`Gradle exited with code ${code} due to signal ${signal}`));
+                }
+                else {
+                    core.setOutput('gradle_output', gradleChild.stdout);
+                    resolve();
+                }
+            });
         });
-        gradleChild.stderr.on('data', (data) => {
-            core.error(data.toString());
-        });
-        gradleChild.on('exit', (code, signal) => {
-            if (code !== 0) {
-                core.setFailed(`Gradle exited with code ${code} due to signal ${signal}`);
-            }
-            else {
-                core.setOutput('gradle_output', gradleChild.stdout);
-            }
-        });
+        await processPromise;
     }
     catch (error) {
         core.setFailed(error.message);

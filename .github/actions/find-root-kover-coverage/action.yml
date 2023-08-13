@@ -1,0 +1,17 @@
+name: 'Find root kover coverage'
+description: 'Finds the project test coverage based on gradle output, assuming the project uses Kover'
+inputs:
+  gradle_output:
+    required: true
+    description: 'Gradle output'
+  project_name:
+    required: false
+    description: 'the project to find the coverage for, will look for root if not provided'
+
+outputs:
+  kover_coverage:
+    description: 'Output from Gradle'
+
+runs:
+  using: node16
+  main: dist/index.js

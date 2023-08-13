@@ -1,0 +1,20 @@
+name: 'Execute gradle tasks on projects'
+description: 'Run gradle tasks on projects'
+inputs:
+  projects:
+    required: true
+    description: 'Projects to run the tasks on, comma separated'
+  tasks:
+    required: true
+    description: 'Tasks to run on the projects, comma separated'
+  parent_project_task:
+    required: false
+    description: 'Task to run on the parent project'
+
+outputs:
+  gradle_output:
+    description: 'Output from Gradle'
+
+runs:
+  using: node16
+  main: dist/index.js

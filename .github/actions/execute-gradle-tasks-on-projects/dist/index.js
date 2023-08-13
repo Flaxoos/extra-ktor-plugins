@@ -49,7 +49,7 @@ function run() {
             }, '');
         }
         gradleProjectsTasks += `${parentProjectTask} `;
-        const gradleCommand = `./gradlew --stacktrace --console=plain ${gradleProjectsTasks.trim()}`;
+        const gradleCommand = `./gradlew --info --stacktrace --console=plain ${gradleProjectsTasks.trim()}`;
         core.debug(`Executing: ${gradleCommand}`);
         const gradleArgs = gradleCommand.split(' ');
         const gradleChild = (0, child_process_1.spawn)(gradleArgs[0], gradleArgs.slice(1));

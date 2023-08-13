@@ -36,6 +36,9 @@ function run() {
         gradleChild.on('message', (message) => {
             core.debug(message.toString())
         })
+        gradleChild.stderr.on('data', (data) => {
+            core.error(data.toString())
+        })
         gradleChild.on('exit', (code, signal) => {
             if (code !== 0) {
                 core.setFailed(`Gradle exited with code ${code} due to signal ${signal}`);

@@ -26,12 +26,20 @@ jobs:
         with:
           project_prefixes: ktor-client,ktor-server
 
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         id: execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean
+          tasks: clean,build,publish
           parent_project_task: koverLog
 
       - name: Find root project kover coverage

@@ -25,7 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
 function run() {
-    var _a;
+    var _a, _b;
     const gradleOutput = core.getInput('gradle_output');
     const projectName = core.getInput('project_name');
     const koverPrintCoverage = "koverPrintCoverage";
@@ -41,7 +41,9 @@ function run() {
         return;
     }
     let koverCoverage;
-    const lineToSearchFor = `> Task :${(_a = projectName === null || projectName === void 0 ? void 0 : projectName.concat(":")) !== null && _a !== void 0 ? _a : ""}${koverPrintCoverage}`;
+    core.debug("Project name: " + projectName);
+    core.debug("Trimmed Project name: " + projectName.trim());
+    const lineToSearchFor = `> Task :${(_b = (_a = projectName.trim()) === null || _a === void 0 ? void 0 : _a.concat(":")) !== null && _b !== void 0 ? _b : ""}${koverPrintCoverage}`;
     core.debug(`Searching for ${lineToSearchFor}`);
     for (let index = 0; index < lines.length; index++) {
         const line = lines[index];
@@ -60,7 +62,7 @@ function run() {
         core.setOutput('kover_coverage', koverCoverage);
     }
     else {
-        console.error("Could not extract root coverage.");
+        core.setFailed(`Kover coverage for ${projectName !== null && projectName !== void 0 ? projectName : "root"} could not be found in gradle output.`);
     }
 }
 run();

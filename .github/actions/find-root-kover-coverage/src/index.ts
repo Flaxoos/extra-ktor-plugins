@@ -18,8 +18,9 @@ function run() {
     }
 
     let koverCoverage: string | undefined;
-
-    const lineToSearchFor = `> Task :${projectName?.concat(":") ?? ""}${koverPrintCoverage}`
+    core.debug("Project name: " + projectName);
+    core.debug("Trimmed Project name: " + projectName.trim());
+    const lineToSearchFor = `> Task :${projectName.trim()?.concat(":") ?? ""}${koverPrintCoverage}`
     core.debug(`Searching for ${lineToSearchFor}`);
     for (let index = 0; index < lines.length; index++) {
         const line: string = lines[index];
@@ -38,7 +39,7 @@ function run() {
         core.debug("kover_coverage: " + koverCoverage);
         core.setOutput('kover_coverage', koverCoverage);
     } else {
-        console.error("Could not extract root coverage.");
+        core.setFailed(`Kover coverage for ${projectName ?? "root"} could not be found in gradle output.`)
     }
 }
 

@@ -35,7 +35,8 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-        uses: ./.github/actions/execute-gradle-tasks-on-projects && inputs.execute_on_root_anyway=true
+        uses: ./.github/actions/execute-gradle-tasks-on-projects
+        if: steps.detect-modified-subprojects.outputs.modified_projects && inputs.execute_on_root_anyway=true
         id: execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}

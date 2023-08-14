@@ -28,13 +28,16 @@ function run() {
     var _a;
     const gradleOutput = core.getInput('gradle_output');
     const projectName = core.getInput('project_name');
-    if (!gradleOutput.includes("koverPrintCoverage")) {
-        core.error("Gradle output does not contain koverPrintCoverage, make sure kover plugin is applied " +
-            "and configured to print coverage");
-    }
+    const koverPrintCoverage = "koverPrintCoverage";
     const lines = gradleOutput.split('\n');
     if (lines.length === 0) {
-        core.error("Empty gradle output provided.");
+        core.setFailed("Gradle output does not contain koverPrintCoverage, make sure kover plugin is applied " +
+            "and configured to print coverage");
+        return;
+    }
+    if (!gradleOutput.includes(koverPrintCoverage)) {
+        core.setFailed(`Gradle output does not contain ${koverPrintCoverage}, make sure kover plugin is applied ` +
+            "and configured to print coverage");
         return;
     }
     let koverCoverage;

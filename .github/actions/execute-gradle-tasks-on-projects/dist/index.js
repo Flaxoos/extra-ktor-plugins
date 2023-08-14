@@ -33,12 +33,12 @@ async function run() {
         let executeOnRootAnyway = (_b = ((_a = core.getInput('execute_on_root_anyway', {
             trimWhitespace: true,
         })) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true') !== null && _b !== void 0 ? _b : false;
-        let parentProjectTask = core.getInput('parent_project_task', {
+        let rootProjectTask = core.getInput('root_project_task', {
             required: false
         });
-        core.debug(`Projects: ${projects !== null && projects !== void 0 ? projects : "--EMPTY INPUT AFTER TRIMMING--"}`);
-        core.debug(`Tasks: ${tasks !== null && tasks !== void 0 ? tasks : "--EMPTY INPUT AFTER TRIMMING--"}`);
-        core.debug(`Parent Project Task: ${parentProjectTask !== null && parentProjectTask !== void 0 ? parentProjectTask : "--EMPTY INPUT AFTER TRIMMING--"}`);
+        core.debug(`Projects: '${projects}'`);
+        core.debug(`Tasks: '${tasks}'`);
+        core.debug(`Root project Task: '${rootProjectTask}'`);
         const taskArr = tasks.split(',').filter((p) => p.trim() !== '');
         core.debug("Task array: " + taskArr);
         let gradleProjectsTasks;
@@ -49,7 +49,7 @@ async function run() {
         else {
             const projArr = projects.split(',').filter((p) => p.trim() !== '');
             core.debug(`building gradleProjectsTasks with projects: ${projArr} and tasks: ${taskArr}`);
-            if (taskArr.length === 0 && !parentProjectTask) {
+            if (taskArr.length === 0 && !rootProjectTask) {
                 core.info("No tasks provided, skipping");
                 return;
             }
@@ -70,7 +70,10 @@ async function run() {
                 }, '');
             }
         }
-        gradleProjectsTasks += parentProjectTask ? `${parentProjectTask} ` : ``;
+        if (rootProjectTask) {
+            core.debug(`Adding root project task: ${rootProjectTask} to command`);
+            gradleProjectsTasks += rootProjectTask;
+        }
         const gradleCommand = `./gradlew --stacktrace ${gradleProjectsTasks.trim()}`;
         core.info(`Executing: ${gradleCommand}`);
         const gradleArgs = gradleCommand.split(' ');

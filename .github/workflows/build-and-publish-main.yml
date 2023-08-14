@@ -42,6 +42,8 @@ jobs:
           tasks: clean,build,publish
           root_project_task: koverLog
           execute_on_root_anyway: true
+        env:
+          GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
 
       - name: Find root project kover coverage
         uses: ./.github/actions/find-root-kover-coverage

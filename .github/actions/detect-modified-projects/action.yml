@@ -1,5 +1,5 @@
-name: 'Execute gradle tasks on subprojects'
-description: 'Run gradle tasks on subprojects'
+name: 'Detect modified projects'
+description: 'Detects modified projects'
 inputs:
   project_prefixes:
     required: false

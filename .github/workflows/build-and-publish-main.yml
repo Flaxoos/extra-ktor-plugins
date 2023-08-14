@@ -48,15 +48,15 @@ jobs:
         uses: ./.github/actions/find-root-kover-coverage
         with:
           gradle_output: ${{ steps.execute-gradle-tasks-on-projects.outputs.gradle_output }}
+          coverage_for_green: 90
 
       - name: Call dynamic badges
         id: call-dynamic-badges
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
-          gistID: 2e4bf8a120b7dd025243ba081ee72bb6
-          filename: coverage-badge.json
+          gistID: 474c7fd1a50107277ce16cfbf69f4ff9
+          filename: flax-ktor-plugins-kover-badge.json
           label: Kover
           message: ${{ steps.find-root-kover-coverage.outputs.kover_coverage }}
-          color: green
-          forceUpdate: true
+          color: ${{ steps.find-root-kover-coverage.outputs.kover_color }}

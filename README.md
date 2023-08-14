@@ -1,7 +1,7 @@
 # Ktor Server Multiplatform Plugins Library
-![example event parameter](https://github.com/idoflax/flax-ktor-plugins/blob/main/.github/workflows/build-and-publish-main.yml/badge.svg?event=push)
+![Build status](https://github.com/idoflax/flax-ktor-plugins/actions/workflows/build-and-publish-main.yml/badge.svg?event=push)
 
-![badge](https://img.shields.io/endpoint?url=https://gist.github.com/idoflax/2e4bf8a120b7dd025243ba081ee72bb6/raw/coverage-badge.json)
+![Kover](https://img.shields.io/endpoint?url=https://gist.github.com/idoflax/474c7fd1a50107277ce16cfbf69f4ff9/raw/flax-ktor-plugins-kover-badge.json)
 
 This project provides a suite of useful, efficient, and customizable plugins for your Ktor Server, crafted in Kotlin, available for multiplatform. Whether you need rate limiting, logging, monitoring, or more, you can enhance your server's capabilities with these plugins.
 

@@ -1,9 +1,17 @@
 import * as core from '@actions/core';
 
+const defaultGreenThreshold = 90;
+
 function run() {
     const gradleOutput: string = core.getInput('gradle_output')
     const projectName: string = core.getInput('project_name')
+    const coverageForGreen: string = core.getInput('coverage_for_green')
     const koverPrintCoverage = "koverPrintCoverage";
+
+    const coverageForGreenNumber = coverageForGreen.trim() ? parseFloat(coverageForGreen) : defaultGreenThreshold;
+    if (isNaN(Number(coverageForGreen))) {
+        core.setFailed("illegal coverage_for_green value: " + coverageForGreen);
+    }
 
     const lines: string[] = gradleOutput.split('\n');
     if (lines.length === 0) {
@@ -39,6 +47,8 @@ function run() {
     if (koverCoverage) {
         core.debug("kover_coverage: " + koverCoverage);
         core.setOutput('kover_coverage', koverCoverage);
+        const color = parseFloat(koverCoverage) > parseFloat(coverageForGreen) ? "green" : "yellow";
+        core.setOutput('kover_color', color);
     } else {
         core.setFailed(`Kover coverage for ${projectName ?? "root"} could not be found in gradle output.`)
     }

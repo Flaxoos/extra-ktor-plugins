@@ -24,10 +24,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
+const defaultGreenThreshold = 90;
 function run() {
     const gradleOutput = core.getInput('gradle_output');
     const projectName = core.getInput('project_name');
+    const coverageForGreen = core.getInput('coverage_for_green');
     const koverPrintCoverage = "koverPrintCoverage";
+    const coverageForGreenNumber = coverageForGreen.trim() ? parseFloat(coverageForGreen) : defaultGreenThreshold;
+    if (isNaN(Number(coverageForGreen))) {
+        core.setFailed("illegal coverage_for_green value: " + coverageForGreen);
+    }
     const lines = gradleOutput.split('\n');
     if (lines.length === 0) {
         core.setFailed("Gradle output does not contain koverPrintCoverage, make sure kover plugin is applied " +
@@ -59,6 +65,8 @@ function run() {
     if (koverCoverage) {
         core.debug("kover_coverage: " + koverCoverage);
         core.setOutput('kover_coverage', koverCoverage);
+        const color = parseFloat(koverCoverage) > parseFloat(coverageForGreen) ? "green" : "yellow";
+        core.setOutput('kover_color', color);
     }
     else {
         core.setFailed(`Kover coverage for ${projectName !== null && projectName !== void 0 ? projectName : "root"} could not be found in gradle output.`);

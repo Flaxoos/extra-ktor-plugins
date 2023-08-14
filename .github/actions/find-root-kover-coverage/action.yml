@@ -7,6 +7,9 @@ inputs:
   project_name:
     required: false
     description: 'the project to find the coverage for, will look for root if not provided'
+  coverage_for_green:
+    required: false
+    description: 'minimum test coverage figure for green badge, if less, will be yellow defaults to 90'
 
 outputs:
   kover_coverage:

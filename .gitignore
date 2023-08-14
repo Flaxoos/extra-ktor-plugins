@@ -37,3 +37,6 @@ out/
 
 ### hprof ###
 **/*.hprof
+
+### act ###
+.actrc

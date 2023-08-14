@@ -27,12 +27,14 @@ const core = __importStar(require("@actions/core"));
 const child_process_1 = require("child_process");
 async function run() {
     try {
-        const projects = core.getInput('projects');
-        const tasks = core.getInput('tasks');
+        let projects = core.getInput('projects');
+        let tasks = core.getInput('tasks');
         const parentProjectTask = core.getInput('parent_project_task');
-        core.debug(`Projects: ${projects}`);
-        core.debug(`Tasks: ${tasks}`);
-        core.debug(`Parent Project Task: ${parentProjectTask}`);
+        projects = projects.trim().replace("\n", " ");
+        tasks = tasks.trim().replace("\n", " ");
+        core.debug(`Projects: ${projects !== null && projects !== void 0 ? projects : "--EMPTY INPUT--"}`);
+        core.debug(`Tasks: ${tasks !== null && tasks !== void 0 ? tasks : "--EMPTY INPUT--"}`);
+        core.debug(`Parent Project Task: ${parentProjectTask !== null && parentProjectTask !== void 0 ? parentProjectTask : "--EMPTY INPUT--"}`);
         let gradleProjectsTasks;
         if (projects === 'buildSrc') {
             core.debug(`only buildSrc has changed, setting gradleProjectsTasks to ${tasks}`);
@@ -40,15 +42,19 @@ async function run() {
         }
         else {
             core.debug(`building gradleProjectsTasks`);
-            const projArr = projects.trim().split(',');
-            const taskArr = tasks.trim().split(',');
+            const projArr = projects.split(',');
+            const taskArr = tasks.split(',');
+            if (projArr.length == 0) {
+                core.info("No projects to build, skipping");
+                return;
+            }
             gradleProjectsTasks = projArr.reduce((acc1, proj) => {
                 return acc1 + taskArr.reduce((acc2, task) => {
                     return acc2 + `:${proj}:${task} `;
                 }, '');
             }, '');
         }
-        gradleProjectsTasks += `${parentProjectTask} `;
+        gradleProjectsTasks += parentProjectTask ? `${parentProjectTask} ` : ``;
         const gradleCommand = `./gradlew --stacktrace ${gradleProjectsTasks.trim()}`;
         core.info(`Executing: ${gradleCommand}`);
         const gradleArgs = gradleCommand.split(' ');

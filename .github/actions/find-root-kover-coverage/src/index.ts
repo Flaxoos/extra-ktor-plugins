@@ -18,9 +18,10 @@ function run() {
     }
 
     let koverCoverage: string | undefined;
+
     core.debug("Project name: " + projectName);
-    core.debug("Trimmed Project name: " + projectName.trim());
-    const lineToSearchFor = `> Task :${projectName.trim()?.concat(":") ?? ""}${koverPrintCoverage}`
+    let projectTaskPrefix = projectName.trim() ? `${projectName}:` : "";
+    const lineToSearchFor = `> Task :${projectTaskPrefix}${koverPrintCoverage}`;
     core.debug(`Searching for ${lineToSearchFor}`);
     for (let index = 0; index < lines.length; index++) {
         const line: string = lines[index];

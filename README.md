@@ -1,5 +1,5 @@
 # Ktor Server Multiplatform Plugins Library
-[![Build Workflow](https://github.com/idoflax/flax-ktor-plugins/workflows/Build/badge.svg)](https://github.com/idoflax/flax-ktor-plugins/actions)
+![example event parameter](https://github.com/idoflax/flax-ktor-plugins/blob/main/.github/workflows/build-and-publish-main.yml/badge.svg?event=push)
 
 ![badge](https://img.shields.io/endpoint?url=https://gist.github.com/idoflax/2e4bf8a120b7dd025243ba081ee72bb6/raw/coverage-badge.json)
 

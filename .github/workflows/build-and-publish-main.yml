@@ -41,8 +41,8 @@ jobs:
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build,publish
-          execute_on_root_anyway: true
           root_project_task: koverLog
+          execute_on_root_anyway: true
 
       - name: Find root project kover coverage
         uses: ./.github/actions/find-root-kover-coverage

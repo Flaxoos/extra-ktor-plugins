@@ -26,11 +26,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
 const child_process_1 = require("child_process");
 async function run() {
+    var _a, _b;
     try {
-        let projects = core.getInput('projects', { trimWhitespace: true });
-        let tasks = core.getInput('tasks', { trimWhitespace: true });
-        let executeOnRootAnyway = core.getBooleanInput('execute_on_root_anyway');
-        let parentProjectTask = core.getInput('parent_project_task', { trimWhitespace: true });
+        let projects = core.getInput('projects');
+        let tasks = core.getInput('tasks');
+        let executeOnRootAnyway = (_b = ((_a = core.getInput('execute_on_root_anyway', {
+            trimWhitespace: true,
+        })) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true') !== null && _b !== void 0 ? _b : false;
+        let parentProjectTask = core.getInput('parent_project_task', {
+            required: false
+        });
         core.debug(`Projects: ${projects !== null && projects !== void 0 ? projects : "--EMPTY INPUT AFTER TRIMMING--"}`);
         core.debug(`Tasks: ${tasks !== null && tasks !== void 0 ? tasks : "--EMPTY INPUT AFTER TRIMMING--"}`);
         core.debug(`Parent Project Task: ${parentProjectTask !== null && parentProjectTask !== void 0 ? parentProjectTask : "--EMPTY INPUT AFTER TRIMMING--"}`);

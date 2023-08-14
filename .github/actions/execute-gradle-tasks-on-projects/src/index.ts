@@ -5,9 +5,9 @@ async function run() {
     try {
         let projects = core.getInput('projects');
         let tasks = core.getInput('tasks');
-        let executeOnRootAnyway = core.getBooleanInput('execute_on_root_anyway', {
+        let executeOnRootAnyway = core.getInput('execute_on_root_anyway', {
             trimWhitespace: true,
-        }) ?? false;
+        })?.toLowerCase() === 'true' ?? false;
         let parentProjectTask = core.getInput('parent_project_task', {
             required: false
         });

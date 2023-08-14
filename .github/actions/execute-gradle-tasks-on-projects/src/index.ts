@@ -8,13 +8,13 @@ async function run() {
         let executeOnRootAnyway = core.getInput('execute_on_root_anyway', {
             trimWhitespace: true,
         })?.toLowerCase() === 'true' ?? false;
-        let parentProjectTask = core.getInput('parent_project_task', {
+        let rootProjectTask = core.getInput('root_project_task', {
             required: false
         });
 
-        core.debug(`Projects: ${projects ?? "--EMPTY INPUT AFTER TRIMMING--"}`);
-        core.debug(`Tasks: ${tasks ?? "--EMPTY INPUT AFTER TRIMMING--"}`);
-        core.debug(`Parent Project Task: ${parentProjectTask ?? "--EMPTY INPUT AFTER TRIMMING--"}`);
+        core.debug(`Projects: '${projects}'`);
+        core.debug(`Tasks: '${tasks}'`);
+        core.debug(`Root project Task: '${rootProjectTask}'`);
 
         const taskArr: string[] = tasks.split(',').filter((p) => p.trim() !== '');
         core.debug("Task array: " + taskArr);
@@ -25,7 +25,7 @@ async function run() {
         } else {
             const projArr: string[] = projects.split(',').filter((p) => p.trim() !== '');
             core.debug(`building gradleProjectsTasks with projects: ${projArr} and tasks: ${taskArr}`);
-            if (taskArr.length === 0 && !parentProjectTask) {
+            if (taskArr.length === 0 && !rootProjectTask) {
                 core.info("No tasks provided, skipping");
                 return;
             }
@@ -45,7 +45,10 @@ async function run() {
                 }, '');
             }
         }
-        gradleProjectsTasks += parentProjectTask ? `${parentProjectTask} ` : ``;
+        if (rootProjectTask) {
+            core.debug(`Adding root project task: ${rootProjectTask} to command`);
+            gradleProjectsTasks += rootProjectTask;
+        }
         const gradleCommand = `./gradlew --stacktrace ${gradleProjectsTasks.trim()}`;
         core.info(`Executing: ${gradleCommand}`);
         const gradleArgs = gradleCommand.split(' ');

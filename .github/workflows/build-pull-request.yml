@@ -21,14 +21,14 @@ jobs:
         run: sh .github/actions/build-all-actions.sh
 
       - name: Detect modified subprojects
-        uses: ./.github/actions/detect-modified-projects
         id: detect-modified-subprojects
+        uses: ./.github/actions/detect-modified-projects
         with:
           project_prefixes: ktor-client,ktor-server
 
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-        uses: ./.github/actions/execute-gradle-tasks-on-projects
         id: execute-gradle-tasks-on-projects
+        uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build

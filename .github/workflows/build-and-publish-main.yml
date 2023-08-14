@@ -35,8 +35,8 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-        uses: ./.github/actions/execute-gradle-tasks-on-projects
         id: execute-gradle-tasks-on-projects
+        uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build
@@ -47,13 +47,16 @@ jobs:
           GPR_USER: ${{ env.GPR_USER }}
 
       - name: Find root project kover coverage
-        uses: ./.github/actions/find-root-kover-coverage
         id: find-root-kover-coverage
+        uses: ./.github/actions/find-root-kover-coverage
+        if: steps.execute-gradle-tasks-on-projects.outcome === 'success'
         with:
           gradle_output: ${{ steps.execute-gradle-tasks-on-projects.outputs.gradle_output }}
 
       - name: Call dynamic badges
+        id: call-dynamic-badges
         uses: schneegans/dynamic-badges-action@v1.6.0
+        if: steps.find-root-kover-coverage.outcome === 'success'
         with:
           auth: ${{ secrets.GIST_TOKEN }}
           gistID: 2e4bf8a120b7dd025243ba081ee72bb6

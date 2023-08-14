@@ -37,7 +37,7 @@ async function run() {
         core.debug(`Projects: ${projects !== null && projects !== void 0 ? projects : "--EMPTY INPUT AFTER TRIMMING--"}`);
         core.debug(`Tasks: ${tasks !== null && tasks !== void 0 ? tasks : "--EMPTY INPUT AFTER TRIMMING--"}`);
         core.debug(`Parent Project Task: ${parentProjectTask !== null && parentProjectTask !== void 0 ? parentProjectTask : "--EMPTY INPUT AFTER TRIMMING--"}`);
-        const taskArr = tasks.split(',');
+        const taskArr = tasks.split(',').filter((p) => p.trim() !== '');
         core.debug("Task array: " + taskArr);
         let gradleProjectsTasks;
         if (projects === 'buildSrc') {
@@ -45,13 +45,13 @@ async function run() {
             gradleProjectsTasks = `${tasks} `;
         }
         else {
-            const projArr = projects.split(',');
+            const projArr = projects.split(',').filter((p) => p.trim() !== '');
             core.debug(`building gradleProjectsTasks with projects: ${projArr} and tasks: ${taskArr}`);
             if (taskArr.length === 0 && !parentProjectTask) {
                 core.info("No tasks provided, skipping");
                 return;
             }
-            if (projArr.length == 0 && !executeOnRootAnyway) {
+            if (projArr.length === 0 && !executeOnRootAnyway) {
                 core.info("No projects to build, skipping");
                 return;
             }

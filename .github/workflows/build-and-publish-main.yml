@@ -39,8 +39,9 @@ jobs:
         id: execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,build,publish
+          tasks: clean,build
           root_project_task: koverLog
+          execute_on_root_anyway: true
         env:
           GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
           GPR_USER: ${{ env.GPR_USER }}

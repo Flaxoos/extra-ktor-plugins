@@ -3,10 +3,14 @@ import {spawn} from 'child_process';
 
 async function run() {
     try {
-        let projects = core.getInput('projects', {trimWhitespace: true});
-        let tasks = core.getInput('tasks', {trimWhitespace: true});
-        let executeOnRootAnyway = core.getBooleanInput('execute_on_root_anyway')
-        let parentProjectTask = core.getInput('parent_project_task', {trimWhitespace: true});
+        let projects = core.getInput('projects');
+        let tasks = core.getInput('tasks');
+        let executeOnRootAnyway = core.getBooleanInput('execute_on_root_anyway', {
+            trimWhitespace: true,
+        }) ?? false;
+        let parentProjectTask = core.getInput('parent_project_task', {
+            required: false
+        });
 
         core.debug(`Projects: ${projects ?? "--EMPTY INPUT AFTER TRIMMING--"}`);
         core.debug(`Tasks: ${tasks ?? "--EMPTY INPUT AFTER TRIMMING--"}`);

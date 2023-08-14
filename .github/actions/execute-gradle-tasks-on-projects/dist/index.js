@@ -46,15 +46,15 @@ async function run() {
         }
         else {
             const projArr = projects.split(',');
+            core.debug(`building gradleProjectsTasks with projects: ${projArr} and tasks: ${taskArr}`);
             if (taskArr.length === 0 && !parentProjectTask) {
                 core.info("No tasks provided, skipping");
                 return;
             }
-            if (!executeOnRootAnyway && projArr.length == 0) {
+            if (projArr.length == 0 && !executeOnRootAnyway) {
                 core.info("No projects to build, skipping");
                 return;
             }
-            core.debug(`building gradleProjectsTasks`);
             if (projArr.length > 0) {
                 gradleProjectsTasks = projArr.reduce((acc1, proj) => {
                     return acc1 + taskArr.reduce((acc2, task) => {

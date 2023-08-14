@@ -44,7 +44,7 @@ async function run() {
             core.debug(`building gradleProjectsTasks`);
             const projArr = projects.split(',');
             const taskArr = tasks.split(',');
-            if (projArr.length == 0) {
+            if (projArr.length === 0) {
                 core.info("No projects to build, skipping");
                 return;
             }

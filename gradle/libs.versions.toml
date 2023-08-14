@@ -1,8 +1,26 @@
 [versions]
 kotlin = "1.9.0"
+java = "11"
 gradle = "8.1.1"
+kotest = "5.6.2"
+ktor = "2.3.2"
+logback = "1.4.8"
+atomicFu = "0.21.0"
+kover = "0.7.2"
+logging_capabilities = "0.11.1"
+kotlinx_datetime = "0.4.0"
+kotlinx_coroutines = "1.7.1"
+logging = "5.0.2"
+arrow = "1.2.0"
+junit = "5.9.2"
+ktlint = "11.5.1"
 
 [libraries]
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kover-gradlePlugin = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
+atomicfu-gradlePlugin = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version.ref = "atomicFu" }
+loggingCapabilities-gradlePlugin = { module = "dev.jacomet.gradle.plugins:logging-capabilities", version.ref = "logging_capabilities" }
+kotestFrameworkMultiplatform-gradlePlugin = { module = "io.kotest:kotest-framework-multiplatform-plugin-gradle", version.ref = "kotest" }
+ktlint-gradlePlugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint" }
 
 [plugins]

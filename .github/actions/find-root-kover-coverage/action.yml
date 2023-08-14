@@ -10,7 +10,7 @@ inputs:
 
 outputs:
   kover_coverage:
-    description: 'Output from Gradle'
+    description: 'Kover coverage'
 
 runs:
   using: node16

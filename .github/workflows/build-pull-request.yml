@@ -31,6 +31,5 @@ jobs:
         id: execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,build,publish
-          root_project_task: koverLog
+          tasks: clean,build
           execute_on_root_anyway: true

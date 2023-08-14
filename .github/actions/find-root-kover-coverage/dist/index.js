@@ -41,9 +41,12 @@ function run() {
         return;
     }
     let koverCoverage;
+    const lineToSearchFor = `> Task :${(_a = projectName === null || projectName === void 0 ? void 0 : projectName.concat(":")) !== null && _a !== void 0 ? _a : ""}${koverPrintCoverage}`;
+    core.debug(`Searching for ${lineToSearchFor}`);
     for (let index = 0; index < lines.length; index++) {
         const line = lines[index];
-        if (line.includes(`> Task :${(_a = projectName === null || projectName === void 0 ? void 0 : projectName.concat(":")) !== null && _a !== void 0 ? _a : ""}koverPrintCoverage`)) {
+        if (line.includes(lineToSearchFor)) {
+            core.debug(`Found ${koverPrintCoverage}`);
             const coverageLine = lines[index + 1];
             const match = coverageLine.split('application line coverage: ');
             if (match && match[1]) {

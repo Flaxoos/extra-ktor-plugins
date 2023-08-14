@@ -19,9 +19,12 @@ function run() {
 
     let koverCoverage: string | undefined;
 
+    const lineToSearchFor = `> Task :${projectName?.concat(":") ?? ""}${koverPrintCoverage}`
+    core.debug(`Searching for ${lineToSearchFor}`);
     for (let index = 0; index < lines.length; index++) {
         const line: string = lines[index];
-        if (line.includes(`> Task :${projectName?.concat(":") ?? ""}koverPrintCoverage`)) {
+        if (line.includes(lineToSearchFor)) {
+            core.debug(`Found ${koverPrintCoverage}`);
             const coverageLine: string = lines[index + 1];
             const match = coverageLine.split('application line coverage: ');
             if (match && match[1]) {

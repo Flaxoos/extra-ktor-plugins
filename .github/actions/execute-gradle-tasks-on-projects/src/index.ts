@@ -1,6 +1,17 @@
 import * as core from '@actions/core';
 import {spawn} from 'child_process';
 
+class StringBuilder {
+    private _parts: string[] = [];
+
+    append(value: string): void {
+        this._parts.push(value);
+    }
+
+    toString(): string {
+        return this._parts.join("");
+    }
+}
 async function run() {
     try {
         let projects = core.getInput('projects');
@@ -82,16 +93,4 @@ async function run() {
 }
 
 run();
-
-class StringBuilder {
-    private _parts: string[] = [];
-
-    append(value: string): void {
-        this._parts.push(value);
-    }
-
-    toString(): string {
-        return this._parts.join("");
-    }
-}
 

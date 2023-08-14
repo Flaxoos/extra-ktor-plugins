@@ -25,6 +25,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
 const child_process_1 = require("child_process");
+class StringBuilder {
+    constructor() {
+        this._parts = [];
+    }
+    append(value) {
+        this._parts.push(value);
+    }
+    toString() {
+        return this._parts.join("");
+    }
+}
 async function run() {
     var _a, _b;
     try {
@@ -103,14 +114,3 @@ async function run() {
     }
 }
 run();
-class StringBuilder {
-    constructor() {
-        this._parts = [];
-    }
-    append(value) {
-        this._parts.push(value);
-    }
-    toString() {
-        return this._parts.join("");
-    }
-}

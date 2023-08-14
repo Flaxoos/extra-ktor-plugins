@@ -3,30 +3,49 @@ import {spawn} from 'child_process';
 
 async function run() {
     try {
-        const projects = core.getInput('projects');
-        const tasks = core.getInput('tasks');
-        const parentProjectTask = core.getInput('parent_project_task');
+        let projects = core.getInput('projects');
+        let tasks = core.getInput('tasks');
+        let executeOnRootAnyway = core.getInput('execute_on_root_anyway', {
+            trimWhitespace: true,
+        })?.toLowerCase() === 'true' ?? false;
+        let parentProjectTask = core.getInput('parent_project_task', {
+            required: false
+        });
 
-        core.debug(`Projects: ${projects}`);
-        core.debug(`Tasks: ${tasks}`);
-        core.debug(`Parent Project Task: ${parentProjectTask}`);
+        core.debug(`Projects: ${projects ?? "--EMPTY INPUT AFTER TRIMMING--"}`);
+        core.debug(`Tasks: ${tasks ?? "--EMPTY INPUT AFTER TRIMMING--"}`);
+        core.debug(`Parent Project Task: ${parentProjectTask ?? "--EMPTY INPUT AFTER TRIMMING--"}`);
 
+        const taskArr: string[] = tasks.split(',').filter((p) => p.trim() !== '');
+        core.debug("Task array: " + taskArr);
         let gradleProjectsTasks: string;
         if (projects === 'buildSrc') {
             core.debug(`only buildSrc has changed, setting gradleProjectsTasks to ${tasks}`);
             gradleProjectsTasks = `${tasks} `;
         } else {
-            core.debug(`building gradleProjectsTasks`);
-            const projArr: string[] = projects.trim().split(',');
-            const taskArr: string[] = tasks.trim().split(',');
-
-            gradleProjectsTasks = projArr.reduce((acc1, proj) => {
-                return acc1 + taskArr.reduce((acc2, task) => {
-                    return acc2 + `:${proj}:${task} `;
+            const projArr: string[] = projects.split(',').filter((p) => p.trim() !== '');
+            core.debug(`building gradleProjectsTasks with projects: ${projArr} and tasks: ${taskArr}`);
+            if (taskArr.length === 0 && !parentProjectTask) {
+                core.info("No tasks provided, skipping");
+                return;
+            }
+            if (projArr.length === 0 && !executeOnRootAnyway) {
+                core.info("No projects to build, skipping");
+                return;
+            }
+            if (projArr.length > 0) {
+                gradleProjectsTasks = projArr.reduce((acc1, proj) => {
+                    return acc1 + taskArr.reduce((acc2, task) => {
+                        return acc2 + `:${proj}:${task} `;
+                    }, '');
                 }, '');
-            }, '');
+            } else {
+                gradleProjectsTasks = taskArr.reduce((acc1, task) => {
+                    return acc1 + `${task} `;
+                }, '');
+            }
         }
-        gradleProjectsTasks += `${parentProjectTask} `;
+        gradleProjectsTasks += parentProjectTask ? `${parentProjectTask} ` : ``;
         const gradleCommand = `./gradlew --stacktrace ${gradleProjectsTasks.trim()}`;
         core.info(`Executing: ${gradleCommand}`);
         const gradleArgs = gradleCommand.split(' ');

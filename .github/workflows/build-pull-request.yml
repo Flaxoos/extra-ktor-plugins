@@ -32,4 +32,4 @@ jobs:
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build
-          parent_project_task: koverLog
+          execute_on_root_anyway: true

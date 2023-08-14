@@ -35,13 +35,17 @@ function run() {
         if (!githubSha) {
             core.setFailed('GITHUB_SHA not set');
         }
-        let modifiedProjects = (0, child_process_1.execSync)(`git diff --name-only origin/main..${githubSha}`, { encoding: 'utf8' });
+        const diffCmd = `git diff --name-only origin/main..${githubSha}`;
+        core.debug("Calling: " + diffCmd);
+        let modifiedProjects = (0, child_process_1.execSync)(diffCmd, { encoding: 'utf8' });
+        core.debug("Result:" + modifiedProjects);
         if (modifiedProjects.includes('buildSrc/') && !modifiedProjects.includes('ktor-')) {
             core.debug("only buildSrc has modified");
             modifiedProjects = "buildSrc";
         }
         else {
             const subprojectPrefixesPattern = subprojectPrefixes.join("|");
+            core.debug("subprojectPrefixesPattern: " + subprojectPrefixesPattern);
             const regex = subprojectPrefixes.length > 0
                 ? new RegExp(`^(${subprojectPrefixesPattern})`)
                 : null;
@@ -54,8 +58,13 @@ function run() {
                 .filter((value, index, self) => self.indexOf(value) === index)
                 .join(',');
         }
-        core.debug(`Modified subprojects: ${modifiedProjects}`);
-        core.setOutput('modified_projects', modifiedProjects);
+        if (modifiedProjects) {
+            core.debug(`Modified subprojects: ${modifiedProjects}`);
+            core.setOutput('modified_projects', modifiedProjects);
+        }
+        else {
+            core.info("No modified subprojects");
+        }
     }
     catch (error) {
         core.setFailed(`Action failed with error: ${error}`);

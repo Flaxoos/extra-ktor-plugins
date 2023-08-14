@@ -41,7 +41,6 @@ jobs:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build,publish
           root_project_task: koverLog
-          execute_on_root_anyway: true
         env:
           GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
           GPR_USER: ${{ env.GPR_USER }}

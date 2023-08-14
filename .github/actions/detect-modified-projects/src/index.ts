@@ -34,8 +34,12 @@ function run() {
                 .filter((value, index, self) => self.indexOf(value) === index)
                 .join(',');
         }
-        core.debug(`Modified subprojects: ${modifiedProjects}`);
-        core.setOutput('modified_projects', modifiedProjects);
+        if (modifiedProjects) {
+            core.debug(`Modified subprojects: ${modifiedProjects}`);
+            core.setOutput('modified_projects', modifiedProjects);
+        } else {
+            core.info("No modified subprojects");
+        }
 
     } catch (error) {
         core.setFailed(`Action failed with error: ${error}`);

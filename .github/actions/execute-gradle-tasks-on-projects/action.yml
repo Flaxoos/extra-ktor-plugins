@@ -10,6 +10,9 @@ inputs:
   parent_project_task:
     required: false
     description: 'Task to run on the parent project'
+  execute_on_root_anyway:
+    required: false
+    description: 'Execute on root regardless of if any projects have been provided, [true/false]'
 
 outputs:
   gradle_output:

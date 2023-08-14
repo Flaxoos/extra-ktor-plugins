@@ -79,7 +79,9 @@ async function run() {
         const gradleArgs = gradleCommand.split(' ');
         const gradleChild = (0, child_process_1.spawn)(gradleArgs[0], gradleArgs.slice(1));
         const processPromise = new Promise((resolve, reject) => {
+            let gradleOutputBuilder = new StringBuilder();
             gradleChild.stdout.on('data', (data) => {
+                gradleOutputBuilder.append(data.toString());
                 core.info(data.toString());
             });
             gradleChild.stderr.on('data', (data) => {
@@ -90,15 +92,25 @@ async function run() {
                     reject(new Error(`Gradle exited with code ${code} due to signal ${signal}`));
                 }
                 else {
-                    core.setOutput('gradle_output', gradleChild.stdout);
-                    resolve();
+                    resolve(gradleOutputBuilder.toString());
                 }
             });
         });
-        await processPromise;
+        core.setOutput('gradle_output', await processPromise);
     }
     catch (error) {
         core.setFailed(error.message);
     }
 }
 run();
+class StringBuilder {
+    constructor() {
+        this._parts = [];
+    }
+    append(value) {
+        this._parts.push(value);
+    }
+    toString() {
+        return this._parts.join("");
+    }
+}

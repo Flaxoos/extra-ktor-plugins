@@ -17,9 +17,6 @@ jobs:
         with:
           java-version: 11
 
-      - name: Build all local actions
-        run: sh .github/actions/build-all-actions.sh
-
       - name: Detect modified subprojects
         uses: ./.github/actions/detect-modified-projects
         id: detect-modified-subprojects

@@ -1,6 +1,8 @@
 # Ktor Server Multiplatform Plugins Library
 [![Build Workflow](https://github.com/idoflax/flax-ktor-plugins/workflows/Build/badge.svg)](https://github.com/idoflax/flax-ktor-plugins/actions)
-https://gist.github.com/idoflax/2e4bf8a120b7dd025243ba081ee72bb6
+
+![badge](https://img.shields.io/endpoint?url=https://gist.github.com/idoflax/2e4bf8a120b7dd025243ba081ee72bb6/raw/coverage-badge.json)
+
 This project provides a suite of useful, efficient, and customizable plugins for your Ktor Server, crafted in Kotlin, available for multiplatform. Whether you need rate limiting, logging, monitoring, or more, you can enhance your server's capabilities with these plugins.
 
 ## Features

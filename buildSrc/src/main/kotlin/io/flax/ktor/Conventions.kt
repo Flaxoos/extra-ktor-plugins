@@ -1,5 +1,8 @@
 package io.flax.ktor
 
+import io.flax.kover.ColorBand.Companion.from
+import io.flax.kover.KoverBadgePluginExtension
+import io.flax.kover.Names.KOVER_BADGE_TASK_NAME
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
 import org.gradle.api.GradleException
@@ -7,6 +10,8 @@ import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
@@ -24,6 +29,7 @@ fun Project.libs() = project.the<VersionCatalogsExtension>()
 fun Project.versionOf(version: String): String =
     this.libs().find("libs").get().findVersion(version).get().toString()
 
+
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics() {}
     override fun apply(project: Project) {
@@ -37,12 +43,17 @@ open class Conventions : Plugin<Project> {
                 apply("dev.jacomet.logging-capabilities")
                 apply("kotlinx-atomicfu")
                 apply("org.jlleitschuh.gradle.ktlint")
+                apply("io.flax.kover-badge")
             }
             group = "io.flax.ktor"
             version = "0.0.1-SNAPSHOT"
 
             repositories {
                 mavenCentral()
+                maven {
+                    url = uri("https://maven.pkg.github.com/idoflax/flax-gradle-plugins")
+                    gprCredentials()
+                }
             }
 
             extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
@@ -99,7 +110,7 @@ open class Conventions : Plugin<Project> {
             }
 
             tasks.withType<Wrapper> {
-                gradleVersion = "8.1.1"
+                gradleVersion = "8.2.1"
                 distributionType = Wrapper.DistributionType.BIN
             }
             extensions.findByType(KoverReportExtension::class)?.apply {
@@ -115,28 +126,57 @@ open class Conventions : Plugin<Project> {
                 }
             }
 
+            extensions.findByType<KoverBadgePluginExtension>()?.apply {
+                readme.set(project.file("README.md"))
+                spectrum.set(
+                    listOf(
+                        "red" from 0.0f,
+                        "yellow" from 50.0f,
+                        "green" from 90.0f
+                    )
+                )
+            }
+
             extensions.findByType(PublishingExtension::class)?.apply {
                 repositories {
                     maven {
-                        createReleaseTag()
                         name = "GitHubPackages"
                         url =
                             URI("https://maven.pkg.github.com/idoflax/${project.findProperty("github.repository.name") ?: project.name}")
-                        credentials {
-                            username = project.findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
-                            password = project.findProperty("gpr.key") as String? ?: System.getenv("GPR_TOKEN")
-                        }
+                        gprCredentials()
                     }
                 }
             }
 
+            tasks.register("createReleaseTag") {
+                doLast {
+                    createReleaseTag()
+                }
+            }.let { tasks.named("publish") { dependsOn(it) } }
+
+            tasks.named(KOVER_BADGE_TASK_NAME)
+
             extensions.findByType(AtomicFUPluginExtension::class)?.apply {
-                dependenciesVersion = versionOf("atomicFu") // set to null to turn-off auto dependencies
-                transformJvm = true // set to false to turn off JVM transformation
-                jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH
+                dependenciesVersion = versionOf("atomicFu")
+                transformJvm = true
+                jvmVariant = "FU"
             }
         }
     }
+
+    context(Project)
+    private fun MavenArtifactRepository.gprCredentials() {
+        credentials {
+            username = gprUser
+            password = gprToken
+        }
+    }
+
+    private val Project.gprToken
+        get() = findProperty("gpr.key") as String? ?: System.getenv("GPR_TOKEN")
+
+    private val Project.gprUser
+        get() = findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
 }
 
 class KtorServerPluginConventions : Conventions() {
@@ -210,7 +250,7 @@ internal fun Project.createReleaseTag() {
     try {
         runCommands("git", "tag", "-d", tagName)
     } catch (e: Exception) {
-        logger.error(e.message)
+        logger.warn("Failed deleting release tag. if the tag $tagName doesn't exist then this is expected", e.message)
     }
     runCommands("git", "status")
     runCommands("git", "tag", tagName)

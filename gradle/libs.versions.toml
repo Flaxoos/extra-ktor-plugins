@@ -1,7 +1,7 @@
 [versions]
 kotlin = "1.9.0"
 java = "11"
-gradle = "8.1.1"
+gradle = "8.2.1"
 kotest = "5.6.2"
 ktor = "2.3.2"
 logback = "1.4.8"
@@ -14,6 +14,8 @@ logging = "5.0.2"
 arrow = "1.2.0"
 junit = "5.9.2"
 ktlint = "11.5.1"
+mockk = "1.11.0"
+koverBadge = "0.0.2"
 
 [libraries]
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -22,5 +24,10 @@ atomicfu-gradlePlugin = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin
 loggingCapabilities-gradlePlugin = { module = "dev.jacomet.gradle.plugins:logging-capabilities", version.ref = "logging_capabilities" }
 kotestFrameworkMultiplatform-gradlePlugin = { module = "io.kotest:kotest-framework-multiplatform-plugin-gradle", version.ref = "kotest" }
 ktlint-gradlePlugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+kover-badge-gradlePlugin = { module = "io.flax.kover-badge:io.flax.kover-badge.gradle.plugin", version.ref = "koverBadge" }
 
 [plugins]
+kover-badge = { id = "io.flax.kover-badge", version.ref = "koverBadge" }

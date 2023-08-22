@@ -4,7 +4,7 @@ plugins {
     `version-catalog`
 }
 
-kotlin{
+kotlin {
     jvmToolchain(libs.versions.java.get().toInt())
 }
 
@@ -12,6 +12,13 @@ repositories {
     google()
     mavenCentral()
     gradlePluginPortal()
+    maven {
+        url = uri("https://maven.pkg.github.com/idoflax/flax-gradle-plugins")
+        credentials {
+            username = gprUser
+            password = gprToken
+        }
+    }
 }
 
 dependencies {
@@ -21,7 +28,23 @@ dependencies {
     implementation(libs.loggingCapabilities.gradlePlugin)
     implementation(libs.kotestFrameworkMultiplatform.gradlePlugin)
     implementation(libs.ktlint.gradlePlugin)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.kover.badge.gradlePlugin)
+
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.mockk)
 }
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs = freeCompilerArgs + "-Xcontext-receivers"
+    }
+}
+
 gradlePlugin {
     plugins {
         create("conventions") {
@@ -38,6 +61,16 @@ gradlePlugin {
             id = "ktor-client-plugin-conventions"
             implementationClass = "io.flax.ktor.KtorClientPluginConventions"
         }
+
+        create("kover-badge") {
+            id = "kover-badge"
+            implementationClass = "io.flax.ktor.KoverBadgePlugin"
+        }
     }
 }
 
+val Project.gprToken
+    get() = findProperty("gpr.key") as String? ?: System.getenv("GPR_TOKEN")
+
+val Project.gprUser
+    get() = findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")

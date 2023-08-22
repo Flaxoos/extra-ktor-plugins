@@ -8,6 +8,7 @@ jobs:
   build-pull-request:
     name: Build and Publish Pull Request
     runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2

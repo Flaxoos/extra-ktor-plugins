@@ -8,6 +8,7 @@ jobs:
   build-and-publish-main:
     name: Build and Publish Main
     runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -42,21 +43,3 @@ jobs:
         env:
           GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
           GPR_USER: ${{ env.GPR_USER }}
-
-      - name: Find root project kover coverage
-        id: find-root-kover-coverage
-        uses: ./.github/actions/find-root-kover-coverage
-        with:
-          gradle_output: ${{ steps.execute-gradle-tasks-on-projects.outputs.gradle_output }}
-          coverage_for_green: 90
-
-      - name: Call dynamic badges
-        id: call-dynamic-badges
-        uses: schneegans/dynamic-badges-action@v1.6.0
-        with:
-          auth: ${{ secrets.GIST_TOKEN }}
-          gistID: 474c7fd1a50107277ce16cfbf69f4ff9
-          filename: flax-ktor-plugins-kover-badge.json
-          label: Kover
-          message: ${{ steps.find-root-kover-coverage.outputs.kover_coverage }}
-          color: ${{ steps.find-root-kover-coverage.outputs.kover_color }}

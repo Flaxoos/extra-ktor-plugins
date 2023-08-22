@@ -2,6 +2,7 @@ package io.flax.ktor.client.plugins
 
 import io.flax.ktor.client.plugins.CircuitBreakerState.HALF_OPEN
 import io.flax.ktor.client.plugins.CircuitBreakerState.OPEN
+import io.ktor.client.statement.HttpResponse
 import io.ktor.util.KtorDsl
 import io.ktor.util.collections.ConcurrentMap
 import kotlin.jvm.JvmInline
@@ -28,9 +29,16 @@ class CircuitBreakerConfig {
         var halfOpenFailureThreshold = 2
 
         /**
-         * How long to wait before moving from [OPEN] to [HALF_OPEN]
+         * How long to wait before moving from [OPEN] to [HALF_OPEN].
          */
         var resetInterval: Duration = 1.seconds
+
+        /**
+         * What is considered a failure. default is [HttpResponse.status] >= 300
+         */
+        var failureTrigger: HttpResponse.() -> Boolean = {
+            status.value >= 300
+        }
     }
 }
 

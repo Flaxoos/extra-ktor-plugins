@@ -18,15 +18,23 @@ import kotlin.time.Duration
 
 private val logger = KtorSimpleLogger("io.flax.ktor.client.plugins.CircuitBreaker")
 
-class CircuitBreaker(private val name: CircuitBreakerName, config: CircuitBreakerConfig.CircuitBreakerBuilder) {
+internal class CircuitBreaker(
+    private val name: CircuitBreakerName,
+    config: CircuitBreakerConfig.CircuitBreakerBuilder
+) {
     private val failureThreshold: Int = config.failureThreshold
     private val halfOpenFailureThreshold: Int = config.halfOpenFailureThreshold
     private val resetInterval: Duration = config.resetInterval
+    private val failureTrigger = config.failureTrigger
     private val failureCounter = atomic(0)
     private val _state = atomic(CLOSED)
     private val responseDecorator: HttpResponse.() -> Unit = {}
 
     private var scope: CoroutineScope by Delegates.notNull()
+
+    // TODO: Add State Change Events:
+    // It might be useful to have listeners or callbacks to notify external components when the state changes,
+    // especially for logging or analytics purposes.
 
     internal fun initialize(dispatcher: CoroutineDispatcher) {
         scope = CoroutineScope(dispatcher)
@@ -75,7 +83,7 @@ class CircuitBreaker(private val name: CircuitBreakerName, config: CircuitBreake
         }
         val failureCount = failureCounter.value
         if (failureCount < selectedFailureThreshold) {
-            if (response.status.value < 300) {
+            if (!response.failureTrigger()) {
                 closeCircuit()
                 return
             } else {

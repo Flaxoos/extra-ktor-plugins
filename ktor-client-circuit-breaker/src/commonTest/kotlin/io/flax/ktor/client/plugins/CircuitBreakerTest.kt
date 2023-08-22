@@ -12,18 +12,24 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
+import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.respondError
 import io.ktor.client.engine.mock.respondOk
 import io.ktor.client.request.HttpResponseData
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
-import io.ktor.http.HttpStatusCode.Companion.OK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlin.properties.Delegates
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private val TestCircuitBreakerName = "test".toCircuitBreakerName()
+private const val CONCURRENCY_COUNT = 2
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class, ExperimentalKotest::class)
 class CircuitBreakerTest : FunSpec() {
@@ -60,7 +66,9 @@ class CircuitBreakerTest : FunSpec() {
 
                     givenOkResponse()
 
-                    getWithCircuitBreaker(case.name) shouldBe OK
+                    shouldNotThrow<Exception> {
+                        getWithCircuitBreaker(case.name)
+                    }
                 }
             }
 
@@ -134,11 +142,49 @@ class CircuitBreakerTest : FunSpec() {
                 }
             }
         }
+        // TODO: this is flaky in concurrency counts > 1 or even 2, which suggests the concurrency setup is wrong.
+        // getting: IllegalStateException: Circuit breaker is already open
+        // This is interesting. It maybe due to the default dispatcher used by the mock engine, though default should
+        // have "The maximum number of threads ... is equal to the number of CPU cores, but is at least two."
+        // Need to try with an explicitly bigger dispatcher
+        xcontext("concurrent requests and state transition").config(coroutineTestScope = false) {
+            withData(Global, Specific) { case ->
+
+                initClient(useTestCoroutineScheduler = false)
+
+                givenErrorResponse()
+
+                repeat(case.failureThreshold + 1) {
+                    getWithCircuitBreaker(case.name)
+                }
+                fun call(wait: Duration = 0.milliseconds) = async {
+                    try {
+                        delay(wait)
+                        getWithCircuitBreaker(case.name)
+                    } catch (e: CircuitBreakerException) {
+                        return@async e
+                    }
+                    null
+                }
+
+                val requests = List(CONCURRENCY_COUNT) {
+                    call()
+                }
+                val delayedRequests = List(CONCURRENCY_COUNT) {
+                    call(case.resetInterval)
+                }
+
+                requests.awaitAll().count { it != null } shouldBe CONCURRENCY_COUNT
+                delayedRequests.awaitAll().count { it == null } shouldBe CONCURRENCY_COUNT
+            }
+        }
     }
 
-    private fun TestScope.initClient() {
+    private fun TestScope.initClient(useTestCoroutineScheduler: Boolean = true) {
         val mockEngine = MockEngine.create {
-            dispatcher = StandardTestDispatcher(testCoroutineScheduler)
+            if (useTestCoroutineScheduler) {
+                dispatcher = StandardTestDispatcher(testCoroutineScheduler)
+            }
             requestHandlers.add { _ ->
                 mockResponse()
             }
@@ -149,11 +195,17 @@ class CircuitBreakerTest : FunSpec() {
                     failureThreshold = Global.failureThreshold
                     halfOpenFailureThreshold = Global.halfOpenFailureThreshold
                     resetInterval = Global.resetInterval
+                    failureTrigger = {
+                        status.value >= 400
+                    }
                 }
                 register(TestCircuitBreakerName) {
                     failureThreshold = Specific.failureThreshold
                     halfOpenFailureThreshold = Specific.halfOpenFailureThreshold
                     resetInterval = Specific.resetInterval
+                    failureTrigger = {
+                        status.value >= 400
+                    }
                 }
             }
         }
@@ -167,9 +219,11 @@ class CircuitBreakerTest : FunSpec() {
 
     private fun givenOkResponse() {
         mockResponse = {
-            respondOk()
+            respond("Ok-ish", customOk)
         }
     }
+
+    private val customOk = HttpStatusCode(300, "It's ok!")
 
     private suspend fun getWithCircuitBreaker(name: CircuitBreakerName) =
         client.requestWithCircuitBreaker(name = name) {}.status

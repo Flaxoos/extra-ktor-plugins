@@ -1,6 +1,6 @@
-package io.flax.plugins
+package io.flax.ktor.server.plugins
 
-import io.flax.plugins.Caller.Companion.extractCaller
+import io.flax.ktor.server.plugins.Caller.Companion.extractCaller
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.createRouteScopedPlugin
@@ -101,11 +101,6 @@ class RateLimitConfiguration {
      */
     var loggerProvider: suspend (ApplicationCall) -> Logger = { call -> call.application.log }
 
-    /**
-     * Configuration for the plugin
-     */
-    var dynamicConfig: suspend () -> RateLimitConfiguration = { this }
-
     init {
         check(burstLimit > 0) {
             "burstLimit must be > 0"
@@ -125,7 +120,7 @@ val RateLimitingPlugin = createRouteScopedPlugin(
     val callStoreLock = reentrantLock()
 
     on(AuthenticationChecked) { call ->
-        with(pluginConfig.dynamicConfig.invoke()) {
+        with(pluginConfig) {
             val caller = call.extractCaller()
 
             if (caller.remoteHost in blackListedHosts ||

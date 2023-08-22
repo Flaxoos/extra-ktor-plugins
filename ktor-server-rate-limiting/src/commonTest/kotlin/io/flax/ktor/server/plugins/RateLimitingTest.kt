@@ -1,4 +1,4 @@
-package io.flax.plugins
+package io.flax.ktor.server.plugins
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec

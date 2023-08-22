@@ -45,8 +45,8 @@ open class Conventions : Plugin<Project> {
                 apply("org.jlleitschuh.gradle.ktlint")
                 apply("io.flax.kover-badge")
             }
-            group = "io.flax.ktor"
-            version = "0.0.1-SNAPSHOT"
+            group = "io.flax"
+            version = "1.0.0"
 
             repositories {
                 mavenCentral()

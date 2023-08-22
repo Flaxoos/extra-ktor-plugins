@@ -1,35 +1,21 @@
 # Ktor Server Multiplatform Plugins Library
 ![Build status](https://github.com/idoflax/flax-ktor-plugins/actions/workflows/build-and-publish-main.yml/badge.svg?event=push)
+![Language](https://img.shields.io/github/languages/top/idoflax/flax-ktor-plugins?color=blue&logo=kotlin)
+<a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/94.92-green?logo=kotlin&label=koverage&style=flat)</a>
 
-![Kover](https://img.shields.io/endpoint?url=https://gist.github.com/idoflax/474c7fd1a50107277ce16cfbf69f4ff9/raw/flax-ktor-plugins-kover-badge.json)
-
-This project provides a suite of useful, efficient, and customizable plugins for your Ktor Server, crafted in Kotlin, available for multiplatform. Whether you need rate limiting, logging, monitoring, or more, you can enhance your server's capabilities with these plugins.
+This project provides a suite of useful, efficient, and customizable plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform.
 
 ## Features
 
-These plugins offer a wide range of features designed to provide additional layers of control, security, and utility to your server. Here are some key features:
+These plugins offer a wide range of features designed to provide additional layers of control, security, and utility to your server or client.
 
 * **Rate Limiting Plugin**: Limit the number of requests a client can make in a specific time window. This plugin also offers whitelist and blacklist features for hosts, principals, and user-agents. You can configure custom responses for blacklisted callers or when the rate limit is exceeded.
 
-* **Coming Soon**: Stay tuned for additional plugins that will further extend the capabilities of your Ktor server.
+* **Circuit Breaker Plugin**:  Enhance system resilience by halting requests to failing services once a defined error threshold is reached. The plugin automatically switches between open and closed states based on the health of the targeted service, allowing it to recover. Configuration options include failure thresholds, fallback responses, and reset intervals, making it a pivotal tool in ensuring smooth system operations.
 
 ## Usage
 
-You can apply and configure each plugin to suit your needs. Here's a basic example of using the Rate Limiting Plugin:
-
-```kotlin
-install(RateLimitingPlugin) {
-    limit = 100
-    timeWindow = Duration.ofMinutes(1)
-    burstLimit = 10
-    whiteListedHosts = setOf("trusted-host.com")
-    blackListedAgents = setOf("malicious-agent")
-    rateLimitExceededCallHandler = { call, count ->
-        call.respond(HttpStatusCode.TooManyRequests, "You have exceeded the limit of requests. Limit: 100, Your calls: $count")
-    }
-    logRateLimitHits = true
-}
-```
+Please refer to the readme of the relevant plugin subproject
 
 Detailed usage is available in the tests and in [examples repository](https://github.com/idoflax/flax-ktor-plugins/ktor-plugins-examples)
 

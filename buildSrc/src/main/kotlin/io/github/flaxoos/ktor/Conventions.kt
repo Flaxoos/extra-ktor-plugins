@@ -1,9 +1,9 @@
-package io.github.flaxoos.ktor
+package io.flax.ktor
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
-import io.github.flaxoos.kover.ColorBand.Companion.from
-import io.github.flaxoos.kover.KoverBadgePluginExtension
+import io.flax.kover.ColorBand.Companion.from
+import io.flax.kover.KoverBadgePluginExtension
+import io.flax.kover.Names.KOVER_BADGE_TASK_NAME
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
 import org.gradle.api.GradleException
@@ -13,23 +13,22 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.publish.PublishingExtension
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
-import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinSoftwareComponentWithCoordinatesAndPublication
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import java.net.URI
+
+fun Project.libs() = project.the<VersionCatalogsExtension>()
+
+fun Project.versionOf(version: String): String =
+    this.libs().find("libs").get().findVersion(version).get().toString()
+
 
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics() {}
@@ -40,26 +39,23 @@ open class Conventions : Plugin<Project> {
                 apply("org.jetbrains.kotlin.multiplatform")
                 apply("maven-publish")
                 apply("io.kotest.multiplatform")
-                apply(project.plugin("loggingCapabilities"))
-                apply(project.plugin("atomicfu"))
-                apply(project.plugin("kover"))
-                apply(project.plugin("kover-badge"))
-                apply(project.plugin("dokka"))
-                apply(project.plugin("detekt"))
-                apply(project.plugin("ktlint"))
-                apply(project.plugin("shadow"))
+                apply("org.jetbrains.kotlinx.kover")
+                apply("dev.jacomet.logging-capabilities")
+                apply("kotlinx-atomicfu")
+                apply("org.jlleitschuh.gradle.ktlint")
+                apply("io.flax.kover-badge")
             }
-            group = "io.github.flaxoos"
+            group = "io.flax"
             version = "1.0.0"
 
             repositories {
                 mavenCentral()
                 maven {
-                    url = uri("https://maven.pkg.github.com/flaxoos/flax-gradle-plugins")
-                    gprReadCredentials()
+                    url = uri("https://maven.pkg.github.com/idoflax/flax-gradle-plugins")
+                    gprCredentials()
                 }
             }
-            tasks.withType(KotlinCompilationTask::class) {
+            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask::class) {
                 compilerOptions {
                     freeCompilerArgs.add("-Xcontext-receivers")
                 }
@@ -75,7 +71,6 @@ open class Conventions : Plugin<Project> {
                     hostOs == "Mac OS X" && arch == "x86_64" -> macosX64("native")
                     hostOs == "Mac OS X" && arch == "aarch64" -> macosArm64("native")
                     hostOs == "Linux" -> linuxX64("native")
-                    //TODO: support IOS and android for client plugins, split to two conventions for server and client
                     // Other supported targets are listed here: https://ktor.io/docs/native-server.html#targets
                     else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
                 }
@@ -130,7 +125,7 @@ open class Conventions : Plugin<Project> {
                     verify {
                         rule {
                             isEnabled = true
-                            minBound(60)
+                            minBound(90)
                         }
                         onCheck = true
                     }
@@ -154,7 +149,7 @@ open class Conventions : Plugin<Project> {
                         name = "GitHubPackages"
                         url =
                             URI("https://maven.pkg.github.com/idoflax/${project.findProperty("github.repository.name") ?: project.name}")
-                        gprWriteCredentials()
+                        gprCredentials()
                     }
                 }
             }
@@ -176,6 +171,20 @@ open class Conventions : Plugin<Project> {
             }
         }
     }
+
+    context(Project)
+    private fun MavenArtifactRepository.gprCredentials() {
+        credentials {
+            username = gprUser
+            password = gprToken
+        }
+    }
+
+    private val Project.gprToken
+        get() = findProperty("gpr.key") as String? ?: System.getenv("GPR_TOKEN")
+
+    private val Project.gprUser
+        get() = findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
 }
 
 class KtorServerPluginConventions : Conventions() {
@@ -267,43 +276,3 @@ private fun runCommands(vararg commands: String): String {
     }
     return result
 }
-
-context(Project)
-private fun MavenArtifactRepository.gprWriteCredentials() {
-    credentials {
-        username = gprUser
-        password = gprWriteToken
-    }
-}
-
-context(Project)
-private fun MavenArtifactRepository.gprReadCredentials() {
-    credentials {
-        username = gprUser
-        password = gprReadToken
-    }
-}
-
-private val Project.gprWriteToken
-    get() = findProperty("gpr.write.key") as String? ?: System.getenv("GPR_WRITE_TOKEN")
-
-private val Project.gprReadToken
-    get() = findProperty("gpr.read.key") as String? ?: System.getenv("GPR_READ_TOKEN")
-
-private val Project.gprUser
-    get() = findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
-
-fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")
-
-fun Project.versionOf(version: String): String =
-    this.libs().get().findVersion(version).get().toString()
-
-fun Project.library(name: String): String =
-    this.libs().get().findLibrary(name).get().get().toString()
-
-fun Project.plugin(name: String): String =
-    this.libs().get().findPlugin(name).get().get().pluginId
-
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class KoverIgnore

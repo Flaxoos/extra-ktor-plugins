@@ -2,6 +2,8 @@ plugins {
     id("ktor-server-plugin-conventions")
 }
 
+version = "1.1.0"
+
 kotlin {
     sourceSets {
         commonMain {

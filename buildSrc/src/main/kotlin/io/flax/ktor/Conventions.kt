@@ -1,5 +1,6 @@
 package io.flax.ktor
 
+import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.flax.kover.ColorBand.Companion.from
 import io.flax.kover.KoverBadgePluginExtension
 import io.flax.kover.Names.KOVER_BADGE_TASK_NAME
@@ -11,7 +12,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
@@ -53,6 +53,11 @@ open class Conventions : Plugin<Project> {
                 maven {
                     url = uri("https://maven.pkg.github.com/idoflax/flax-gradle-plugins")
                     gprCredentials()
+                }
+            }
+            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask::class) {
+                compilerOptions {
+                    freeCompilerArgs.add("-Xcontext-receivers")
                 }
             }
 
@@ -99,6 +104,7 @@ open class Conventions : Plugin<Project> {
                     jvmTest {
                         dependencies {
                             implementation("io.kotest:kotest-runner-junit5:${versionOf("kotest")}")
+                            implementation("ch.qos.logback:logback-classic:${project.versionOf("logback")}")
                         }
                     }
                 }
@@ -148,13 +154,15 @@ open class Conventions : Plugin<Project> {
                 }
             }
 
+            extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
+                enforceLogback()
+            }
+
             tasks.register("createReleaseTag") {
                 doLast {
                     createReleaseTag()
                 }
             }.let { tasks.named("publish") { dependsOn(it) } }
-
-            tasks.named(KOVER_BADGE_TASK_NAME)
 
             extensions.findByType(AtomicFUPluginExtension::class)?.apply {
                 dependenciesVersion = versionOf("atomicFu")
@@ -222,11 +230,6 @@ class KtorClientPluginConventions : Conventions() {
                     }
                 }
             }
-            jvmTest {
-                dependencies {
-                    implementation("ch.qos.logback:logback-classic:1.4.9")
-                }
-            }
         }
     }
 }
@@ -236,6 +239,9 @@ private fun NamedDomainObjectCollection<KotlinSourceSet>.commonMain(configure: K
 
 private fun NamedDomainObjectCollection<KotlinSourceSet>.commonTest(configure: KotlinSourceSet.() -> Unit) =
     get("commonTest").apply { configure() }
+
+private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmMain(configure: KotlinSourceSet.() -> Unit) =
+    get("jvmMain").apply { configure() }
 
 private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTest(configure: KotlinSourceSet.() -> Unit) =
     get("jvmTest").apply { configure() }

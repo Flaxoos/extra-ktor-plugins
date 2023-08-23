@@ -1,7 +1,7 @@
 # Ktor Server Multiplatform Plugins Library
 ![Build status](https://github.com/idoflax/flax-ktor-plugins/actions/workflows/build-and-publish-main.yml/badge.svg?event=push)
 ![Language](https://img.shields.io/github/languages/top/idoflax/flax-ktor-plugins?color=blue&logo=kotlin)
-<a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/94.92-green?logo=kotlin&label=koverage&style=flat)</a>
+<a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/91.7-green?logo=kotlin&label=koverage&style=flat)</a>
 
 This project provides a suite of useful, efficient, and customizable plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform.
 

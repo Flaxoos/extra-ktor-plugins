@@ -14,4 +14,5 @@ dependencyResolutionManagement {
 }
 
 include("ktor-server-rate-limiting")
+include("ktor-server-kafka")
 include("ktor-client-circuit-breaker")

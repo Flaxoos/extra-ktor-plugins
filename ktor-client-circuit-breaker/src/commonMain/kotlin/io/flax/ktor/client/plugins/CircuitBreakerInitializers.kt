@@ -10,7 +10,7 @@ import io.ktor.util.collections.ConcurrentMap
 /**
  * Register a [CircuitBreaker] with a given name
  */
-@KtorDsl
+@CircuitBreakerDsl
 fun CircuitBreakerConfig.register(
     name: CircuitBreakerName,
     config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit
@@ -21,7 +21,7 @@ fun CircuitBreakerConfig.register(
 /**
  * Registers a global [CircuitBreaker] that is applied to the whole client
  */
-@KtorDsl
+@CircuitBreakerDsl
 fun CircuitBreakerConfig.global(config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit) {
     global = CircuitBreaker(
         CIRCUIT_BREAKER_NAME_GLOBAL,
@@ -32,7 +32,6 @@ fun CircuitBreakerConfig.global(config: CircuitBreakerConfig.CircuitBreakerBuild
 /**
  * Apply the [CircuitBreaker] with the given [CircuitBreakerName] to the request or the global one if name is given
  */
-@KtorDsl
 fun HttpRequestBuilder.withCircuitBreaker(name: CircuitBreakerName = CIRCUIT_BREAKER_NAME_GLOBAL) {
     setAttributes {
         this.put(CircuitBreakerNameKey, name)
@@ -42,7 +41,6 @@ fun HttpRequestBuilder.withCircuitBreaker(name: CircuitBreakerName = CIRCUIT_BRE
 /**
  * Make a request with the [CircuitBreaker] with the given [CircuitBreakerName]
  */
-@KtorDsl
 suspend fun HttpClient.requestWithCircuitBreaker(
     name: CircuitBreakerName = CIRCUIT_BREAKER_NAME_GLOBAL,
     block: HttpRequestBuilder.() -> Unit

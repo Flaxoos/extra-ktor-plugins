@@ -4,8 +4,6 @@ import com.sksamuel.avro4k.Avro
 import io.kotest.common.runBlocking
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestScope
-import io.kotest.extensions.testcontainers.perSpec
-import io.kotest.extensions.testcontainers.perTest
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
@@ -16,8 +14,6 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.logging.KtorSimpleLogger
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -53,14 +49,15 @@ abstract class KafkaIntegrationTest : FunSpec() {
     private lateinit var applicationConfigFileContent: String
     private val ktorClient = HttpClient { install(ContentNegotiation) { json() } }
 
-    protected val bootstrapServers = atomic("")
+    protected lateinit var bootstrapServers: String
 
     lateinit var schemaRegistryUrl: String
+
     init {
         beforeSpec {
             kafka.start()
             schemaRegistry.withKafka(kafka).start()
-            bootstrapServers.update { kafka.bootstrapServers.also { logger.info("Updated bootstrap.servers: $it") }}
+            bootstrapServers = kafka.bootstrapServers.also { logger.info("Updated bootstrap.servers: $it") }
             schemaRegistryUrl = "http://${schemaRegistry.host}:${schemaRegistry.firstMappedPort}"
 
             registerSchemas.forEach { (klass, topics) ->
@@ -69,7 +66,7 @@ abstract class KafkaIntegrationTest : FunSpec() {
                 }
             }
 
-            waitForKafkaBroker(bootstrapServers.value, 10, 5.seconds)
+            waitForKafkaBroker(bootstrapServers, 10, 5.seconds)
         }
         afterEach {
 //            kafka.stop()
@@ -103,7 +100,7 @@ abstract class KafkaIntegrationTest : FunSpec() {
         applicationConfigFile.writeText(
             applicationConfigFileContent
                 .replace(CONFIG_PATH_PLACEHOLDER, configPath)
-                .replace(BOOTSTRAP_SERVERS_PLACEHOLDER, bootstrapServers.value)
+                .replace(BOOTSTRAP_SERVERS_PLACEHOLDER, bootstrapServers)
                 .replace(SCHEMA_REGISTRY_URL_PLACEHOLDER, schemaRegistryUrl)
                 .replace(GROUP_ID_PLACEHOLDER, this.testCase.name.testName.plus("-group"))
                 .replace(CLIENT_ID_PLACEHOLDER, this.testCase.name.testName.plus("-client"))
@@ -111,7 +108,7 @@ abstract class KafkaIntegrationTest : FunSpec() {
     }
 
     protected companion object {
-        private val logger = KtorSimpleLogger(javaClass.simpleName)
+        private val logger = KtorSimpleLogger(this::class.java.simpleName)
 
         private val kafkaImage: DockerImageName =
             DockerImageName.parse("confluentinc/cp-kafka:$CONFLUENT_PLATFORM_VERSION")

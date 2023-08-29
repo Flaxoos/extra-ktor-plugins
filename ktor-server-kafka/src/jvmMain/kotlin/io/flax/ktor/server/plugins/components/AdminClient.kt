@@ -1,6 +1,5 @@
 package io.flax.ktor.server.plugins.components
 
-import io.flax.ktor.server.plugins.AdminPropertiesBuilder
 import io.flax.ktor.server.plugins.TopicBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +14,7 @@ context (CoroutineScope)
 internal suspend fun AdminClient.createKafkaTopics(
     topicBuilders: List<TopicBuilder>,
     existingTopicHandler: (String) -> Unit = {},
-    topicCreationHandler: Pair<String, Future<Void>>.() -> Unit,
+    topicCreationHandler: Pair<String, Future<Void>>.() -> Unit
 ) {
     val existingTopics = listTopics().listings().get().map { it.name() }
     val createTopicsResult =
@@ -33,4 +32,3 @@ internal suspend fun AdminClient.createKafkaTopics(
         }
     }.joinAll()
 }
-

@@ -18,14 +18,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-
 internal fun kafkaFromConfig(
     configurationPath: String,
-    additionalConfig: KafkaPathConfig.() -> Unit
+    additionalConfig: KafkaFileConfig.() -> Unit
 ) = createApplicationPlugin(
     name = "Kafka",
     configurationPath = configurationPath,
-    createConfiguration = ::KafkaPathConfig
+    createConfiguration = ::KafkaFileConfig
 ) {
     setupKafkaClients(pluginConfig.apply(additionalConfig))
 }
@@ -56,22 +55,15 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafkaClients(pluginC
             application.log.info("Kafka producer setup finished")
         }
 
-//    val consumerWrapper = if (pluginConfig.consumerRecordHandlers.isNotEmpty()) {
-//        pluginConfig.consumerProperties?.createConsumer()
-//            ?.also { application.attributes.put(ConsumerAttributeKey, it) }?.let {
-//                val consumerWrapper = ConsumerWrapper(application, it, pluginConfig.consumerRecordHandlers)
-//                consumerWrapper.start()
-//                application.attributes.put(ConsumerWrapperAttributeKey, consumerWrapper)
-//                consumerWrapper
-//            }
-//    } else null
     val consumer = if (pluginConfig.consumerRecordHandlers.isNotEmpty()) {
         pluginConfig.consumerProperties?.createConsumer()?.also {
             application.attributes.put(ConsumerAttributeKey, it)
             application.attributes.put(ConsumerShouldRun, true)
             application.log.info("Kafka consumer setup finished")
         }
-    } else null
+    } else {
+        null
+    }
 
     var consumerJob: Job? = null
     on(MonitoringEvent(ApplicationStarted)) { application ->
@@ -123,13 +115,21 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafkaClients(pluginC
     }
 }
 
-
 val Application.kafkaAdminClient
-    get() = attributes[AdminClientAttributeKey]
+    get() = attributes.getOrNull(AdminClientAttributeKey)
 
 val Application.kafkaProducer
-    get() = attributes[ProducerAttributeKey]
-
+    get() = attributes.getOrNull(ProducerAttributeKey)
 
 val Application.kafkaConsumer
-    get() = attributes[ConsumerAttributeKey]
+    get() = attributes.getOrNull(ConsumerAttributeKey)
+
+//    val consumerWrapper = if (pluginConfig.consumerRecordHandlers.isNotEmpty()) {
+//        pluginConfig.consumerProperties?.createConsumer()
+//            ?.also { application.attributes.put(ConsumerAttributeKey, it) }?.let {
+//                val consumerWrapper = ConsumerWrapper(application, it, pluginConfig.consumerRecordHandlers)
+//                consumerWrapper.start()
+//                application.attributes.put(ConsumerWrapperAttributeKey, consumerWrapper)
+//                consumerWrapper
+//            }
+//    } else null

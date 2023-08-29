@@ -6,6 +6,7 @@ import com.sksamuel.avro4k.AvroNamespace
 import io.flax.ktor.server.plugins.TopicName.Companion.named
 import io.kotest.common.ExperimentalKotest
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -13,7 +14,6 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.config.ApplicationConfig
@@ -29,6 +29,7 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.atomicfu.AtomicInt
 import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
@@ -40,21 +41,20 @@ import org.apache.kafka.common.config.TopicConfig
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
-
 @OptIn(InternalSerializationApi::class, ExperimentalKotest::class)
 class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
     private val logger: Logger = KtorSimpleLogger(javaClass.simpleName)
     private val topics = listOf(named("topic1"), named("topic2"))
     private val invocations = 2
     private lateinit var recordChannel: Channel<TestRecord>
-    private lateinit var consumerOperationsCount: AtomicInt
+    private val consumerOperationsCount: AtomicInt = atomic(0)
 
     override val registerSchemas: Map<KClass<out Any>, List<TopicName>> = mapOf(TestRecord::class to topics)
 
     init {
         beforeEach {
             recordChannel = Channel()
-            consumerOperationsCount = atomic(0)
+            consumerOperationsCount.update { 0 }
         }
         afterEach {
             recordChannel.close()
@@ -64,14 +64,14 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
             test("With default config path") {
                 editConfigurationFile()
                 testKafkaApplication {
-                    installKafka { topicConfig() }
+                    installKafkaFromFile { topicConfig() }
                 }
             }
             test("With custom config path") {
                 val customConfigPath = "ktor.kafka.config"
                 editConfigurationFile(customConfigPath)
                 testKafkaApplication {
-                    installKafka(configurationPath = customConfigPath) {
+                    installKafkaFromFile(configurationPath = customConfigPath) {
                         topicConfig()
                     }
                 }
@@ -79,8 +79,8 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
             test("With code configuration") {
                 editConfigurationFile()
                 testKafkaApplication {
-                    installKafkaWith {
-                        bootstrapServers = listOf(super.bootstrapServers.value)
+                    installKafka {
+                        bootstrapServers = listOf(super.bootstrapServers)
                         schemaRegistryUrl = listOf(super.schemaRegistryUrl)
                         topicConfig()
                         admin { }
@@ -127,8 +127,8 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
     }
 
     private fun testKafkaApplication(
-        extraAssertions: List<Application.() -> Unit> = emptyList(),
-        pluginInstallation: Application.() -> Unit,
+        extraAssertions: Application.() -> Unit = {},
+        pluginInstallation: Application.() -> Unit
     ) {
         testApplication {
             val client = setupClient()
@@ -169,42 +169,43 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
     }
 
     private fun ApplicationTestBuilder.setupApplication(
-        extraAssertions: List<Application.() -> Unit> = emptyList(),
+        extraAssertions: Application.() -> Unit = {},
         pluginInstallation: Application.() -> Unit
     ) {
         application {
             install(ContentNegotiation) {
                 json()
             }
-            environment.monitor.subscribe(ApplicationStopped) { application ->
-            }
 
             pluginInstallation()
 
-            val topicIdCounters = topics.associateWith { atomic(0) }
+            this@application.kafkaAdminClient.shouldNotBeNull()
+            this@application.kafkaConsumer.shouldNotBeNull()
+            this@application.kafkaProducer.shouldNotBeNull()
+
+            val topicIdCounters = topics.associateWith { 0 }
             routing {
                 topics.forEach { topic ->
                     route("/$topic") {
                         get {
-                            val testRecord = TestRecord(topicIdCounters[topic]!!.getAndIncrement(), topic.name)
+                            val testRecord = TestRecord(topicIdCounters[topic]!!.inc(), topic.name)
                             val genericRecord =
                                 Avro.default.toRecord(
                                     TestRecord::class.serializer(),
                                     testRecord
                                 )
                             val record = ProducerRecord(topic.name, "testKey", genericRecord)
-                            call.application.kafkaProducer
-                                .send(record)
+                            with(call.application.kafkaProducer.shouldNotBeNull()) { send(record) }
                             logger.info("Produced record: $record")
                             call.respond(testRecord)
                         }
                         delete {
-                            call.application.kafkaAdminClient.deleteTopics(listOf(topic.name))
+                            with(call.application.kafkaAdminClient.shouldNotBeNull()) { deleteTopics(listOf(topic.name)) }
                         }
                     }
                 }
             }
-            extraAssertions.forEach { assertion -> assertion(this) }
+            extraAssertions(this)
         }
     }
 

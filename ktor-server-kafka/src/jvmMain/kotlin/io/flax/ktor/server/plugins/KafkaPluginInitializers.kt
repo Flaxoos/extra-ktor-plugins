@@ -18,14 +18,14 @@ import kotlin.time.Duration.Companion.milliseconds
 @DslMarker
 annotation class KafkaDsl
 
-fun Application.installKafka(
+fun Application.installKafkaFromFile(
     configurationPath: String = DEFAULT_CONFIG_PATH,
-    config: KafkaPathConfig.() -> Unit
+    config: KafkaFileConfig.() -> Unit
 ) {
     install(kafkaFromConfig(configurationPath, config))
 }
 
-fun Application.installKafkaWith(config: KafkaConfig.() -> Unit) {
+fun Application.installKafka(config: KafkaConfig.() -> Unit) {
     install(Kafka) { config() }
 }
 
@@ -36,10 +36,13 @@ class TopicBuilder(internal val topicName: TopicName) {
     var replicasAssignments: Map<Int, List<Int?>>? = null
     var configs: Map<String, String>? = null
 
-    internal fun build() = (if (replicasAssignments == null)
-        NewTopic(topicName.name, partitions, replicas)
-    else
-        NewTopic(topicName.name, replicasAssignments)).configs(configs)
+    internal fun build() = (
+        if (replicasAssignments == null) {
+            NewTopic(topicName.name, partitions, replicas)
+        } else {
+            NewTopic(topicName.name, replicasAssignments)
+        }
+        ).configs(configs)
 }
 
 @KafkaDsl
@@ -65,15 +68,18 @@ class KafkaConfig : AbstractKafkaConfig() {
     internal var producerPropertiesBuilder: ProducerPropertiesBuilder? = null
     internal var consumerPropertiesBuilder: ConsumerPropertiesBuilder? = null
 
-    override val adminProperties: KafkaProperties? =
+    override val adminProperties: KafkaProperties? by lazy {
         adminPropertiesBuilder?.build()?.withDefaultAdminConfig()
-    override val producerProperties: KafkaProperties? =
+    }
+    override val producerProperties: KafkaProperties? by lazy {
         producerPropertiesBuilder?.build()?.withDefaultProducerConfig()
-    override val consumerProperties: KafkaProperties? =
+    }
+    override val consumerProperties: KafkaProperties? by lazy {
         consumerPropertiesBuilder?.build()?.withDefaultConsumerConfig()
+    }
 }
 
-class KafkaPathConfig(config: ApplicationConfig) : AbstractKafkaConfig() {
+class KafkaFileConfig(config: ApplicationConfig) : AbstractKafkaConfig() {
     override val bootstrapServers = config.property("bootstrap.servers").getList()
     override var schemaRegistryUrl: List<String> =
         config.propertyOrNull("properties.schema.registry.url")?.getList() ?: emptyList()
@@ -83,7 +89,6 @@ class KafkaPathConfig(config: ApplicationConfig) : AbstractKafkaConfig() {
         config.config("producer").toMap().toMutableMap().withDefaultProducerConfig()
     override val consumerProperties: KafkaProperties =
         config.config("consumer").toMap().toMutableMap().withDefaultConsumerConfig()
-
 }
 
 context (AbstractKafkaConfig)
@@ -211,7 +216,8 @@ class AdminPropertiesBuilder : CommonClientPropertiesBuilder() {
  * see [ProducerConfig]
  */
 @Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection")
-class ProducerPropertiesBuilder(override val schemaRegistryUrl: List<String>) : CommonClientPropertiesBuilder(),
+class ProducerPropertiesBuilder(override val schemaRegistryUrl: List<String>) :
+    CommonClientPropertiesBuilder(),
     SchemaRegistryDependant {
     var batchSize: Any? = null
     var acks: Any? = null
@@ -257,7 +263,8 @@ class ProducerPropertiesBuilder(override val schemaRegistryUrl: List<String>) : 
  * see [ConsumerConfig]
  */
 @Suppress("MemberVisibilityCanBePrivate")
-class ConsumerPropertiesBuilder(override val schemaRegistryUrl: List<String>) : CommonClientPropertiesBuilder(),
+class ConsumerPropertiesBuilder(override val schemaRegistryUrl: List<String>) :
+    CommonClientPropertiesBuilder(),
     SchemaRegistryDependant {
     var groupId: Any? = null
     var groupInstanceId: Any? = null

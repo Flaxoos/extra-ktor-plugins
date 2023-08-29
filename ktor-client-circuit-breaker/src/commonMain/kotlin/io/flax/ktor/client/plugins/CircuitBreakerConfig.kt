@@ -9,10 +9,13 @@ import kotlin.jvm.JvmInline
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+@DslMarker
+annotation class CircuitBreakerDsl
 /**
  * Configuration for [CircuitBreaker].
  */
-@KtorDsl
+
+@CircuitBreakerDsl
 class CircuitBreakerConfig {
     internal val circuitBreakers: ConcurrentMap<CircuitBreakerName, CircuitBreaker> = ConcurrentMap()
     internal var global: CircuitBreaker? = null

@@ -61,11 +61,6 @@ gradlePlugin {
             id = "ktor-client-plugin-conventions"
             implementationClass = "io.flax.ktor.KtorClientPluginConventions"
         }
-
-        create("kover-badge") {
-            id = "kover-badge"
-            implementationClass = "io.flax.ktor.KoverBadgePlugin"
-        }
     }
 }
 

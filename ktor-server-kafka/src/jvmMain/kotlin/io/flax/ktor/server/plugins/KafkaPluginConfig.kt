@@ -25,10 +25,10 @@ annotation class KafkaDsl
 @KafkaDsl
 sealed class AbstractKafkaConfig {
     abstract val schemaRegistryUrl: List<String>?
-    internal abstract val commonProperties: KafkaPropertyStore?
-    internal abstract val adminProperties: KafkaDelegatingPropertyStore?
-    internal abstract val producerProperties: KafkaDelegatingPropertyStore?
-    internal abstract val consumerProperties: KafkaDelegatingPropertyStore?
+    internal abstract val commonProperties: KafkaProperties?
+    internal abstract val adminProperties: KafkaProperties?
+    internal abstract val producerProperties: KafkaProperties?
+    internal abstract val consumerProperties: KafkaProperties?
     internal abstract val topics: List<NewTopic>
 
     /**
@@ -37,6 +37,7 @@ sealed class AbstractKafkaConfig {
     var consumerConfig: KafkaConsumerConfig? = null
 }
 
+@KafkaDsl
 class KafkaConsumerConfig {
     var consumerRecordHandlers: MutableMap<TopicName, ConsumerRecordHandler> = mutableMapOf()
     var consumerPollFrequency: Duration = DEFAULT_CONSUMER_POLL_FREQUENCY_MS.milliseconds
@@ -48,17 +49,25 @@ class KafkaConfig : AbstractKafkaConfig() {
     }
     override var schemaRegistryUrl: List<String>? = emptyList()
 
-    override val commonProperties: KafkaPropertyStore? by lazy {
+    override val commonProperties: KafkaProperties? by lazy {
         commonPropertiesBuilder?.build()
     }
-    override val adminProperties: KafkaDelegatingPropertyStore? by lazy {
-        adminPropertiesBuilder?.build()?.withDefaultAdminConfig()
+    override val adminProperties: KafkaProperties? by lazy {
+        adminPropertiesBuilder?.build()
+            ?.withDefaultAdminConfig()
+            ?.delegatingToCommon()
     }
-    override val producerProperties: KafkaDelegatingPropertyStore? by lazy {
-        producerPropertiesBuilder?.build()?.withDefaultProducerConfig()
+    override val producerProperties: KafkaProperties? by lazy {
+        producerPropertiesBuilder?.build()
+            ?.withSchemaRegistryUrl()
+            ?.withDefaultProducerConfig()
+            ?.delegatingToCommon()
     }
-    override val consumerProperties: KafkaDelegatingPropertyStore? by lazy {
-        consumerPropertiesBuilder?.build()?.withDefaultConsumerConfig()
+    override val consumerProperties: KafkaProperties? by lazy {
+        consumerPropertiesBuilder?.build()
+            ?.withSchemaRegistryUrl()
+            ?.withDefaultConsumerConfig()
+            ?.delegatingToCommon()
     }
 
     internal val topicBuilders = mutableListOf<TopicBuilder>()
@@ -72,46 +81,64 @@ class KafkaFileConfig(config: ApplicationConfig) : AbstractKafkaConfig() {
     override var schemaRegistryUrl: List<String> =
         config.propertyOrNull("schema.registry.url")?.getList() ?: emptyList()
 
-    override val commonProperties: KafkaDelegatingPropertyStore =
-        KafkaDelegatingPropertyStore(config.config("common").toMap().toMutableMap(), null)
-    override val adminProperties: KafkaDelegatingPropertyStore =
-        KafkaDelegatingPropertyStore(config.config("admin").toMap().toMutableMap(), commonProperties.store)
-    override val producerProperties: KafkaDelegatingPropertyStore =
-        KafkaDelegatingPropertyStore(config.config("producer").toMap().toMutableMap(), commonProperties.store)
-    override val consumerProperties: KafkaDelegatingPropertyStore =
-        KafkaDelegatingPropertyStore(config.config("consumer").toMap().toMutableMap(), commonProperties.store)
+    override val commonProperties: KafkaProperties? =
+        config.configOrNull("common")?.toMutableMap()
+    override val adminProperties: KafkaProperties? =
+        config.configOrNull("admin")?.toMutableMap()
+            ?.withDefaultAdminConfig()
+            ?.delegatingToCommon()
+    override val producerProperties: KafkaProperties? =
+        config.configOrNull("producer")?.toMutableMap()
+            ?.withSchemaRegistryUrl()
+            ?.withDefaultProducerConfig()
+            ?.delegatingToCommon()
+    override val consumerProperties: KafkaProperties? =
+        config.configOrNull("consumer")?.toMutableMap()
+            ?.withSchemaRegistryUrl()
+            ?.withDefaultConsumerConfig()
+            ?.delegatingToCommon()
 
     override val topics: List<NewTopic> = config.configList("topics").map { TopicBuilder.froMap(it.toMap()).build() }
+}
 
+private fun ApplicationConfig.configOrNull(name: String) =
+    this.runCatching { config(name) }.getOrNull()?.toMap()?.toMutableMap()
+
+context (AbstractKafkaConfig)
+internal fun KafkaProperties.delegatingToCommon(): KafkaProperties {
+    val joined = commonProperties
+    joined?.putAll(this)
+    return joined ?: this
 }
 
 context (AbstractKafkaConfig)
-internal fun KafkaDelegatingPropertyStore.withDefaultAdminConfig() = apply {
+internal fun KafkaProperties.withDefaultAdminConfig() = apply {
     getOrPut(CommonClientConfigs.CLIENT_ID_CONFIG) { DEFAULT_CLIENT_ID }
-
 }
 
 context (AbstractKafkaConfig)
-internal fun KafkaDelegatingPropertyStore.withDefaultProducerConfig() = apply {
-    getOrPut(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG) { schemaRegistryUrl }
+internal fun KafkaProperties.withDefaultProducerConfig() = apply {
     getOrPut(ProducerConfig.CLIENT_ID_CONFIG) { DEFAULT_CLIENT_ID }
     getOrPut(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG) { StringSerializer::class.java.name }
     getOrPut(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG) { KafkaAvroSerializer::class.java.name }
 }
 
 context (AbstractKafkaConfig)
-internal fun KafkaDelegatingPropertyStore.withDefaultConsumerConfig() = apply {
-    getOrPut(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG) { schemaRegistryUrl }
+internal fun KafkaProperties.withDefaultConsumerConfig() = apply {
     getOrPut(ConsumerConfig.GROUP_ID_CONFIG) { DEFAULT_GROUP_ID }
     getOrPut(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG) { StringDeserializer::class.java.name }
     getOrPut(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG) { KafkaAvroDeserializer::class.java.name }
+}
+
+context (AbstractKafkaConfig)
+internal fun KafkaProperties.withSchemaRegistryUrl() = apply {
+    put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
 }
 
 @KafkaDsl
 fun KafkaConsumerConfig.consumerRecordHandler(topicName: TopicName, handler: ConsumerRecordHandler) {
     consumerRecordHandlers[topicName] = handler
 }
-
 
 @KafkaDsl
 fun KafkaConfig.common(configuration: CommonClientPropertiesBuilder.() -> Unit = { CommonClientPropertiesBuilder }) {
@@ -120,8 +147,8 @@ fun KafkaConfig.common(configuration: CommonClientPropertiesBuilder.() -> Unit =
 }
 
 @KafkaDsl
-fun KafkaConfig.admin(configuration: AdminPropertiesBuilder.() -> Unit = { AdminPropertiesBuilder(delegate) }) {
-    adminPropertiesBuilder = AdminPropertiesBuilder(commonPropertiesBuilder).apply(configuration)
+fun KafkaConfig.admin(configuration: AdminPropertiesBuilder.() -> Unit = { AdminPropertiesBuilder() }) {
+    adminPropertiesBuilder = AdminPropertiesBuilder().apply(configuration)
 }
 
 @KafkaDsl
@@ -131,30 +158,29 @@ fun KafkaConfig.topic(name: TopicName, block: TopicBuilder.() -> Unit) {
 
 @KafkaDsl
 fun KafkaConfig.producer(
-    configuration: ProducerPropertiesBuilder.() -> Unit = { ProducerPropertiesBuilder(schemaRegistryUrl, delegate) }
+    configuration: ProducerPropertiesBuilder.() -> Unit = { ProducerPropertiesBuilder(schemaRegistryUrl) }
 ) {
     producerPropertiesBuilder =
         ProducerPropertiesBuilder(
-            //TODO: assuming only avro is used, support custom serializers later
+            // TODO: assuming only avro is used, support custom serializers later
             with(checkNotNull(schemaRegistryUrl) { "Consumer schema registry url is not set" }) {
                 check(isNotEmpty()) { "Schema registry url is not set" }
                 this
-            },
-            commonPropertiesBuilder
+            }
         ).apply(configuration)
 }
 
 @KafkaDsl
 fun KafkaConfig.consumer(
-    configuration: ConsumerPropertiesBuilder.() -> Unit = { ConsumerPropertiesBuilder(schemaRegistryUrl, delegate) }
+    configuration: ConsumerPropertiesBuilder.() -> Unit = { ConsumerPropertiesBuilder(schemaRegistryUrl) }
 ) {
     consumerPropertiesBuilder =
         ConsumerPropertiesBuilder(
-            //TODO: assuming only avro is used, support custom serializers later
+            // TODO: assuming only avro is used, support custom serializers later
             with(checkNotNull(schemaRegistryUrl) { "Consumer schema registry url is not set" }) {
                 check(isNotEmpty()) { "Schema registry url is not set" }
                 this
-            }, commonPropertiesBuilder
+            }
         ).apply(configuration)
 }
 
@@ -165,6 +191,7 @@ fun AbstractKafkaConfig.consumerConfig(
     consumerConfig = KafkaConsumerConfig().apply(configuration)
 }
 
+@KafkaDsl
 @Suppress("MemberVisibilityCanBePrivate")
 class TopicBuilder(internal val name: TopicName) {
     var partitions: Int = DEFAULT_TOPIC_PARTITIONS
@@ -174,7 +201,7 @@ class TopicBuilder(internal val name: TopicName) {
 
     @KafkaDsl
     fun configs(config: TopicPropertiesBuilder.() -> Unit) {
-        configs = TopicPropertiesBuilder().apply(config).build().store
+        configs = TopicPropertiesBuilder().apply(config).build()
     }
 
     internal fun build(): NewTopic {
@@ -186,6 +213,7 @@ class TopicBuilder(internal val name: TopicName) {
         return topic.configs(configs?.filterValues { it != null }?.mapValues { it.value.toString() })
     }
 
+    @Suppress("UNCHECKED_CAST")
     companion object {
         fun froMap(map: Map<String, Any?>): TopicBuilder {
             return TopicBuilder(TopicName.named(map["name"] as String)).apply {
@@ -198,8 +226,12 @@ class TopicBuilder(internal val name: TopicName) {
     }
 }
 
+/**
+ * [KafkaDsl] Builder for [KafkaProperties]
+ */
+@KafkaDsl
 sealed interface KafkaPropertiesBuilder {
-    fun build(): KafkaDelegatingPropertyStore
+    fun build(): KafkaProperties
 }
 
 /**
@@ -232,7 +264,7 @@ class TopicPropertiesBuilder : KafkaPropertiesBuilder {
     var messageTimestampDifferenceMaxMs: Long? = null
     var messageDownconversionEnable: Boolean? = null
 
-    override fun build(): KafkaDelegatingPropertyStore {
+    override fun build(): KafkaProperties {
         val configMap = mutableMapOf<String, Any?>()
 
         segmentBytes?.let { configMap["segment.bytes"] = it }
@@ -260,7 +292,7 @@ class TopicPropertiesBuilder : KafkaPropertiesBuilder {
         messageTimestampDifferenceMaxMs?.let { configMap["message.timestamp.difference.max.ms"] = it }
         messageDownconversionEnable?.let { configMap["message.downconversion.enable"] = it }
 
-        return KafkaDelegatingPropertyStore(configMap)
+        return configMap
     }
 }
 
@@ -288,8 +320,7 @@ sealed class ClientPropertiesBuilder : KafkaPropertiesBuilder {
     var connectionsMaxIdleMs: Any? = null
     var requestTimeoutMs: Any? = null
 
-
-    fun buildCommon(): KafkaDelegatingPropertyStore {
+    internal fun buildCommon(): KafkaProperties {
         val configMap = mutableMapOf<String, Any?>()
         bootstrapServers?.let { configMap[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = it }
         clientDnsLookup?.let { configMap[CommonClientConfigs.CLIENT_DNS_LOOKUP_CONFIG] = it }
@@ -309,27 +340,25 @@ sealed class ClientPropertiesBuilder : KafkaPropertiesBuilder {
         securityProtocol?.let { configMap[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG] = it }
         connectionsMaxIdleMs?.let { configMap[CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG] = it }
         requestTimeoutMs?.let { configMap[CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG] = it }
-        return KafkaDelegatingPropertyStore(configMap)
+        return configMap
     }
 
     override fun build() = buildCommon()
 }
 
+/**
+ * Concrete implementation of [ClientPropertiesBuilder] to represent the common properties
+ */
 data object CommonClientPropertiesBuilder : ClientPropertiesBuilder()
 
-interface Delegating {
-    val delegate: CommonClientPropertiesBuilder?
-}
+class AdminPropertiesBuilder :
+    ClientPropertiesBuilder()
 
-class AdminPropertiesBuilder(override val delegate: CommonClientPropertiesBuilder?) :
-    ClientPropertiesBuilder(), Delegating {
-    override fun build(): KafkaDelegatingPropertyStore {
-        return KafkaDelegatingPropertyStore(super.build().store, delegate?.build()?.store)
-    }
-}
-
-interface SchemaRegistryProvider {
-    abstract var schemaRegistryUrl: List<String>?
+/**
+ * Used to constraint consumer and producer builders to provide a schema registry url
+ */
+internal interface SchemaRegistryProvider {
+    var schemaRegistryUrl: List<String>?
 }
 
 /**
@@ -337,9 +366,8 @@ interface SchemaRegistryProvider {
  */
 @Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection")
 class ProducerPropertiesBuilder(
-    override var schemaRegistryUrl: List<String>? = null,
-    override val delegate: CommonClientPropertiesBuilder?
-) : ClientPropertiesBuilder(), Delegating, SchemaRegistryProvider {
+    override var schemaRegistryUrl: List<String>? = null
+) : ClientPropertiesBuilder(), SchemaRegistryProvider {
     var batchSize: Any? = null
     var acks: Any? = null
     var lingerMs: Any? = null
@@ -357,7 +385,7 @@ class ProducerPropertiesBuilder(
     var transactionTimeout: Any? = null
     var transactionalId: Any? = null
 
-    override fun build(): KafkaDelegatingPropertyStore {
+    override fun build(): KafkaProperties {
         val configMap = buildCommon()
         batchSize?.let { configMap[ProducerConfig.BATCH_SIZE_CONFIG] = it }
         acks?.let { configMap[ProducerConfig.ACKS_CONFIG] = it }
@@ -378,7 +406,7 @@ class ProducerPropertiesBuilder(
         transactionTimeout?.let { configMap[ProducerConfig.TRANSACTION_TIMEOUT_CONFIG] = it }
         transactionalId?.let { configMap[ProducerConfig.TRANSACTIONAL_ID_CONFIG] = it }
 
-        return KafkaDelegatingPropertyStore(configMap.store, delegate?.build()?.store)
+        return configMap
     }
 }
 
@@ -387,9 +415,8 @@ class ProducerPropertiesBuilder(
  */
 @Suppress("MemberVisibilityCanBePrivate")
 class ConsumerPropertiesBuilder(
-    override var schemaRegistryUrl: List<String>? = null,
-    override val delegate: CommonClientPropertiesBuilder?
-) : ClientPropertiesBuilder(), Delegating, SchemaRegistryProvider {
+    override var schemaRegistryUrl: List<String>? = null
+) : ClientPropertiesBuilder(), SchemaRegistryProvider {
     var groupId: Any? = null
     var groupInstanceId: Any? = null
     var maxPollRecords: Any? = null
@@ -413,7 +440,7 @@ class ConsumerPropertiesBuilder(
     var isolationLevel: Any? = null
     var allowAutoCreateTopics: Any? = null
 
-    override fun build(): KafkaDelegatingPropertyStore {
+    override fun build(): KafkaProperties {
         val configMap = buildCommon()
         groupId?.let { configMap[ConsumerConfig.GROUP_ID_CONFIG] = it }
         groupInstanceId?.let { configMap[ConsumerConfig.GROUP_INSTANCE_ID_CONFIG] = it }
@@ -438,31 +465,11 @@ class ConsumerPropertiesBuilder(
         isolationLevel?.let { configMap[ConsumerConfig.ISOLATION_LEVEL_CONFIG] = it }
         allowAutoCreateTopics?.let { configMap[ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG] = it }
 
-        return KafkaDelegatingPropertyStore(configMap.store, delegate?.build()?.store)
+        return configMap
     }
 }
 
-sealed class KafkaPropertyStore(
-    open val store: MutableMap<String, Any?>
-) : Map<String, Any?> by store
-
-class KafkaDelegatingPropertyStore(
-    override val store: MutableMap<String, Any?>,
-    var delegate: MutableMap<String, Any?>? = null
-) : KafkaPropertyStore(store) {
-    override operator fun get(key: String): Any? {
-        return store[key] ?: delegate?.get(key)
-    }
-
-    operator fun set(key: String, value: Any?) {
-        store[key] = value
-    }
-
-    fun getOrPut(key: String, defaultValue: () -> Any?) {
-        store.getOrPut(key, defaultValue)
-    }
-}
-
+typealias KafkaProperties = MutableMap<String, Any?>
 
 @Suppress("unused")
 enum class MessageTimestampType {

@@ -50,7 +50,6 @@ abstract class KafkaIntegrationTest : FunSpec() {
     private lateinit var applicationConfigFileContent: String
     private val ktorClient = HttpClient { install(ContentNegotiation) { json() } }
 
-
     lateinit var schemaRegistryUrl: String
 
     init {

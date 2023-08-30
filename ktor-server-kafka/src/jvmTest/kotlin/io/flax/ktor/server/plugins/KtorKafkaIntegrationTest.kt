@@ -33,7 +33,6 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.config.TopicConfig
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
@@ -56,7 +55,7 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
             revertConfigurationFileEdit()
         }
         context("should produce and consume records").config(timeout = 120.seconds) {
-            xtest("With default config path") {
+            test("With default config path") {
                 editConfigurationFile()
                 testKafkaApplication {
                     installKafkaFromFile {
@@ -64,7 +63,7 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
                     }
                 }
             }
-            xtest("With custom config path") {
+            test("With custom config path") {
                 val customConfigPath = "ktor.kafka.config"
                 editConfigurationFile(customConfigPath)
                 testKafkaApplication {

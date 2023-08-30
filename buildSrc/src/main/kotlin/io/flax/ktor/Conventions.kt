@@ -24,12 +24,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import java.net.URI
 
-fun Project.libs() = project.the<VersionCatalogsExtension>()
-
-fun Project.versionOf(version: String): String =
-    this.libs().find("libs").get().findVersion(version).get().toString()
-
-
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics() {}
     override fun apply(project: Project) {
@@ -39,11 +33,13 @@ open class Conventions : Plugin<Project> {
                 apply("org.jetbrains.kotlin.multiplatform")
                 apply("maven-publish")
                 apply("io.kotest.multiplatform")
-                apply("org.jetbrains.kotlinx.kover")
-                apply("dev.jacomet.logging-capabilities")
-                apply("kotlinx-atomicfu")
-                apply("org.jlleitschuh.gradle.ktlint")
-                apply("io.flax.kover-badge")
+                apply(project.plugin("loggingCapabilities"))
+                apply(project.plugin("atomicfu"))
+                apply(project.plugin("kover-badge"))
+                apply(project.plugin("dokka"))
+                apply(project.plugin("detekt"))
+                apply(project.plugin("ktlint"))
+                apply(project.plugin("kover"))
             }
             group = "io.flax"
             version = "1.0.0"
@@ -276,3 +272,24 @@ private fun runCommands(vararg commands: String): String {
     }
     return result
 }
+
+private val Project.gprToken
+    get() = findProperty("gpr.key") as String? ?: System.getenv("GPR_TOKEN")
+
+private val Project.gprUser
+    get() = findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
+
+fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")
+
+fun Project.versionOf(version: String): String =
+    this.libs().get().findVersion(version).get().toString()
+
+fun Project.library(name: String): String =
+    this.libs().get().findLibrary(name).get().get().toString()
+
+fun Project.plugin(name: String): String =
+    this.libs().get().findPlugin(name).get().get().pluginId
+
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class KoverIgnore

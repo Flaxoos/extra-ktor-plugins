@@ -28,6 +28,7 @@ testcontainers = "1.19.0"
 ktlint = "11.5.1"
 kover = "0.7.2"
 koverBadge = "0.0.2"
+detekt = "1.23.1"
 
 # Date and Time
 kotlinx_datetime = "0.4.0"
@@ -40,6 +41,9 @@ kafka = "3.5.1"
 confluent = "5.3.0"
 avro4k = "0.41.0"
 avro = "1.11.2"
+
+# Documentation
+dokka = "1.8.20"
 
 [libraries]
 # Core libraries
@@ -73,6 +77,7 @@ avro-tools = {module = "org.apache.avro:avro-tools", version.ref = "avro"}
 ktlint-gradlePlugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint" }
 kover-gradlePlugin = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
 kover-badge-gradlePlugin = { module = "io.flax.kover-badge:io.flax.kover-badge.gradle.plugin", version.ref = "koverBadge" }
+detekt-gradlePlugin = { module =  "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 
 # Asynchronous and Concurrency plugins
 atomicfu-gradlePlugin = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version.ref = "atomicFu" }
@@ -84,8 +89,21 @@ loggingCapabilities-gradlePlugin = { module = "dev.jacomet.gradle.plugins:loggin
 # Testing plugins
 kotestFrameworkMultiplatform-gradlePlugin = { module = "io.kotest:kotest-framework-multiplatform-plugin-gradle", version.ref = "kotest" }
 
+# Documentation
+dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
+
 [plugins]
-# Code Coverage Badge
+# Code quality and coverage
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 kover-badge = { id = "io.flax.kover-badge", version.ref = "koverBadge" }
-loggingCapabilities = { id = "dev.jacomet.gradle.plugins.logging-capabilities", version.ref = "logging_capabilities" }
+loggingCapabilities = { id = "dev.jacomet.logging-capabilities", version.ref = "logging_capabilities" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+
+# Documentation
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+
+
+# Asynchronous and Concurrency plugins
+atomicfu = { id = "kotlinx-atomicfu", version.ref = "atomicFu" }

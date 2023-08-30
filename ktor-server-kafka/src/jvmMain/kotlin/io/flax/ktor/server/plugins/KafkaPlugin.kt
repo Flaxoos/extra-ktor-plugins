@@ -1,6 +1,8 @@
 package io.flax.ktor.server.plugins
 
-import io.flax.ktor.server.plugins.components.ConsumerShouldRun
+import io.flax.ktor.server.plugins.Attributes.AdminClientAttributeKey
+import io.flax.ktor.server.plugins.Attributes.ConsumerAttributeKey
+import io.flax.ktor.server.plugins.Attributes.ProducerAttributeKey
 import io.flax.ktor.server.plugins.components.createConsumer
 import io.flax.ktor.server.plugins.components.createKafkaAdminClient
 import io.flax.ktor.server.plugins.components.createKafkaTopics
@@ -13,12 +15,14 @@ import io.ktor.server.application.PluginBuilder
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.hooks.MonitoringEvent
 import io.ktor.server.application.log
+import io.ktor.util.AttributeKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-internal fun kafkaFromConfig(
+@Suppress("FunctionName")
+internal fun Kafka(
     configurationPath: String,
     additionalConfig: KafkaFileConfig.() -> Unit
 ) = createApplicationPlugin(
@@ -43,7 +47,7 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafkaClients(pluginC
             application.attributes.put(AdminClientAttributeKey, it)
             application.log.info("Kafka admin setup finished")
             runBlocking(Dispatchers.IO) {
-                it.createKafkaTopics(topicBuilders = pluginConfig.topicBuilders) {
+                it.createKafkaTopics(topicBuilders = pluginConfig.topics) {
                     application.log.info("Created Topics: $first")
                 }
             }
@@ -55,62 +59,77 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafkaClients(pluginC
             application.log.info("Kafka producer setup finished")
         }
 
-    val consumer = if (pluginConfig.consumerRecordHandlers.isNotEmpty()) {
+    val consumer = pluginConfig.consumerConfig?.let {
         pluginConfig.consumerProperties?.createConsumer()?.also {
             application.attributes.put(ConsumerAttributeKey, it)
             application.attributes.put(ConsumerShouldRun, true)
             application.log.info("Kafka consumer setup finished")
         }
-    } else {
-        null
     }
 
-    var consumerJob: Job? = null
     on(MonitoringEvent(ApplicationStarted)) { application ->
         application.log.info("Application started hook triggered")
-        consumerJob = consumer?.let {
+        if (consumer != null) {
+            if (pluginConfig.consumerConfig == null) {
+                application.log.warn("Consumer defined but no consumer configuration defined, make sure to provide one during plugin installation")
+            } else {
+                with(
+                    checkNotNull(pluginConfig.consumerConfig) {
+                        "Consumer config changed to null during application start, this shouldn't happen"
+                    }
+                ) {
+                    if (consumerRecordHandlers.isEmpty()) {
+                        application.log.debug("No consumer record handlers defined, consumer job will not start automatically")
+                    }
+                    runCatching {
+                        application.startConsumer(
+                            consumer = consumer,
+                            pollFrequency = consumerPollFrequency,
+                            consumerRecordHandlers = consumerRecordHandlers
+                        ).also {
+                            application.attributes.put(ConsumerJob, it)
+                            application.log.info("Started kafka consumer")
+                        }
+                    }.onFailure {
+                        application.log.error("Error starting kafka consumer", it)
+                    }
+                }
+            }
+        }
+
+        on(MonitoringEvent(ApplicationStopped)) {
+            application.log.info("Application stopped hook triggered")
+
             runCatching {
-                application.startConsumer(
-                    consumer = it,
-                    pollFrequency = pluginConfig.consumerPollFrequency,
-                    consumerRecordHandlers = pluginConfig.consumerRecordHandlers,
-                    consumerOperations = pluginConfig.consumerOperations
-                ).also {
-                    application.log.info("Started kafka consumer")
+                adminClient?.close()
+                application.log.info("Closed kafka admin")
+            }.onFailure { application.log.error("Error closing kafka admin", it) }
+
+            runCatching {
+                producer?.close()
+                application.log.info("Closed kafka producer")
+            }.onFailure { application.log.error("Error closing kafka producer", it) }
+
+            runCatching {
+                application.kafkaConsumerJob?.let {
+                    runBlocking {
+                        it.cancel()
+                        application.log.info("Cancelled kafka consumer job")
+                        with(
+                            checkNotNull(pluginConfig.consumerConfig) {
+                                "Consumer config changed to null during application start, this shouldn't happen"
+                            }
+                        ) {
+                            // Let it finish one round to avoid race condition
+                            delay(consumerPollFrequency)
+                            consumer?.close()
+                        }
+                    }
+                    application.log.info("Closed kafka consumer")
                 }
             }.onFailure {
-                application.log.error("Error starting kafka consumer", it)
-            }.getOrNull()
-        }
-    }
-
-    on(MonitoringEvent(ApplicationStopped)) {
-        application.log.info("Application stopped hook triggered")
-
-        runCatching {
-            adminClient?.close()
-            application.log.info("Closed kafka admin")
-        }.onFailure { application.log.error("Error closing kafka admin", it) }
-
-        runCatching {
-            producer?.close()
-            application.log.info("Closed kafka producer")
-        }.onFailure { application.log.error("Error closing kafka producer", it) }
-
-        runCatching {
-            application.attributes.put(ConsumerShouldRun, false)
-            consumerJob?.let {
-                runBlocking {
-                    it.cancel()
-                    application.log.info("Cancelled kafka consumer job")
-                    // Let it finish one round to avoid "KafkaConsumer is not safe for multi-threaded access"
-                    delay(pluginConfig.consumerPollFrequency)
-                    consumer?.close()
-                }
-                application.log.info("Closed kafka consumer")
+                application.log.error("Error closing kafka consumer", it)
             }
-        }.onFailure {
-            application.log.error("Error closing kafka consumer", it)
         }
     }
 }
@@ -124,12 +143,11 @@ val Application.kafkaProducer
 val Application.kafkaConsumer
     get() = attributes.getOrNull(ConsumerAttributeKey)
 
-//    val consumerWrapper = if (pluginConfig.consumerRecordHandlers.isNotEmpty()) {
-//        pluginConfig.consumerProperties?.createConsumer()
-//            ?.also { application.attributes.put(ConsumerAttributeKey, it) }?.let {
-//                val consumerWrapper = ConsumerWrapper(application, it, pluginConfig.consumerRecordHandlers)
-//                consumerWrapper.start()
-//                application.attributes.put(ConsumerWrapperAttributeKey, consumerWrapper)
-//                consumerWrapper
-//            }
-//    } else null
+val Application.kafkaConsumerJob
+    get() = attributes.getOrNull(ConsumerJob)
+
+internal val Application.consumerShouldRun
+    get() = attributes.getOrNull(ConsumerShouldRun) ?: false
+
+internal val ConsumerShouldRun = AttributeKey<Boolean>("ConsumerShouldRun")
+internal val ConsumerJob = AttributeKey<Job>("ConsumerJob")

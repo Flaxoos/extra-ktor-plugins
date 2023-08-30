@@ -30,6 +30,8 @@ dependencies {
     implementation(libs.ktlint.gradlePlugin)
     implementation(libs.ktor.client.cio)
     implementation(libs.kover.badge.gradlePlugin)
+    implementation(libs.dokka.gradlePlugin)
+    implementation(libs.detekt.gradlePlugin)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.mockk)

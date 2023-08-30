@@ -3,7 +3,6 @@ package io.flax.ktor.client.plugins
 import io.flax.ktor.client.plugins.CircuitBreakerState.HALF_OPEN
 import io.flax.ktor.client.plugins.CircuitBreakerState.OPEN
 import io.ktor.client.statement.HttpResponse
-import io.ktor.util.KtorDsl
 import io.ktor.util.collections.ConcurrentMap
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
@@ -11,6 +10,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @DslMarker
 annotation class CircuitBreakerDsl
+
 /**
  * Configuration for [CircuitBreaker].
  */

@@ -13,3 +13,15 @@ kotlin {
         }
     }
 }
+
+koverReport {
+    defaults {
+        verify {
+            rule {
+                isEnabled = true
+                minBound(70)
+            }
+            onCheck = true
+        }
+    }
+}

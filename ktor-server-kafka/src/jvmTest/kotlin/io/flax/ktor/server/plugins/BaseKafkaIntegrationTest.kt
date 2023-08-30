@@ -1,6 +1,7 @@
 package io.flax.ktor.server.plugins
 
 import com.sksamuel.avro4k.Avro
+import io.flax.ktor.server.plugins.Defaults.DEFAULT_CONFIG_PATH
 import io.kotest.common.runBlocking
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestScope
@@ -49,7 +50,6 @@ abstract class KafkaIntegrationTest : FunSpec() {
     private lateinit var applicationConfigFileContent: String
     private val ktorClient = HttpClient { install(ContentNegotiation) { json() } }
 
-    protected lateinit var bootstrapServers: String
 
     lateinit var schemaRegistryUrl: String
 
@@ -57,7 +57,6 @@ abstract class KafkaIntegrationTest : FunSpec() {
         beforeSpec {
             kafka.start()
             schemaRegistry.withKafka(kafka).start()
-            bootstrapServers = kafka.bootstrapServers.also { logger.info("Updated bootstrap.servers: $it") }
             schemaRegistryUrl = "http://${schemaRegistry.host}:${schemaRegistry.firstMappedPort}"
 
             registerSchemas.forEach { (klass, topics) ->
@@ -66,10 +65,7 @@ abstract class KafkaIntegrationTest : FunSpec() {
                 }
             }
 
-            waitForKafkaBroker(bootstrapServers, 10, 5.seconds)
-        }
-        afterEach {
-//            kafka.stop()
+            waitTillProducersAccepted(10, 5.seconds)
         }
     }
 
@@ -100,7 +96,7 @@ abstract class KafkaIntegrationTest : FunSpec() {
         applicationConfigFile.writeText(
             applicationConfigFileContent
                 .replace(CONFIG_PATH_PLACEHOLDER, configPath)
-                .replace(BOOTSTRAP_SERVERS_PLACEHOLDER, bootstrapServers)
+                .replace(BOOTSTRAP_SERVERS_PLACEHOLDER, kafka.bootstrapServers)
                 .replace(SCHEMA_REGISTRY_URL_PLACEHOLDER, schemaRegistryUrl)
                 .replace(GROUP_ID_PLACEHOLDER, this.testCase.name.testName.plus("-group"))
                 .replace(CLIENT_ID_PLACEHOLDER, this.testCase.name.testName.plus("-client"))
@@ -125,16 +121,16 @@ abstract class KafkaIntegrationTest : FunSpec() {
             withEnv("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1")
         }
 
-        suspend fun waitForKafkaBroker(bootstrapServers: String, attempts: Int, delay: Duration) {
+        suspend fun waitTillProducersAccepted(attempts: Int, delay: Duration) {
             val props = Properties()
-            props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
+            props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = kafka.bootstrapServers
             props[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java.name
             props[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java.name
 
             val producer = KafkaProducer<String, String>(props)
             var isConnected = false
 
-            logger.info("Waiting to connect to Kafka broker at bootstrap.servers: $bootstrapServers")
+            logger.info("Waiting to connect to Kafka broker at bootstrap.servers: $kafka.bootstrapServers")
             for (i in 0 until attempts) {
                 try {
                     val record = ProducerRecord("test-topic", "key", "value")
@@ -145,7 +141,7 @@ abstract class KafkaIntegrationTest : FunSpec() {
                     isConnected = true
                     break
                 } catch (e: Exception) {
-                    logger.info("Attempt $i to connect to Kafka broker at bootstrap.servers: $bootstrapServers failed, retrying")
+                    logger.info("Attempt $i to connect to Kafka broker at bootstrap.servers: $kafka.bootstrapServers failed, retrying")
                     delay(delay)
                 }
             }
@@ -153,9 +149,9 @@ abstract class KafkaIntegrationTest : FunSpec() {
             producer.close()
 
             if (!isConnected) {
-                throw RuntimeException("Unable to connect to Kafka broker at bootstrap.servers: $bootstrapServers")
+                throw RuntimeException("Unable to connect to Kafka broker at bootstrap.servers: $kafka.bootstrapServers")
             }
-            logger.info("Connected to Kafka broker at bootstrap.servers: $bootstrapServers")
+            logger.info("Connected to Kafka broker at bootstrap.servers: $kafka.bootstrapServers")
         }
     }
 }

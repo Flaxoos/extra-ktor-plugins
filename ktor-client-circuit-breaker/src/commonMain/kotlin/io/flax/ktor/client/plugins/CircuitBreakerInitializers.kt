@@ -4,7 +4,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.request
 import io.ktor.client.statement.HttpResponse
-import io.ktor.util.KtorDsl
 import io.ktor.util.collections.ConcurrentMap
 
 /**

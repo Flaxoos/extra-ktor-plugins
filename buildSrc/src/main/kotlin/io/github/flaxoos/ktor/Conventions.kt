@@ -163,6 +163,10 @@ open class Conventions : Plugin<Project> {
                 enforceLogback()
             }
 
+            extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
+                enforceLogback()
+            }
+
             tasks.register("createReleaseTag") {
                 doLast {
                     createReleaseTag()

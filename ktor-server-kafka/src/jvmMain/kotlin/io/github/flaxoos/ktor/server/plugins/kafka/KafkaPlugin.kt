@@ -1,7 +1,7 @@
 package io.github.flaxoos.ktor.server.plugins.kafka
 
-import io.github.flaxoos.ktor.server.plugins.components.createConsumer
-import io.github.flaxoos.ktor.server.plugins.components.startConsumer
+import io.github.flaxoos.ktor.server.plugins.kafka.components.createConsumer
+import io.github.flaxoos.ktor.server.plugins.kafka.components.startConsumer
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.AdminClientAttributeKey
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.ConsumerAttributeKey
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.ProducerAttributeKey

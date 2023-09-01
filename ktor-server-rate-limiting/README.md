@@ -1,6 +1,6 @@
 # Rate Limiting Plugin for Ktor Server
-
-<a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/ktor-server-rate-limiting/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/96.04-green?logo=kotlin&label=koverage&style=flat)</a>
+![Language](https://img.shields.io/github/languages/top/flaxoos/flax-ktor-plugins?color=blue&logo=kotlin)
+<a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/ktor-server-rate-limiting/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/95.16-green?logo=kotlin&label=koverage&style=flat)</a>
 
 The `RateLimitingPlugin` is a utility designed to limit the number of requests a client can make in a specific time window to your Ktor server. It offers the flexibility of whitelisting and blacklisting based on hosts, user-agents, and authentication principals.
 

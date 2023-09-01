@@ -3,6 +3,7 @@
 kotlin = "1.9.0"
 java = "11"
 gradle = "8.2.1"
+shadow = "8.1.1"
 
 # Web Framework
 ktor = "2.3.2"
@@ -27,7 +28,7 @@ testcontainers = "1.19.0"
 # Code Quality and Coverage
 ktlint = "11.5.1"
 kover = "0.7.2"
-koverBadge = "0.0.2"
+koverBadge = "0.0.5"
 detekt = "1.23.1"
 
 # Date and Time
@@ -50,6 +51,7 @@ dokka = "1.8.20"
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow"}
 arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
+shadow-gradlePlugin = { module = "com.github.johnrengelman:shadow", version.ref = "shadow" }
 
 # Web Framework
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
@@ -76,7 +78,7 @@ avro-tools = {module = "org.apache.avro:avro-tools", version.ref = "avro"}
 # Code Quality and Coverage plugins
 ktlint-gradlePlugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint" }
 kover-gradlePlugin = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
-kover-badge-gradlePlugin = { module = "io.flax.kover-badge:io.flax.kover-badge.gradle.plugin", version.ref = "koverBadge" }
+kover-badge-gradlePlugin = { module = "io.github.flaxoos:kover-badge", version.ref = "koverBadge" }
 detekt-gradlePlugin = { module =  "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 
 # Asynchronous and Concurrency plugins
@@ -93,9 +95,11 @@ kotestFrameworkMultiplatform-gradlePlugin = { module = "io.kotest:kotest-framewo
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 
 [plugins]
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+
 # Code quality and coverage
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
-kover-badge = { id = "io.flax.kover-badge", version.ref = "koverBadge" }
+kover-badge = { id = "io.github.flaxoos.kover-badge", version.ref = "koverBadge" }
 loggingCapabilities = { id = "dev.jacomet.logging-capabilities", version.ref = "logging_capabilities" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
@@ -103,7 +107,6 @@ ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
 # Documentation
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
-
 
 # Asynchronous and Concurrency plugins
 atomicfu = { id = "kotlinx-atomicfu", version.ref = "atomicFu" }

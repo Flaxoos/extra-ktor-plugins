@@ -11,12 +11,13 @@ kotlin {
 repositories {
     google()
     mavenCentral()
+    mavenLocal()
     gradlePluginPortal()
     maven {
-        url = uri("https://maven.pkg.github.com/idoflax/flax-gradle-plugins")
+        url = uri("https://maven.pkg.github.com/flaxoos/flax-gradle-plugins")
         credentials {
             username = gprUser
-            password = gprToken
+            password = gprReadToken
         }
     }
 }
@@ -32,6 +33,7 @@ dependencies {
     implementation(libs.kover.badge.gradlePlugin)
     implementation(libs.dokka.gradlePlugin)
     implementation(libs.detekt.gradlePlugin)
+    implementation(libs.shadow.gradlePlugin)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.mockk)
@@ -51,23 +53,26 @@ gradlePlugin {
     plugins {
         create("conventions") {
             id = "conventions"
-            implementationClass = "io.flax.ktor.Conventions"
+            implementationClass = "io.github.flaxoos.ktor.Conventions"
         }
 
         create("ktor-server-plugin-conventions") {
             id = "ktor-server-plugin-conventions"
-            implementationClass = "io.flax.ktor.KtorServerPluginConventions"
+            implementationClass = "io.github.flaxoos.ktor.KtorServerPluginConventions"
         }
 
         create("ktor-client-plugin-conventions") {
             id = "ktor-client-plugin-conventions"
-            implementationClass = "io.flax.ktor.KtorClientPluginConventions"
+            implementationClass = "io.github.flaxoos.ktor.KtorClientPluginConventions"
         }
     }
 }
 
-val Project.gprToken
-    get() = findProperty("gpr.key") as String? ?: System.getenv("GPR_TOKEN")
+private val Project.gprWriteToken
+    get() = findProperty("gpr.write.key") as String? ?: System.getenv("GPR_WRITE_TOKEN")
 
-val Project.gprUser
+private val Project.gprReadToken
+    get() = findProperty("gpr.read.key") as String? ?: System.getenv("GPR_READ_TOKEN")
+
+private val Project.gprUser
     get() = findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")

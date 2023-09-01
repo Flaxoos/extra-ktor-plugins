@@ -221,6 +221,11 @@ class KtorClientPluginConventions : Conventions() {
                     }
                 }
             }
+            jvmTest {
+                dependencies {
+                    implementation("ch.qos.logback:logback-classic:1.4.9")
+                }
+            }
         }
     }
 }

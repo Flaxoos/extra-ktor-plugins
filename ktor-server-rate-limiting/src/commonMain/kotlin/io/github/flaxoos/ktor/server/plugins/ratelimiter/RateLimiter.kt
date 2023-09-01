@@ -1,5 +1,6 @@
-package io.github.flaxoos.ktor.server.plugins.ratelimiter
+package io.flax.ktor.server.plugins
 
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.RATE_LIMIT_EXCEEDED_MESSAGE
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall

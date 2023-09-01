@@ -1,5 +1,6 @@
 package io.github.flaxoos.ktor.server.plugins.ratelimiter
 
+import io.flax.ktor.server.plugins.RateLimiter
 import io.ktor.server.application.PluginBuilder
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.createRouteScopedPlugin

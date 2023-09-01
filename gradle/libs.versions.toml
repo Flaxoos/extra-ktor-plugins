@@ -7,9 +7,6 @@ shadow = "8.1.1"
 
 # Web Framework
 ktor = "2.3.2"
-logback = "1.4.11"
-atomicFu = "0.21.0"
-kover = "0.7.2"
 
 # Logging
 logback = "1.4.11"

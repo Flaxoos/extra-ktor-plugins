@@ -1,5 +1,3 @@
-
-
 plugins {
     id("ktor-server-plugin-conventions")
     alias(libs.plugins.kotlin.serialization)

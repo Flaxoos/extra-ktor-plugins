@@ -16,6 +16,10 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
+import io.ktor.server.auth.UserIdPrincipal
+import io.ktor.server.auth.authentication
+import io.ktor.server.auth.basic
+import io.ktor.server.auth.form
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.response.respond
@@ -58,7 +62,7 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
             test("With default config path") {
                 editConfigurationFile()
                 testKafkaApplication {
-                    installKafkaFromFile {
+                    install(FileConfig.Kafka) {
                         configureConsumer()
                     }
                 }
@@ -67,7 +71,7 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
                 val customConfigPath = "ktor.kafka.config"
                 editConfigurationFile(customConfigPath)
                 testKafkaApplication {
-                    installKafkaFromFile(configurationPath = customConfigPath) {
+                    install(FileConfig.Kafka(customConfigPath)) {
                         configureConsumer()
                     }
                 }
@@ -75,7 +79,7 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
             test("With code configuration") {
                 editConfigurationFile()
                 testKafkaApplication {
-                    installKafka {
+                    install(Kafka) {
                         schemaRegistryUrl = listOf(super.schemaRegistryUrl)
                         setupTopics()
                         common { bootstrapServers = listOf(kafka.bootstrapServers) }

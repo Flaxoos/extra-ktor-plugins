@@ -21,8 +21,8 @@ Integrate Kafka effortlessly into your Ktor application with this powerful Kafka
 The plugin provides a DSL that enables comprehensive Kafka configuration, adhering to the classes and properties defined in [org.apache.kafka.common.config](https://kafka.apache.org/21/javadoc/index.html?org/apache/kafka/common/config/package-summary.html), the DSL offers a fluent, programmatic way to set up your Kafka settings right within your Ktor application.
 
 ```kotlin
-installKafka {
-     schemaRegistryUrl = listOf("my.schemaRegistryUrl")
+install(Kafka) {
+    schemaRegistryUrl = listOf("my.schemaRegistryUrl")
      topic(named("my-topic")) {
          partitions = 1
          replicas = 1
@@ -56,7 +56,7 @@ installKafka {
 Alternatively, You can easily install the Kafka plugin using an application configuration file:
 
 ```kotlin
-installKafkaFromFile {
+install(KafkaFromFileConfig.Kafka) {
     consumerConfig {
         consumerRecordHandler("my-topic") { record ->
             myService.save(record)
@@ -69,7 +69,7 @@ The above will look for the config in `ktor.kafka` by default.
 You can also specify a different path if needed:
 
 ```kotlin
-installKafkaFromFile(configurationPath = "ktor.kafka" /*like: ktor.kafka*/){
+install(KafkaFromFileConfig.Kafka("ktor.my.kafka")){
     consumerConfig {
         consumerRecordHandler("my-topic") { record ->
             myService.save(record)
@@ -78,6 +78,7 @@ installKafkaFromFile(configurationPath = "ktor.kafka" /*like: ktor.kafka*/){
 }
 ```
 
+Example file configuration:
 ```hocon
 ktor {
   kafka {
@@ -121,7 +122,6 @@ val adminClient = application.kafkaAdminClient
 val producer = application.kafkaProducer
 val consumer = application.kafkaConsumer
 ```
-
 
 ## Important Notes:
 

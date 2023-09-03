@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+version = "1.1.0"
+
 repositories {
     mavenCentral()
     maven {

@@ -11,8 +11,7 @@ Integrate Kafka effortlessly into your Ktor application with this powerful Kafka
 - **Admin Client**: Easy setup and topic creation for your Kafka admin client.
 - **Producer Client**: Initialize Kafka producer instances effortlessly.
 - **Consumer Client**: Configure and manage Kafka consumer instances, including polling logic and record handling.
-- **Built in Avro4k support**: Avro schemas are supported by default. There's no need to define key/value serializers
-- **Coming soon** automatic schema registration and convenience methods for de/serialization.
+- **Built in Avro4k support**: Avro schemas are supported by default. There's no need to define key/value serializers. Schemas can be registered automatically. Avro records to and from conversion methods
 
 ## How to Use:
 
@@ -48,6 +47,9 @@ install(Kafka) {
              myService.save(record)
          }
      }
+    registerSchemas {
+        MyRecord::class at named("my-topic") // <-- Will register schema upon startup
+    }
 }
 ```
 

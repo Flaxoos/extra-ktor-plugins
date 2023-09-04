@@ -173,8 +173,8 @@ fun KafkaConfig.admin(configuration: AdminPropertiesBuilder.() -> Unit = { Admin
 }
 
 @KafkaDsl
-fun AbstractKafkaConfig.registerSchemas(schemas: Map<KClass<out Any>, TopicName>) {
-    this.schemas.putAll(schemas)
+fun AbstractKafkaConfig.registerSchemas(configuration: SchemaRegistrationBuilder.() -> Unit = { SchemaRegistrationBuilder() }) {
+    this.schemas.putAll(SchemaRegistrationBuilder().apply(configuration).schemas)
 }
 
 @KafkaDsl
@@ -213,6 +213,14 @@ fun AbstractKafkaConfig.consumerConfig(
     configuration: KafkaConsumerConfig.() -> Unit = { }
 ) {
     consumerConfig = KafkaConsumerConfig().apply(configuration)
+}
+
+@KafkaDsl
+class SchemaRegistrationBuilder {
+    internal val schemas: MutableMap<KClass<out Any>, TopicName> = mutableMapOf()
+    infix fun KClass<out Any>.at(topicName: TopicName) {
+        schemas[this] = topicName
+    }
 }
 
 @KafkaDsl

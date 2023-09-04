@@ -103,7 +103,9 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
 
     private fun AbstractKafkaConfig.withRegisterSchemas() {
         topics.forEach {
-            registerSchemas(mapOf(TestRecord::class to named(it.name())))
+            registerSchemas {
+                TestRecord::class at named(it.name())
+            }
         }
     }
 

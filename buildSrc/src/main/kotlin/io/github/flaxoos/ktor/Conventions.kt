@@ -20,6 +20,7 @@ import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withType
+import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
@@ -33,6 +34,7 @@ open class Conventions : Plugin<Project> {
                 apply("org.gradle.version-catalog")
                 apply("org.jetbrains.kotlin.multiplatform")
                 apply("maven-publish")
+                apply("idea")
                 apply("io.kotest.multiplatform")
                 apply(project.plugin("loggingCapabilities"))
                 apply(project.plugin("atomicfu"))
@@ -108,6 +110,13 @@ open class Conventions : Plugin<Project> {
                     }
                 }
                 this.conventionSpecifics()
+            }
+
+            the<IdeaModel>().apply {
+                module {
+                    this.isDownloadSources = true
+                    this.isDownloadJavadoc = true
+                }
             }
 
             the<DetektExtension>().apply {

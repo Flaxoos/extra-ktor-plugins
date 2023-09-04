@@ -54,7 +54,7 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
             test("With default config path") {
                 editConfigurationFile()
                 testKafkaApplication {
-                    installKafkaFromFile {
+                    install(FileConfig.Kafka) {
                         withConsumerConfig()
                         withRegisterSchemas()
                     }
@@ -64,7 +64,7 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
                 val customConfigPath = "ktor.kafka.config"
                 editConfigurationFile(customConfigPath)
                 testKafkaApplication {
-                    installKafkaFromFile(configurationPath = customConfigPath) {
+                    install(FileConfig.Kafka(customConfigPath)) {
                         withConsumerConfig()
                         withRegisterSchemas()
                     }
@@ -73,7 +73,7 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
             test("With code configuration") {
                 editConfigurationFile()
                 testKafkaApplication {
-                    installKafka {
+                    install(Kafka) {
                         schemaRegistryUrl = super.schemaRegistryUrl
                         setupTopics()
                         common { bootstrapServers = listOf(kafka.bootstrapServers) }

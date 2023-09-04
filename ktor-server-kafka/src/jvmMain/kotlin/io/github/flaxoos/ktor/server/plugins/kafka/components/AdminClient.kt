@@ -6,15 +6,16 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
-import java.util.concurrent.Future
+import org.apache.kafka.common.KafkaFuture
 
 internal fun Map<String, Any?>.createKafkaAdminClient(): AdminClient = AdminClient.create(this)
 
 context (CoroutineScope)
+@Suppress("ForbiddenVoid", "RedundantSuspendModifier")
 internal suspend fun AdminClient.createKafkaTopics(
     topicBuilders: List<NewTopic>,
     existingTopicHandler: (NewTopic) -> Unit = {},
-    topicCreationHandler: Pair<String, Future<Void>>.() -> Unit
+    topicCreationHandler: Pair<String, KafkaFuture<Void>>.() -> Unit
 ) {
     val existingTopics = listTopics().listings().get().map { it.name() }
     val createTopicsResult =

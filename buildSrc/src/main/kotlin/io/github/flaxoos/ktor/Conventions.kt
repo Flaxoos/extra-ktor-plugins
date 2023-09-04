@@ -1,9 +1,9 @@
 package io.github.flaxoos.ktor
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
+import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
 import org.gradle.api.GradleException
@@ -13,21 +13,15 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.publish.PublishingExtension
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
-import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinSoftwareComponentWithCoordinatesAndPublication
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import java.net.URI
 
@@ -114,6 +108,16 @@ open class Conventions : Plugin<Project> {
                     }
                 }
                 this.conventionSpecifics()
+            }
+
+            the<DetektExtension>().apply {
+                config.setFrom(rootDir.resolve("config/detekt/detekt.yml"))
+                buildUponDefaultConfig = true
+            }
+
+            tasks.named("build").configure {
+                dependsOn("ktlintFormat")
+                dependsOn(tasks.matching { it.name.matches(Regex("detekt(?!.*Baseline).*\\b(Main|Test)\\b\n")) })
             }
 
             tasks.withType(Test::class) {

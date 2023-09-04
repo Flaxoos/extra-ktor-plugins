@@ -1,10 +1,11 @@
 package io.github.flaxoos.ktor.server.plugins.kafka
 
-import com.sksamuel.avro4k.Avro
 import com.sksamuel.avro4k.AvroName
 import com.sksamuel.avro4k.AvroNamespace
 import io.github.flaxoos.ktor.server.plugins.kafka.MessageTimestampType.CreateTime
 import io.github.flaxoos.ktor.server.plugins.kafka.TopicName.Companion.named
+import io.github.flaxoos.ktor.server.plugins.kafka.components.fromRecord
+import io.github.flaxoos.ktor.server.plugins.kafka.components.toRecord
 import io.kotest.common.ExperimentalKotest
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -29,22 +30,17 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.serializer
 import org.apache.kafka.clients.producer.ProducerRecord
-import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(InternalSerializationApi::class, ExperimentalKotest::class)
+@OptIn(ExperimentalKotest::class)
 class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
     private val logger: Logger = KtorSimpleLogger(javaClass.simpleName)
     private val testTopics = listOf(named("topic1"), named("topic2"))
     private val invocations = 2
 
     private lateinit var recordChannel: Channel<TestRecord>
-
-    override val registerSchemas: Map<KClass<out Any>, List<TopicName>> = mapOf(TestRecord::class to testTopics)
 
     init {
         beforeEach {
@@ -58,8 +54,9 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
             test("With default config path") {
                 editConfigurationFile()
                 testKafkaApplication {
-                    installKafkaFromFile {
-                        configureConsumer()
+                    install(FileConfig.Kafka) {
+                        withConsumerConfig()
+                        withRegisterSchemas()
                     }
                 }
             }
@@ -67,40 +64,47 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
                 val customConfigPath = "ktor.kafka.config"
                 editConfigurationFile(customConfigPath)
                 testKafkaApplication {
-                    installKafkaFromFile(configurationPath = customConfigPath) {
-                        configureConsumer()
+                    install(FileConfig.Kafka(customConfigPath)) {
+                        withConsumerConfig()
+                        withRegisterSchemas()
                     }
                 }
             }
             test("With code configuration") {
                 editConfigurationFile()
                 testKafkaApplication {
-                    installKafka {
-                        schemaRegistryUrl = listOf(super.schemaRegistryUrl)
+                    install(Kafka) {
+                        schemaRegistryUrl = super.schemaRegistryUrl
                         setupTopics()
                         common { bootstrapServers = listOf(kafka.bootstrapServers) }
                         admin { clientId = "code-configured-client-id" }
                         producer { clientId = "code-configured-client-id" }
                         consumer { groupId = "code-configured-group-id" }
-                        configureConsumer()
+                        withConsumerConfig()
+                        withRegisterSchemas()
                     }
                 }
             }
         }
     }
 
-    private fun AbstractKafkaConfig.configureConsumer() {
+    private fun AbstractKafkaConfig.withConsumerConfig() {
         consumerConfig {
             testTopics.forEach { topicName ->
                 consumerRecordHandler(topicName) { record ->
                     logger.debug("Consumed record: {} on topic: {}", record, topicName)
                     recordChannel.send(
-                        Avro.default.fromRecord(
-                            TestRecord::class.serializer(),
-                            record.value()
-                        )
+                        fromRecord<TestRecord>(record.value())
                     )
                 }
+            }
+        }
+    }
+
+    private fun AbstractKafkaConfig.withRegisterSchemas() {
+        topics.forEach {
+            registerSchemas {
+                TestRecord::class at named(it.name())
             }
         }
     }
@@ -178,19 +182,18 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
                 testTopics.forEach { topic ->
                     route("/$topic") {
                         get {
-                            val testRecord = TestRecord(topicIdCounters[topic]!!.inc(), topic.value)
-                            val genericRecord =
-                                Avro.default.toRecord(
-                                    TestRecord::class.serializer(),
-                                    testRecord
-                                )
+                            val testRecord =
+                                TestRecord(topicIdCounters[topic]?.inc() ?: error("topic not counted"), topic.value)
+                            val genericRecord = testRecord.toRecord()
                             val record = ProducerRecord(topic.value, "testKey", genericRecord)
                             with(call.application.kafkaProducer.shouldNotBeNull()) { send(record) }
                             logger.debug("Produced record: {}", record)
                             call.respond(testRecord)
                         }
                         delete {
-                            with(call.application.kafkaAdminClient.shouldNotBeNull()) { deleteTopics(listOf(topic.value)) }
+                            with(call.application.kafkaAdminClient.shouldNotBeNull()) {
+                                deleteTopics(listOf(topic.value))
+                            }
                         }
                     }
                 }

@@ -1,25 +1,12 @@
 package io.github.flaxoos.ktor.server.plugins.kafka
 
-import com.sksamuel.avro4k.Avro
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CONFIG_PATH
-import io.kotest.common.runBlocking
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestScope
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.logging.KtorSimpleLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.serializer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -31,7 +18,6 @@ import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.util.Properties
-import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -42,13 +28,10 @@ private const val CONFIG_PATH_PLACEHOLDER = "CONFIG_PATH"
 private const val GROUP_ID_PLACEHOLDER = "GROUP_ID"
 private const val CLIENT_ID_PLACEHOLDER = "CLIENT_ID"
 
-abstract class KafkaIntegrationTest : FunSpec() {
-
-    abstract val registerSchemas: Map<KClass<out Any>, List<TopicName>>
+open class KafkaIntegrationTest : FunSpec() {
 
     private lateinit var applicationConfigFile: File
     private lateinit var applicationConfigFileContent: String
-    private val ktorClient = HttpClient { install(ContentNegotiation) { json() } }
 
     lateinit var schemaRegistryUrl: String
 
@@ -58,29 +41,7 @@ abstract class KafkaIntegrationTest : FunSpec() {
             schemaRegistry.withKafka(kafka).start()
             schemaRegistryUrl = "http://${schemaRegistry.host}:${schemaRegistry.firstMappedPort}"
 
-            registerSchemas.forEach { (klass, topics) ->
-                topics.forEach { topicName ->
-                    registerSchema(klass, topicName)
-                }
-            }
-
             waitTillProducersAccepted(10, 5.seconds)
-        }
-    }
-
-    @OptIn(InternalSerializationApi::class)
-    internal fun registerSchema(klass: KClass<out Any>, topicName: TopicName) {
-        val schema = Avro.default.schema(klass.serializer()).toString()
-        val payload = mapOf("schema" to schema) // Creating a map to form the payload
-        runBlocking {
-            ktorClient.post("$schemaRegistryUrl/subjects/$topicName-value/versions") {
-                contentType(ContentType.Application.Json)
-                setBody(payload)
-            }.let {
-                if (!it.status.isSuccess()) {
-                    error("${it.status} ${it.bodyAsText()}:\nschema: $payload")
-                }
-            }
         }
     }
 
@@ -120,6 +81,7 @@ abstract class KafkaIntegrationTest : FunSpec() {
             withEnv("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1")
         }
 
+        @Suppress("SwallowedException")
         suspend fun waitTillProducersAccepted(attempts: Int, delay: Duration) {
             val props = Properties()
             props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = kafka.bootstrapServers
@@ -140,7 +102,10 @@ abstract class KafkaIntegrationTest : FunSpec() {
                     isConnected = true
                     break
                 } catch (e: Exception) {
-                    logger.info("Attempt $i to connect to Kafka broker at bootstrap.servers: $kafka.bootstrapServers failed, retrying")
+                    logger.info(
+                        "Attempt $i to connect to Kafka broker at bootstrap.servers: " +
+                            "$kafka.bootstrapServers failed, retrying"
+                    )
                     delay(delay)
                 }
             }
@@ -148,7 +113,10 @@ abstract class KafkaIntegrationTest : FunSpec() {
             producer.close()
 
             if (!isConnected) {
-                throw RuntimeException("Unable to connect to Kafka broker at bootstrap.servers: $kafka.bootstrapServers")
+                throw AssertionError(
+                    "Unable to connect to Kafka broker at bootstrap.servers: " +
+                        "$kafka.bootstrapServers"
+                )
             }
             logger.info("Connected to Kafka broker at bootstrap.servers: $kafka.bootstrapServers")
         }

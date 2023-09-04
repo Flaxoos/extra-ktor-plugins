@@ -11,8 +11,7 @@ Integrate Kafka effortlessly into your Ktor application with this powerful Kafka
 - **Admin Client**: Easy setup and topic creation for your Kafka admin client.
 - **Producer Client**: Initialize Kafka producer instances effortlessly.
 - **Consumer Client**: Configure and manage Kafka consumer instances, including polling logic and record handling.
-- **Built in Avro4k support**: Avro schemas are supported by default. There's no need to define key/value serializers
-- **Coming soon** automatic schema registration and convenience methods for de/serialization.
+- **Built in Avro4k support**: Avro schemas are supported by default. There's no need to define key/value serializers. Schemas can be registered automatically. Avro records to and from conversion methods
 
 ## How to Use:
 
@@ -21,8 +20,8 @@ Integrate Kafka effortlessly into your Ktor application with this powerful Kafka
 The plugin provides a DSL that enables comprehensive Kafka configuration, adhering to the classes and properties defined in [org.apache.kafka.common.config](https://kafka.apache.org/21/javadoc/index.html?org/apache/kafka/common/config/package-summary.html), the DSL offers a fluent, programmatic way to set up your Kafka settings right within your Ktor application.
 
 ```kotlin
-installKafka {
-     schemaRegistryUrl = listOf("my.schemaRegistryUrl")
+install(Kafka) {
+    schemaRegistryUrl = listOf("my.schemaRegistryUrl")
      topic(named("my-topic")) {
          partitions = 1
          replicas = 1
@@ -48,6 +47,9 @@ installKafka {
              myService.save(record)
          }
      }
+     registerSchemas {
+         MyRecord::class at named("my-topic") // <-- Will register schema upon startup
+     }
 }
 ```
 
@@ -56,11 +58,14 @@ installKafka {
 Alternatively, You can easily install the Kafka plugin using an application configuration file:
 
 ```kotlin
-installKafkaFromFile {
+install(KafkaFromFileConfig.Kafka) {
     consumerConfig {
         consumerRecordHandler("my-topic") { record ->
             myService.save(record)
         }
+    }
+    registerSchemas {
+        MyRecord::class at named("my-topic") // <-- Will register schema upon startup
     }
 }
 ```
@@ -69,15 +74,12 @@ The above will look for the config in `ktor.kafka` by default.
 You can also specify a different path if needed:
 
 ```kotlin
-installKafkaFromFile(configurationPath = "ktor.kafka" /*like: ktor.kafka*/){
-    consumerConfig {
-        consumerRecordHandler("my-topic") { record ->
-            myService.save(record)
-        }
-    }
+install(KafkaFromFileConfig.Kafka("ktor.my.kafka")){
+    ...
 }
 ```
 
+Example file configuration:
 ```hocon
 ktor {
   kafka {
@@ -121,7 +123,6 @@ val adminClient = application.kafkaAdminClient
 val producer = application.kafkaProducer
 val consumer = application.kafkaConsumer
 ```
-
 
 ## Important Notes:
 

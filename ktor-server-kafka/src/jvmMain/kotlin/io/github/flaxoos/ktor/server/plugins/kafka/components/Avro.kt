@@ -1,0 +1,93 @@
+package io.github.flaxoos.ktor.server.plugins.kafka.components
+
+import com.sksamuel.avro4k.Avro
+import io.github.flaxoos.ktor.server.plugins.kafka.TopicName
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
+import io.ktor.server.application.log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.serializer
+import org.apache.avro.generic.GenericRecord
+import kotlin.reflect.KClass
+import kotlin.reflect.typeOf
+
+fun createSchemaRegistryClient(schemaRegistryUrl: String, timeoutMs: Long) =
+    SchemaRegistryClient(schemaRegistryUrl, timeoutMs)
+
+class SchemaRegistryClient(schemaRegistryUrl: String, timeoutMs: Long) {
+    val client = HttpClient {
+        install(ContentNegotiation) { json() }
+        install(HttpTimeout) {
+            requestTimeoutMillis = timeoutMs
+        }
+        defaultRequest {
+            url(schemaRegistryUrl)
+        }
+    }
+
+    context (Application)
+    inline fun <reified T : Any> registerSchemas(
+        schemas: MutableMap<KClass<out T>, TopicName>
+    ) {
+        schemas.forEach {
+            registerSchema(it.key, it.value)
+        }
+    }
+
+    context (Application)
+    @OptIn(InternalSerializationApi::class)
+    inline fun <reified T : Any> registerSchema(
+        klass: KClass<out T>,
+        topicName: TopicName
+    ) {
+        val schema = Avro.default.schema(klass.serializer()).toString()
+        val payload = mapOf("schema" to schema) // Creating a map to form the payload
+        launch(Dispatchers.IO) {
+            client.post("subjects/$topicName-value/versions") {
+                contentType(ContentType.Application.Json)
+                setBody(payload)
+            }.let {
+                if (!it.status.isSuccess()) {
+                    log.error(
+                        "Failed registering schema to schema registry at ${it.call.request.url}:\n${it.status} " +
+                            "${it.bodyAsText()}:\nschema: $payload"
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * converts a [GenericRecord] to a [T]
+ *
+ * @param record [GenericRecord]
+ * @return the resulting [T] must be annotated with [Serializable]
+ * @throws [SerializationException] if serialization fails
+ */
+inline fun <reified T> fromRecord(record: GenericRecord): T =
+    Avro.default.fromRecord(serializer(typeOf<T>()), record) as T
+
+/**
+ * converts a [T] to a [GenericRecord]
+ *
+ * @receiver the [T] to convert, must be annotated with [Serializable]
+ * @return the resulting [GenericRecord]
+ * @throws [SerializationException] if serialization fails
+ */
+inline fun <reified T> T.toRecord(): GenericRecord =
+    Avro.default.toRecord(serializer(), this)

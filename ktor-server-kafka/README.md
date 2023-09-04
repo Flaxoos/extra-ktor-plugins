@@ -47,9 +47,9 @@ install(Kafka) {
              myService.save(record)
          }
      }
-    registerSchemas {
-        MyRecord::class at named("my-topic") // <-- Will register schema upon startup
-    }
+     registerSchemas {
+         MyRecord::class at named("my-topic") // <-- Will register schema upon startup
+     }
 }
 ```
 
@@ -64,6 +64,9 @@ install(KafkaFromFileConfig.Kafka) {
             myService.save(record)
         }
     }
+    registerSchemas {
+        MyRecord::class at named("my-topic") // <-- Will register schema upon startup
+    }
 }
 ```
 The above will look for the config in `ktor.kafka` by default.
@@ -72,11 +75,7 @@ You can also specify a different path if needed:
 
 ```kotlin
 install(KafkaFromFileConfig.Kafka("ktor.my.kafka")){
-    consumerConfig {
-        consumerRecordHandler("my-topic") { record ->
-            myService.save(record)
-        }
-    }
+    ...
 }
 ```
 

@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package io.github.flaxoos.ktor.server.plugins.kafka
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
@@ -6,6 +8,7 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CLIENT_ID
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CONSUMER_POLL_FREQUENCY_MS
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_GROUP_ID
+import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_SCHEMA_REGISTRY_CLIENT_TIMEOUT_MS
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_TOPIC_PARTITIONS
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_TOPIC_REPLICAS
 import io.ktor.server.config.ApplicationConfig
@@ -16,6 +19,7 @@ import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
+import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -24,7 +28,11 @@ annotation class KafkaDsl
 
 @KafkaDsl
 sealed class AbstractKafkaConfig {
-    abstract val schemaRegistryUrl: List<String>?
+    /**
+     * The schema registry url, if set, a client will be created and can be accessed later to register schemas manually,
+     * if [schemas] is left empty
+     */
+    abstract val schemaRegistryUrl: String?
     internal abstract val commonProperties: KafkaProperties?
     internal abstract val adminProperties: KafkaProperties?
     internal abstract val producerProperties: KafkaProperties?
@@ -35,19 +43,29 @@ sealed class AbstractKafkaConfig {
      * Because the consumer is operating in the background, it can be defined in the setup phase
      */
     var consumerConfig: KafkaConsumerConfig? = null
+
+    /**
+     * The schemas to register upon startup, if left empty, none will be registered
+     */
+    internal val schemas: MutableMap<KClass<out Any>, TopicName> = mutableMapOf()
+
+    /**
+     * Schema registration timeout
+     */
+    var schemaRegistrationTimeoutMs: Long = DEFAULT_SCHEMA_REGISTRY_CLIENT_TIMEOUT_MS
 }
 
 @KafkaDsl
 class KafkaConsumerConfig {
-    var consumerRecordHandlers: MutableMap<TopicName, ConsumerRecordHandler> = mutableMapOf()
-    var consumerPollFrequency: Duration = DEFAULT_CONSUMER_POLL_FREQUENCY_MS.milliseconds
+    val consumerRecordHandlers: MutableMap<TopicName, ConsumerRecordHandler> = mutableMapOf()
+    val consumerPollFrequency: Duration = DEFAULT_CONSUMER_POLL_FREQUENCY_MS.milliseconds
 }
 
 class KafkaConfig : AbstractKafkaConfig() {
     override val topics: List<NewTopic> by lazy {
         topicBuilders.map { it.build() }
     }
-    override var schemaRegistryUrl: List<String>? = emptyList()
+    override var schemaRegistryUrl: String? = null
 
     override val commonProperties: KafkaProperties? by lazy {
         commonPropertiesBuilder?.build()
@@ -81,8 +99,8 @@ class KafkaConfig : AbstractKafkaConfig() {
  * Configuration for the Kafka plugin
  */
 class KafkaFileConfig(config: ApplicationConfig) : AbstractKafkaConfig() {
-    override var schemaRegistryUrl: List<String> =
-        config.propertyOrNull("schema.registry.url")?.getList() ?: emptyList()
+    override var schemaRegistryUrl: String? =
+        config.propertyOrNull("schema.registry.url")?.getString()
 
     override val commonProperties: KafkaProperties? =
         config.configOrNull("common")?.toMutableMap()
@@ -155,6 +173,11 @@ fun KafkaConfig.admin(configuration: AdminPropertiesBuilder.() -> Unit = { Admin
 }
 
 @KafkaDsl
+fun AbstractKafkaConfig.registerSchemas(configuration: SchemaRegistrationBuilder.() -> Unit = { SchemaRegistrationBuilder() }) {
+    this.schemas.putAll(SchemaRegistrationBuilder().apply(configuration).schemas)
+}
+
+@KafkaDsl
 fun KafkaConfig.topic(name: TopicName, block: TopicBuilder.() -> Unit) {
     topicBuilders.add(TopicBuilder(name).apply(block))
 }
@@ -165,9 +188,8 @@ fun KafkaConfig.producer(
 ) {
     producerPropertiesBuilder =
         ProducerPropertiesBuilder(
-            // TODO: assuming only avro is used, support custom serializers later
+            // assuming only avro is used, support custom serializers later
             with(checkNotNull(schemaRegistryUrl) { "Consumer schema registry url is not set" }) {
-                check(isNotEmpty()) { "Schema registry url is not set" }
                 this
             }
         ).apply(configuration)
@@ -179,9 +201,8 @@ fun KafkaConfig.consumer(
 ) {
     consumerPropertiesBuilder =
         ConsumerPropertiesBuilder(
-            // TODO: assuming only avro is used, support custom serializers later
+            // assuming only avro is used, support custom serializers later
             with(checkNotNull(schemaRegistryUrl) { "Consumer schema registry url is not set" }) {
-                check(isNotEmpty()) { "Schema registry url is not set" }
                 this
             }
         ).apply(configuration)
@@ -192,6 +213,14 @@ fun AbstractKafkaConfig.consumerConfig(
     configuration: KafkaConsumerConfig.() -> Unit = { }
 ) {
     consumerConfig = KafkaConsumerConfig().apply(configuration)
+}
+
+@KafkaDsl
+class SchemaRegistrationBuilder {
+    internal val schemas: MutableMap<KClass<out Any>, TopicName> = mutableMapOf()
+    infix fun KClass<out Any>.at(topicName: TopicName) {
+        schemas[this] = topicName
+    }
 }
 
 @KafkaDsl
@@ -240,7 +269,7 @@ sealed interface KafkaPropertiesBuilder {
 /**
  * See [TopicConfig]
  */
-@Suppress("MemberVisibilityCanBePrivate")
+@Suppress("MemberVisibilityCanBePrivate", "CyclomaticComplexMethod")
 class TopicPropertiesBuilder : KafkaPropertiesBuilder {
     var segmentBytes: Int? = null
     var segmentMs: Long? = null
@@ -302,7 +331,7 @@ class TopicPropertiesBuilder : KafkaPropertiesBuilder {
 /**
  * see [CommonClientConfigs]
  */
-@Suppress("MemberVisibilityCanBePrivate")
+@Suppress("MemberVisibilityCanBePrivate", "CyclomaticComplexMethod")
 sealed class ClientPropertiesBuilder : KafkaPropertiesBuilder {
     var bootstrapServers: Any? = null
     var clientDnsLookup: Any? = null
@@ -361,15 +390,15 @@ class AdminPropertiesBuilder :
  * Used to constraint consumer and producer builders to provide a schema registry url
  */
 internal interface SchemaRegistryProvider {
-    var schemaRegistryUrl: List<String>?
+    var schemaRegistryUrl: String?
 }
 
 /**
  * see [ProducerConfig]
  */
-@Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection")
+@Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection", "CyclomaticComplexMethod")
 class ProducerPropertiesBuilder(
-    override var schemaRegistryUrl: List<String>? = null
+    override var schemaRegistryUrl: String? = null
 ) : ClientPropertiesBuilder(), SchemaRegistryProvider {
     var batchSize: Any? = null
     var acks: Any? = null
@@ -416,9 +445,9 @@ class ProducerPropertiesBuilder(
 /**
  * see [ConsumerConfig]
  */
-@Suppress("MemberVisibilityCanBePrivate")
+@Suppress("MemberVisibilityCanBePrivate", "CyclomaticComplexMethod")
 class ConsumerPropertiesBuilder(
-    override var schemaRegistryUrl: List<String>? = null
+    override var schemaRegistryUrl: String? = null
 ) : ClientPropertiesBuilder(), SchemaRegistryProvider {
     var groupId: Any? = null
     var groupInstanceId: Any? = null

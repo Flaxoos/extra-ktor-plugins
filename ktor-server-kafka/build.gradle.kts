@@ -1,9 +1,9 @@
-
-
 plugins {
     id("ktor-server-plugin-conventions")
     alias(libs.plugins.kotlin.serialization)
 }
+
+version = "1.1.0"
 
 repositories {
     mavenCentral()

@@ -1,4 +1,4 @@
-package io.github.flaxoos.ktor.server.plugins.components
+package io.github.flaxoos.ktor.server.plugins.kafka.components
 
 import io.github.flaxoos.ktor.server.plugins.kafka.Consumer
 import io.github.flaxoos.ktor.server.plugins.kafka.ConsumerRecordHandler

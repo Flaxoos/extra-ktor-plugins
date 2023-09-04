@@ -3,15 +3,13 @@ package io.github.flaxoos.ktor.server.plugins.kafka
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.AdminClientAttributeKey
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.ConsumerAttributeKey
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.ProducerAttributeKey
-import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CONFIG_PATH
-import io.github.flaxoos.ktor.server.plugins.kafka.components.createConsumer
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.SchemaRegistryClientKey
+import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CONFIG_PATH
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createConsumer
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createKafkaAdminClient
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createKafkaTopics
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createProducer
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createSchemaRegistryClient
-import io.github.flaxoos.ktor.server.plugins.kafka.components.startConsumer
 import io.github.flaxoos.ktor.server.plugins.kafka.components.startConsumer
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStarted

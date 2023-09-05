@@ -5,4 +5,5 @@ plugins {
 dependencies {
     kover(projects.ktorServerRateLimiting)
     kover(projects.ktorClientCircuitBreaker)
+    kover(projects.ktorServerKafka)
 }

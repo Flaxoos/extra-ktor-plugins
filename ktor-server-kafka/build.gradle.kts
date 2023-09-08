@@ -1,9 +1,8 @@
 plugins {
     id("ktor-server-plugin-conventions")
     alias(libs.plugins.kotlin.serialization)
+    id(libs.plugins.shadow.get().pluginId)
 }
-
-version = "1.1.0"
 
 repositories {
     mavenCentral()
@@ -24,12 +23,13 @@ kotlin {
         jvmMain {
             dependencies {
                 api(libs.kafka.clients)
-                api(libs.kafka.streams)
+                api(libs.avro4k.core)
+                api(libs.kafka.avro.serializer)
                 implementation(libs.kafka.schema.registry.client)
-                implementation(libs.kafka.avro.serializer)
-                implementation(libs.avro4k.core)
                 implementation(libs.ktor.client.contentNegotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
+            }
+            dependencies {
             }
         }
         jvmTest {

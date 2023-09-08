@@ -21,8 +21,10 @@ import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.util.AttributeKey
 import io.ktor.util.KtorDsl
+import io.ktor.utils.io.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
@@ -121,25 +123,38 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafka(pluginConfig: 
             application.attributes.put(SchemaRegistryClientKey, schemaRegistryClient)
         }
     }
-    pluginConfig.adminProperties?.createKafkaAdminClient()
-        ?.also {
-            application.attributes.put(AdminClientAttributeKey, it)
-            application.log.info("Kafka admin setup finished")
-            runBlocking(Dispatchers.IO) {
-                it.createKafkaTopics(topicBuilders = pluginConfig.topics) {
-                    application.log.info("Created Topics: $first")
-                }
+    try {
+        pluginConfig.adminProperties?.createKafkaAdminClient()
+    } catch (e: Exception) {
+        failCreatingClient("admin client", pluginConfig.adminProperties!!)
+        return
+    }?.also {
+        application.attributes.put(AdminClientAttributeKey, it)
+        application.log.info("Kafka admin setup finished")
+        runBlocking(Dispatchers.IO) {
+            it.createKafkaTopics(topicBuilders = pluginConfig.topics) {
+                application.log.info("Created Topics: $first")
             }
         }
-
-    pluginConfig.producerProperties?.createProducer()
+    }
+    try {
+        pluginConfig.producerProperties?.createProducer()
+    } catch (e: Exception) {
+        failCreatingClient("producer", pluginConfig.producerProperties!!)
+        return
+    }
         ?.also {
             application.attributes.put(ProducerAttributeKey, it)
             application.log.info("Kafka producer setup finished")
         }
 
     pluginConfig.consumerConfig?.let {
-        pluginConfig.consumerProperties?.createConsumer()?.also { consumer ->
+        try {
+            pluginConfig.consumerProperties?.createConsumer()
+        } catch (e: Exception) {
+            failCreatingClient("consumer", pluginConfig.consumerProperties!!)
+            return
+        }?.also { consumer ->
             application.attributes.put(ConsumerAttributeKey, consumer)
             application.attributes.put(ConsumerShouldRun, true)
             application.log.info("Kafka consumer setup finished")
@@ -148,6 +163,18 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafka(pluginConfig: 
 
     onStart()
     onStop()
+}
+
+private fun <T : AbstractKafkaConfig> PluginBuilder<T>.failCreatingClient(
+    clientName: String,
+    clientProperties: KafkaProperties
+) {
+    application.coroutineContext.cancel(
+        CancellationException(
+            "Failed creating kafka $clientName using properties: " +
+                clientProperties.entries.joinToString { "${it.key}: ${it.value}\n" }
+        )
+    )
 }
 
 private fun <T : AbstractKafkaConfig> PluginBuilder<T>.onStop() {

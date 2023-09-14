@@ -32,5 +32,5 @@ jobs:
           tasks: clean,build
           execute_on_root_anyway: true
         env:
-          GPR_USER: ${{ env.GPR_USER }}
+          GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}

@@ -10,6 +10,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -25,13 +26,20 @@ internal fun Map<String, Any?>.createConsumer(): Consumer =
 internal fun Application.startConsumer(
     consumer: Consumer,
     pollFrequency: Duration,
-    consumerRecordHandlers: Map<TopicName, ConsumerRecordHandler>
+    consumerRecordHandlers: Map<TopicName, ConsumerRecordHandler>,
+    cleanUp: () -> Unit
 ): Job {
     val consumerFlow = subscribe(consumer, pollFrequency, consumerRecordHandlers.keys.toList())
     return launch(Dispatchers.IO) {
-        consumerFlow.collect { record ->
-            consumerRecordHandlers[named(record.topic())]?.invoke(this@startConsumer, record)
-                ?: log.warn("No handler defined for topic ${record.topic()}")
+        try {
+            consumerFlow.collect { record ->
+                consumerRecordHandlers[named(record.topic())]?.invoke(this@startConsumer, record)
+                    ?: log.warn("No handler defined for topic ${record.topic()}")
+            }
+        } finally {
+            withContext(NonCancellable) {
+                cleanUp()
+            }
         }
     }
 }

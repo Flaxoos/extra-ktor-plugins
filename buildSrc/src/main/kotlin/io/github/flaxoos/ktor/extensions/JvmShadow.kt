@@ -34,20 +34,11 @@ fun Project.jvmShadow() {
             project.configurations["${JVM}CompileClasspath"],
             project.configurations["${JVM}RuntimeClasspath"],
         )
-//        val excludeModules = project
-//            .configurations
-//            .map { it.resolvedConfiguration.lenientConfiguration.allModuleDependencies.map { it.name } }
-
-        dependencies {
-            exclude(
-                Spec<ResolvedDependency> {
-                    it.name.contains("slf4j")
-                },
-            )
-        } // replacement that I haven't see anywhere else
+        dependsOn(tasks.named("jvmJar"))
         dependencies {
             exclude(dependency("org.slf4j:slf4j-api"))
         }
+        this.configurations
     }
     with(the<PublishingExtension>()) {
         publications {

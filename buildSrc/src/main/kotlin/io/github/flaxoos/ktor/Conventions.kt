@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import java.net.URI
 
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics() {}
@@ -180,12 +181,12 @@ open class Conventions : Plugin<Project> {
 
             with(the<PublishingExtension>()) {
                 repositories {
-//                    maven {
-//                        name = "GitHubPackages"
-//                        url =
-//                            URI("https://maven.pkg.github.com/idoflax/${project.findProperty("github.repository.name") ?: project.name}")
-//                        gprWriteCredentials()
-//                    }
+                    maven {
+                        name = "GitHubPackages"
+                        url =
+                            URI("https://maven.pkg.github.com/idoflax/${project.findProperty("github.repository.name") ?: project.name}")
+                        gprWriteCredentials()
+                    }
                 }
             }
 

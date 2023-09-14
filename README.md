@@ -42,6 +42,9 @@ dependencies {
 }
 ```
 
+## Examples:
+See [examples repository](https://github.com/Flaxoos/flax-ktor-plugins-examples)
+
 ## Contributing
 
 Contributions are always welcome! If you have an idea for a plugin or want to improve an existing one, feel free to fork this repository and submit a pull request.

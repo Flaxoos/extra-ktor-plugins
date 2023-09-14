@@ -41,5 +41,5 @@ jobs:
           parent_project_task: koverLog
           execute_on_root_anyway: true
         env:
-          GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
+          GPR_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
           GPR_USER: ${{ env.GPR_USER }}

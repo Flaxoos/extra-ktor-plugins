@@ -184,7 +184,7 @@ open class Conventions : Plugin<Project> {
                     maven {
                         name = "GitHubPackages"
                         url =
-                            URI("https://maven.pkg.github.com/idoflax/${project.findProperty("github.repository.name") ?: project.name}")
+                            URI("https://maven.pkg.github.com/flaxoos/${project.findProperty("github.repository.name") ?: project.name}")
                         gprWriteCredentials()
                     }
                 }

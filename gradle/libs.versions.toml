@@ -4,17 +4,19 @@ kotlin = "1.9.0"
 java = "11"
 gradle = "8.2.1"
 shadow = "8.1.1"
+kotlinx-serialization = "1.6.0"
 
 # Web Framework
 ktor = "2.3.2"
 
 # Logging
 logback = "1.4.11"
+slf4j = "1.7.36"
 logging_capabilities = "0.11.1"
 
 # Asynchronous and Concurrency
 atomicFu = "0.21.0"
-kotlinx_coroutines = "1.7.1"
+kotlinx-coroutines = "1.7.1"
 
 # Testing
 kotest = "5.6.2"
@@ -27,11 +29,11 @@ testcontainers = "1.19.0"
 # Code Quality and Coverage
 ktlint = "11.5.1"
 kover = "0.7.2"
-koverBadge = "0.0.5"
+koverBadge = "0.0.6"
 detekt = "1.23.1"
 
 # Date and Time
-kotlinx_datetime = "0.4.0"
+kotlinx-datetime = "0.4.0"
 
 # Functional Programming
 arrow = "1.2.0"
@@ -51,18 +53,33 @@ kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", ve
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow"}
 arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
 shadow-gradlePlugin = { module = "com.github.johnrengelman:shadow", version.ref = "shadow" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 # Web Framework
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
+ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-cio-jvm = { module = "io.ktor:ktor-server-cio-jvm", version.ref = "ktor" }
+ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
+ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-server-contentNegotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 
 # Testing libraries
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 kotest-extensions-testcontainers = { module = "io.kotest.extensions:kotest-extensions-testcontainers", version.ref = "kotest-test-containers" }
 kotest-extensions-testcontainers-kafka = { module = "io.kotest.extensions:kotest-extensions-testcontainers-kafka", version.ref = "kotest-test-containers" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
 
@@ -84,6 +101,7 @@ detekt-gradlePlugin = { module =  "io.gitlab.arturbosch.detekt:detekt-gradle-plu
 atomicfu-gradlePlugin = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version.ref = "atomicFu" }
 
 # Logging
+logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 loggingCapabilities-gradlePlugin = { module = "dev.jacomet.gradle.plugins:logging-capabilities", version.ref = "logging_capabilities" }
 

@@ -37,12 +37,14 @@ internal fun ClientPluginBuilder<CircuitBreakerConfig>.circuitBreakerPluginBuild
     val instanceRegistry = client.circuitBreakerRegistry()
 
     onRequest { request, _ ->
-        val circuitBreakerName = request.attributes[CircuitBreakerNameKey]
-        instanceRegistry.getValue(circuitBreakerName).wire()
+        request.attributes.getOrNull(CircuitBreakerNameKey)?.let { circuitBreakerName ->
+            instanceRegistry.getValue(circuitBreakerName).wire()
+        }
     }
 
     onResponse { response ->
-        val circuitBreakerName = response.request.attributes[CircuitBreakerNameKey]
-        instanceRegistry.getValue(circuitBreakerName).handleResponse(response)
+        response.request.attributes.getOrNull(CircuitBreakerNameKey)?.let { circuitBreakerName ->
+            instanceRegistry.getValue(circuitBreakerName).handleResponse(response)
+        }
     }
 }

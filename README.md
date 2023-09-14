@@ -42,9 +42,9 @@ dependencies {
 }
 ```
 
+## Examples:
+See [examples repository](https://github.com/Flaxoos/flax-ktor-plugins-examples)
+
 ## Contributing
 
 Contributions are always welcome! If you have an idea for a plugin or want to improve an existing one, feel free to fork this repository and submit a pull request.
-
-### Notes for contributors
-If you want to build this locally, there is a dependency on a custom gradle plugin for adding the test coverage badge. As of 30/9/2023, it's gradle plugin portal status is still pending, so the plugin is available via github packages. Because github public packages still requires a token for reading, and token can't and shouldn't be committed, please contact me at idoflax@gmail.com and I will provide you the token. Alternatively, you can pull the plugin project from [here](https://github.com/Flaxoos/flax-gradle-plugins) and build it yourself, or just disable the kover-badge plugin, it won't affect the build.

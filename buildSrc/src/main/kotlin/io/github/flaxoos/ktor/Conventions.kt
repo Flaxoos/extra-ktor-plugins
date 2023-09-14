@@ -3,6 +3,7 @@ package io.github.flaxoos.ktor
 import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
+import io.github.flaxoos.ktor.extensions.jvmShadow
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
@@ -12,16 +13,22 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
+import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.the
+import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
+import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import java.net.URI
@@ -31,7 +38,8 @@ open class Conventions : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
             with(plugins) {
-                apply("org.gradle.version-catalog")
+                apply("org.gradle.java-library")
+                apply("java-library-distribution")
                 apply("org.jetbrains.kotlin.multiplatform")
                 apply("maven-publish")
                 apply("idea")
@@ -43,11 +51,9 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("dokka"))
                 apply(project.plugin("detekt"))
                 apply(project.plugin("ktlint"))
-                apply(project.plugin("shadow"))
             }
             group = "io.github.flaxoos"
-            version = "1.0.0"
-
+            version = project.property("VERSION") as String
             repositories {
                 mavenCentral()
                 maven {
@@ -64,6 +70,15 @@ open class Conventions : Plugin<Project> {
             extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
                 jvm {
                     jvmToolchain(versionOf("java").toInt())
+                    tasks.named("jvmJar", Jar::class).configure {
+                        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+                        from(
+                            listOf(
+                                configurations["jvmCompileClasspath"],
+                                configurations["jvmRuntimeClasspath"],
+                            ).map { it.map { if (it.isDirectory) it else zipTree(it) } },
+                        )
+                    }
                 }
                 val hostOs = System.getProperty("os.name")
                 val arch = System.getProperty("os.arch")
@@ -71,7 +86,7 @@ open class Conventions : Plugin<Project> {
                     hostOs == "Mac OS X" && arch == "x86_64" -> macosX64("native")
                     hostOs == "Mac OS X" && arch == "aarch64" -> macosArm64("native")
                     hostOs == "Linux" -> linuxX64("native")
-                    //TODO: support IOS and android for client plugins, split to two conventions for server and client
+                    // TODO: support IOS and android for client plugins, split to two conventions for server and client
                     // Other supported targets are listed here: https://ktor.io/docs/native-server.html#targets
                     else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
                 }
@@ -82,6 +97,7 @@ open class Conventions : Plugin<Project> {
                         }
                     }
                 }
+
                 this.sourceSets.apply {
                     commonMain {
                         dependencies {
@@ -156,12 +172,14 @@ open class Conventions : Plugin<Project> {
                     listOf(
                         "red" from 0.0f,
                         "yellow" from 50.0f,
-                        "green" from 90.0f
-                    )
+                        "green" from 90.0f,
+                    ),
                 )
             }
 
-            extensions.findByType(PublishingExtension::class)?.apply {
+            jvmShadow()
+
+            with(the<PublishingExtension>()) {
                 repositories {
                     maven {
                         name = "GitHubPackages"
@@ -191,6 +209,13 @@ open class Conventions : Plugin<Project> {
                 transformJvm = true
                 jvmVariant = "FU"
             }
+
+            if (hasProperty("buildScan")) {
+                extensions.findByName("buildScan")?.withGroovyBuilder {
+                    setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
+                    setProperty("termsOfServiceAgree", "yes")
+                }
+            }
         }
     }
 }
@@ -202,17 +227,17 @@ class KtorServerPluginConventions : Conventions() {
             commonMain {
                 with(this.project) {
                     dependencies {
-                        implementation("io.ktor:ktor-server-core:${ktorVersion()}")
-                        implementation("io.ktor:ktor-server-config-yaml:${ktorVersion()}")
-                        implementation("io.ktor:ktor-server-auth:${ktorVersion()}")
+                        implementation(library("ktor-server-core"))
+                        implementation(library("ktor-server-config-yaml"))
+                        implementation(library("ktor-server-auth"))
                     }
                 }
             }
             commonTest {
                 with(this.project) {
                     dependencies {
-                        implementation("io.ktor:ktor-server-test-host:${ktorVersion()}")
-                        implementation("io.ktor:ktor-server-status-pages:${ktorVersion()}")
+                        implementation(library("ktor-server-test-host"))
+                        implementation(library("ktor-server-status-pages"))
                     }
                 }
             }
@@ -221,26 +246,26 @@ class KtorServerPluginConventions : Conventions() {
 }
 
 class KtorClientPluginConventions : Conventions() {
+    @OptIn(ExternalVariantApi::class)
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
-        sourceSets.apply {
-            commonMain {
-                dependencies {
-                    with(this.project) {
-                        implementation("io.ktor:ktor-client-core:${ktorVersion()}")
-                        implementation("io.ktor:ktor-client-cio:${ktorVersion()}")
+        with(this.project) {
+            sourceSets.apply {
+                commonMain {
+                    dependencies {
+                        implementation(library("ktor-client-core"))
+                        implementation(library("ktor-client-cio"))
                     }
                 }
-            }
-            commonTest {
-                dependencies {
-                    with(this.project) {
-                        implementation("io.ktor:ktor-client-mock:${ktorVersion()}")
+                commonTest {
+                    dependencies {
+                        implementation(library("ktor-client-mock"))
                     }
                 }
-            }
-            jvmTest {
-                dependencies {
-                    implementation("ch.qos.logback:logback-classic:1.4.9")
+
+                jvmTest {
+                    dependencies {
+                        implementation(library("logback-classic"))
+                    }
                 }
             }
         }
@@ -265,7 +290,7 @@ private fun Project.ktorVersion() = versionOf("ktor")
  * Deletes the current tag and recreates it
  */
 internal fun Project.createReleaseTag() {
-    val tagName = "release/${version}"
+    val tagName = "release/$version"
     try {
         runCommands("git", "tag", "-d", tagName)
     } catch (e: Exception) {

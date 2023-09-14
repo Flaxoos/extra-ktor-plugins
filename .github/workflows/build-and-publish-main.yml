@@ -37,7 +37,7 @@ jobs:
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,build,publishAll
+          tasks: clean,build,publishWithShadowedJvm
           parent_project_task: koverLog
           execute_on_root_anyway: true
         env:

@@ -26,19 +26,20 @@ import org.apache.avro.generic.GenericRecord
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 
-fun createSchemaRegistryClient(schemaRegistryUrl: String, timeoutMs: Long) =
-    SchemaRegistryClient(schemaRegistryUrl, timeoutMs)
+fun createSchemaRegistryClient(schemaRegistryUrl: String, timeoutMs: Long, clientProvider: () -> HttpClient) =
+    SchemaRegistryClient(clientProvider(), schemaRegistryUrl, timeoutMs)
 
-class SchemaRegistryClient(schemaRegistryUrl: String, timeoutMs: Long) {
-    val client = HttpClient {
-        install(ContentNegotiation) { json() }
-        install(HttpTimeout) {
-            requestTimeoutMillis = timeoutMs
+class SchemaRegistryClient(providedClient: HttpClient, schemaRegistryUrl: String, timeoutMs: Long) {
+    val client =
+        providedClient.config {
+            install(ContentNegotiation) { json() }
+            install(HttpTimeout) {
+                requestTimeoutMillis = timeoutMs
+            }
+            defaultRequest {
+                url(schemaRegistryUrl)
+            }
         }
-        defaultRequest {
-            url(schemaRegistryUrl)
-        }
-    }
 
     context (Application)
     inline fun <reified T : Any> registerSchemas(

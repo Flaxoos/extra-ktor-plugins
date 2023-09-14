@@ -11,6 +11,7 @@ import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_GROUP_ID
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_SCHEMA_REGISTRY_CLIENT_TIMEOUT_MS
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_TOPIC_PARTITIONS
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_TOPIC_REPLICAS
+import io.ktor.client.HttpClient
 import io.ktor.server.config.ApplicationConfig
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.NewTopic
@@ -19,6 +20,7 @@ import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
+import kotlin.properties.Delegates
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -48,6 +50,11 @@ sealed class AbstractKafkaConfig {
      * The schemas to register upon startup, if left empty, none will be registered
      */
     internal val schemas: MutableMap<KClass<out Any>, TopicName> = mutableMapOf()
+
+    /**
+     * The provider for the client to use to register schemas
+     */
+    internal var schemaRegistryClientProvider: () -> HttpClient by Delegates.notNull()
 
     /**
      * Schema registration timeout
@@ -174,7 +181,10 @@ fun KafkaConfig.admin(configuration: AdminPropertiesBuilder.() -> Unit = { Admin
 
 @KafkaDsl
 fun AbstractKafkaConfig.registerSchemas(configuration: SchemaRegistrationBuilder.() -> Unit = { SchemaRegistrationBuilder() }) {
-    this.schemas.putAll(SchemaRegistrationBuilder().apply(configuration).schemas)
+    SchemaRegistrationBuilder().apply(configuration).let {
+        this.schemas.putAll(it.schemas)
+        this.schemaRegistryClientProvider = it.clientProvider
+    }
 }
 
 @KafkaDsl
@@ -218,8 +228,22 @@ fun AbstractKafkaConfig.consumerConfig(
 @KafkaDsl
 class SchemaRegistrationBuilder {
     internal val schemas: MutableMap<KClass<out Any>, TopicName> = mutableMapOf()
+    internal var clientProvider: () -> HttpClient = {
+        HttpClient()
+    }
+
     infix fun KClass<out Any>.at(topicName: TopicName) {
         schemas[this] = topicName
+    }
+
+    /**
+     * optionally provide a client to register schemas, by default, CIO would be used.
+     * In any case, the following it would be configured with serialization json and the configured
+     * [AbstractKafkaConfig.schemaRegistrationTimeoutMs]
+     */
+    @KafkaDsl
+    fun using(provider: () -> HttpClient) {
+        clientProvider = provider
     }
 }
 

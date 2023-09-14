@@ -48,6 +48,9 @@ install(Kafka) {
          }
      }
      registerSchemas {
+         using { // <-- optionally provide a client, by default CIO is used
+             HttpClient()
+         }
          MyRecord::class at named("my-topic") // <-- Will register schema upon startup
      }
 }

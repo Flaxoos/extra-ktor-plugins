@@ -104,6 +104,9 @@ class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
     private fun AbstractKafkaConfig.withRegisterSchemas() {
         topics.forEach {
             registerSchemas {
+                using {
+                    HttpClient()
+                }
                 TestRecord::class at named(it.name())
             }
         }

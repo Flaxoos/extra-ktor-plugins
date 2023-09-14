@@ -122,9 +122,15 @@ fun Application.installKafka(config: KafkaConfig.() -> Unit) {
 private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafka(pluginConfig: T) {
     application.log.info("Setting up kafka clients")
     pluginConfig.schemaRegistryUrl?.let {
-        val schemaRegistryClient = createSchemaRegistryClient(it, pluginConfig.schemaRegistrationTimeoutMs)
-        with(application) { schemaRegistryClient.registerSchemas(pluginConfig.schemas) }.also {
-            application.attributes.put(SchemaRegistryClientKey, schemaRegistryClient)
+        if (pluginConfig.schemas.isNotEmpty()) {
+            val schemaRegistryClient = createSchemaRegistryClient(
+                it,
+                pluginConfig.schemaRegistrationTimeoutMs,
+                pluginConfig.schemaRegistryClientProvider
+            )
+            with(application) { schemaRegistryClient.registerSchemas(pluginConfig.schemas) }.also {
+                application.attributes.put(SchemaRegistryClientKey, schemaRegistryClient)
+            }
         }
     }
     try {

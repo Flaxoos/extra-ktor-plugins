@@ -10,6 +10,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
@@ -48,11 +49,19 @@ class SchemaRegistryClient(schemaRegistryUrl: String, timeoutMs: Long) {
         }
     }
 
+    /**
+     * Register a schema to the schema registry using ktor client
+     *
+     * @param klass the class to register, must be annotated with [Serializable]
+     * @param topicName the topic name to associate the schema with
+     * @param onConflict the function to run if a schema with the same name already exists, defaults to do
+     */
     context (Application)
     @OptIn(InternalSerializationApi::class)
     inline fun <reified T : Any> registerSchema(
         klass: KClass<out T>,
-        topicName: TopicName
+        topicName: TopicName,
+        noinline onConflict: () -> Unit = {}
     ) {
         val schema = Avro.default.schema(klass.serializer()).toString()
         val payload = mapOf("schema" to schema) // Creating a map to form the payload
@@ -61,6 +70,9 @@ class SchemaRegistryClient(schemaRegistryUrl: String, timeoutMs: Long) {
                 contentType(ContentType.Application.Json)
                 setBody(payload)
             }.let {
+                if (it.status == HttpStatusCode.Conflict) {
+                    onConflict()
+                }
                 if (!it.status.isSuccess()) {
                     log.error(
                         "Failed registering schema to schema registry at ${it.call.request.url}:\n${it.status} " +

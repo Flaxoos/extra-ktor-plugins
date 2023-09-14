@@ -25,9 +25,9 @@ kotlin {
                 api(libs.kafka.clients)
                 api(libs.avro4k.core)
                 api(libs.kafka.avro.serializer)
-                implementation(libs.kafka.schema.registry.client)
+                api(libs.kafka.schema.registry.client)
+                api(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.contentNegotiation)
-                implementation(libs.ktor.serialization.kotlinx.json)
             }
             dependencies {
             }

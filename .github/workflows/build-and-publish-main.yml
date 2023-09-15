@@ -19,7 +19,7 @@ jobs:
           java-version: 11
 
       - name: Detect modified subprojects
-        uses: flaxoos/detect-modified-projects@v1.1.0
+        uses: flaxoos/detect-modified-projects@main
         id: detect-modified-subprojects
         with:
           project_prefixes: ktor-client,ktor-server
@@ -34,7 +34,7 @@ jobs:
 
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
         id: execute-gradle-tasks-on-projects
-        uses: flaxoos/execute-gradle-tasks-on-projects@v1.1.0
+        uses: flaxoos/execute-gradle-tasks-on-projects@main
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build,publishWithShadowedJvm

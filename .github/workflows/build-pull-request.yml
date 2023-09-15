@@ -20,13 +20,13 @@ jobs:
 
       - name: Detect modified subprojects
         id: detect-modified-subprojects
-        uses: flaxoos/detect-modified-projects@v1.0.0
+        uses: flaxoos/detect-modified-projects@v1.1.0
         with:
           project_prefixes: ktor-client,ktor-server
 
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
         id: execute-gradle-tasks-on-projects
-        uses: flaxoos/execute-gradle-tasks-on-projects@v1.0.0
+        uses: flaxoos/execute-gradle-tasks-on-projects@v1.1.0
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build

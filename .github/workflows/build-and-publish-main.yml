@@ -19,7 +19,7 @@ jobs:
           java-version: 11
 
       - name: Detect modified subprojects
-        uses: flaxoos/detect-modified-projects@v1.0.1
+        uses: flaxoos/detect-modified-projects@v1.0.0
         id: detect-modified-subprojects
         with:
           project_prefixes: ktor-client,ktor-server

@@ -27,6 +27,7 @@ import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -64,6 +65,8 @@ open class Conventions : Plugin<Project> {
             tasks.withType(KotlinCompilationTask::class) {
                 compilerOptions {
                     freeCompilerArgs.add("-Xcontext-receivers")
+                    languageVersion.set(KOTLIN_1_9)
+                    apiVersion.set(KOTLIN_1_9)
                 }
             }
 

@@ -1,5 +1,7 @@
 package io.github.flaxoos.ktor.server.plugins.ratelimiter
 
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketType
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.TimeWindow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.spec.style.scopes.ContainerScope
@@ -42,11 +44,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.math.floor
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-private const val LIMIT = 5
-private const val EXCEED = 1
+private const val LIMIT = 5.0
+private const val EXCEED = 1.0
 private const val DELAY_MS = 1
 private const val BASIC_AUTH_NAME = "test"
 private const val BASIC_AUTH_PASSWORD = "password"
@@ -106,7 +110,7 @@ class RateLimitingTest : FunSpec() {
 
                     delay(window)
 
-                    testClient.call(times = 1).shouldNotBeLimited()
+                    testClient.call(times = 1.0).shouldNotBeLimited()
                 }
             }
 
@@ -114,9 +118,8 @@ class RateLimitingTest : FunSpec() {
                 testRateLimiting(
                     "Bursts should pass if within time window",
                     modifyConfiguration = {
-                        limit = LIMIT
-                        timeWindow = window
-                        burstLimit = LIMIT * 2
+                        capacity = LIMIT
+                        timeWindow = TimeWindow(LIMIT, window)
                     }
                 ) {
                     client.call(times = LIMIT + EXCEED).shouldNotBeLimited()
@@ -125,9 +128,8 @@ class RateLimitingTest : FunSpec() {
                 testRateLimiting(
                     "Bursts should not pass if not within time window",
                     modifyConfiguration = {
-                        limit = LIMIT
-                        timeWindow = window
-                        burstLimit = LIMIT * 2
+                        capacity = LIMIT
+                        timeWindow = TimeWindow(LIMIT, window)
                     }
                 ) {
                     client.call(times = LIMIT + 10).shouldBeLimited()
@@ -173,7 +175,7 @@ class RateLimitingTest : FunSpec() {
                 blackListedPrincipals = setOf(UserIdPrincipal(BASIC_AUTH_NAME))
             }, exclude = ApplicationRateLimiting) { testClient ->
                 testClient.call(
-                    times = 1
+                    times = 1.0
                 ).shouldBeForbidden()
             }
 
@@ -181,7 +183,7 @@ class RateLimitingTest : FunSpec() {
                 blackListedHosts = setOf(LOCALHOST)
             }) { testClient ->
                 testClient.call(
-                    times = 1
+                    times = 1.0
                 ).shouldBeForbidden()
             }
 
@@ -189,7 +191,7 @@ class RateLimitingTest : FunSpec() {
                 blackListedAgents = setOf(USER_AGENT)
             }) { testClient ->
                 testClient.call(
-                    times = 1,
+                    times = 1.0,
                     userAgent = USER_AGENT
                 ).shouldBeForbidden()
             }
@@ -202,17 +204,21 @@ class RateLimitingTest : FunSpec() {
         modifyConfiguration: RateLimitingConfiguration.() -> Unit = {},
         callShouldFail: Boolean = false,
         exclude: Plugin<Application, RateLimitingConfiguration, PluginInstance>? = null,
+        bucketTypes: List<BucketType> = listOf(BucketType.Token, BucketType.Leaky(10)),
         test: suspend ApplicationTestBuilder.(HttpClient) -> Unit
     ) {
+
         withData(
-            nameFn = { "${it.key.name}: $testName" },
+            nameFn = { "${it.first.key.name} - ${it.second}: $testName" },
             ts = listOf(
                 RouteRateLimiting,
                 ApplicationRateLimiting
             ).let { plugins ->
                 exclude?.let { plugins.minus(it) } ?: plugins
+            }.flatMap { plugin ->
+                bucketTypes.map { plugin to it }
             }
-        ) { rateLimiter ->
+        ) { (rateLimiter, bucketType) ->
             testApplication {
                 val applicationScope = rateLimiter !is RouteScopedPlugin
                 install(Authentication) {
@@ -229,7 +235,7 @@ class RateLimitingTest : FunSpec() {
                 }
                 if (applicationScope) {
                     install(ApplicationRateLimiting) {
-                        configureForTest(rateLimiter, testName, modifyConfiguration)
+                        configureForTest(rateLimiter, bucketType, testName, modifyConfiguration)
                     }
                 }
                 routing {
@@ -237,7 +243,7 @@ class RateLimitingTest : FunSpec() {
                         route(LIMITED_PATH) {
                             if (!applicationScope) {
                                 install(RouteRateLimiting) {
-                                    configureForTest(rateLimiter, testName, modifyConfiguration)
+                                    configureForTest(rateLimiter, bucketType, testName, modifyConfiguration)
                                 }
                             }
                             get {
@@ -263,25 +269,26 @@ class RateLimitingTest : FunSpec() {
 
     private fun RateLimitingConfiguration.configureForTest(
         rateLimiter: Plugin<Application, RateLimitingConfiguration, PluginInstance>,
+        bucketType: BucketType,
         testName: String,
         modifyConfiguration: RateLimitingConfiguration.() -> Unit
     ) {
-        limit = LIMIT
-        timeWindow = window
-        burstLimit = LIMIT
-        loggerProvider = { KtorSimpleLogger("io.github.flaxoos.${rateLimiter.key.name}: $testName") }
+        this.bucketType = bucketType
+        this.capacity = LIMIT
+        this.timeWindow = TimeWindow(LIMIT, window)
+        this.loggerProvider = { KtorSimpleLogger("io.github.flaxoos.${rateLimiter.key.name}: $testName") }
         modifyConfiguration()
     }
 
     private suspend fun HttpClient.call(
         path: String = LIMITED_PATH,
-        times: Int = LIMIT,
+        times: Double = LIMIT,
         delay: Duration = DELAY_MS.milliseconds,
         basicAuthFn: (Int) -> String = { _ -> encodedBasicAuth },
         userAgent: String? = null
     ) =
         coroutineScope {
-            (1..times).map { index ->
+            (1..floor(times).toInt()).map { index ->
                 async {
                     delay(delay)
                     get(path) {

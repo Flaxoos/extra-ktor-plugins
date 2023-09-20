@@ -1,5 +1,9 @@
 package io.github.flaxoos.ktor.server.plugins.ratelimiter
 
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketCapacityUnit
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketResponse
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketType
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.TimeWindow
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -8,8 +12,10 @@ import io.ktor.server.auth.Principal
 import io.ktor.server.response.respond
 import io.ktor.util.logging.Logger
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 internal const val RATE_LIMIT_EXCEEDED_MESSAGE = "Rate limit exceeded"
+internal const val X_RATE_LIMIT = "X-RateLimit"
 
 /**
  * Rate limit plugin configuration.
@@ -20,14 +26,29 @@ internal const val RATE_LIMIT_EXCEEDED_MESSAGE = "Rate limit exceeded"
  */
 class RateLimitingConfiguration {
     /**
-     * How many requests per time window
+     * What type of bucket to use for the rate limiter, defaults to [BucketType.TOKEN]
      */
-    var limit: Int = Int.MAX_VALUE
+    var bucketType: BucketType = BucketType.Token
 
     /**
-     * The time window in which the rate limit is applied
+     * What should the bucket capacity be measure in, defaults to [BucketCapacityUnit.Calls]
      */
-    var timeWindow: Duration = Duration.INFINITE
+    var capacityUnit: BucketCapacityUnit = BucketCapacityUnit.Calls()
+
+    /**
+     * Refill/Empty rate for the Token/Leaky bucket
+     */
+    var volumeChangeRate: Pair<Duration, Double> = 1.seconds to 1.0
+
+    /**
+     * Bucket capacity, measured in the configured [capacityUnit]
+     */
+    var capacity: Double = Double.MAX_VALUE
+
+    /**
+     * An optional time window constraint
+     */
+    var timeWindow: TimeWindow? = null
 
     /**
      * Any Hosts that are whitelisted, i.e. will be allowed through without rate limiting
@@ -67,15 +88,15 @@ class RateLimitingConfiguration {
     }
 
     /**
-     * Allow a burst of requests to be processed before the limit kicks in
+     * The call handler for rate limited IPs, use to define the response for rate limited IPs, default is respond with 429 and appropriate X-RateLimit headers
      */
-    var burstLimit: Int = limit
-
-    /**
-     * The call handler for rate limited IPs, use to define the response for rate limited IPs, default is respond with 429
-     */
-    var rateLimitExceededCallHandler: suspend (ApplicationCall, Int) -> Unit = { call, count ->
-        call.respond(HttpStatusCode.TooManyRequests, "$RATE_LIMIT_EXCEEDED_MESSAGE: call count: $count, limit: $limit")
+    val rateLimitExceededCallHandler: suspend ApplicationCall.(BucketResponse.LimitedBy) -> Unit = { limitedBy ->
+        respond(
+            HttpStatusCode.TooManyRequests, "$RATE_LIMIT_EXCEEDED_MESSAGE: ${limitedBy.message}"
+        )
+        response.headers.append("$X_RATE_LIMIT-Limit", "$capacity ${capacityUnit.measures}")
+//        response.headers.append("$X_RATE_LIMIT-Remaining", "${TODO()} ${tokenType.measures}")
+        response.headers.append("$X_RATE_LIMIT-Reset", "${limitedBy.resetIn.inWholeMilliseconds}")
     }
 
     /**
@@ -89,8 +110,8 @@ class RateLimitingConfiguration {
     var loggerProvider: Application.() -> Logger = { log }
 
     init {
-        check(burstLimit > 0) {
-            "burstLimit must be > 0"
+        require(capacity > 0) {
+            "capacity must be > 0"
         }
     }
 }

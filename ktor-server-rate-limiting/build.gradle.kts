@@ -9,6 +9,11 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:atomicfu:0.21.0")
             }
         }
+        commonTest{
+            dependencies{
+                implementation(libs.mockk)
+            }
+        }
     }
 }
 

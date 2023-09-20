@@ -1,6 +1,10 @@
-package io.flax.ktor.server.plugins
+package io.github.flaxoos.ktor.server.plugins.ratelimiter
 
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.RATE_LIMIT_EXCEEDED_MESSAGE
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.Bucket
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketCapacityUnit
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketResponse
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketType
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.TimeWindow
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -14,17 +18,16 @@ import io.ktor.util.logging.Logger
 import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock.System.now
-import kotlinx.datetime.Instant
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
+
 
 class RateLimiter(
-    val limit: Int = Int.MAX_VALUE,
-    val timeWindow: Duration = Duration.INFINITE,
+    val bucketType: BucketType,
+    val capacityUnit: BucketCapacityUnit = BucketCapacityUnit.Calls(),
+    val capacity: Double,
+    val volumeChangeRate: Pair<Duration, Double>,
+    val timeWindow: TimeWindow? = null,
+
     val whiteListedHosts: Set<String> = emptySet(),
     val whiteListedPrincipals: Set<Principal> = emptySet(),
     val whiteListedAgents: Set<String> = emptySet(),
@@ -34,28 +37,15 @@ class RateLimiter(
     val blackListedCallerCallHandler: suspend (ApplicationCall) -> Unit = { call ->
         call.respond(HttpStatusCode.Forbidden)
     },
-    val burstLimit: Int = limit,
-    val rateLimitExceededCallHandler: suspend (ApplicationCall, Int) -> Unit = { call, count ->
-        call.respond(HttpStatusCode.TooManyRequests, "$RATE_LIMIT_EXCEEDED_MESSAGE: call count: $count, limit: $limit")
-    },
+    val rateLimitExceededCallHandler: suspend ApplicationCall.(BucketResponse.LimitedBy) -> Unit,
     val logRateLimitHits: Boolean = false,
     val loggerProvider: Application.() -> Logger = { log },
     application: Application
 ) {
 
-    private val callStore = mutableMapOf<Caller, Pair<ReentrantLock, CallCount>>()
-    private val callStoreLock = reentrantLock()
+    private val buckets = mutableMapOf<Caller, Pair<ReentrantLock, Bucket>>()
+    private val bucketsLock = reentrantLock()
     private val logger = loggerProvider(application)
-
-    init {
-        application.launch {
-            while (application.isActive) {
-                delay(timeWindow)
-                logger.debug("Clearing caller call count")
-                callStoreLock.withLock { callStore.clear() }
-            }
-        }
-    }
 
     suspend fun handleCall(call: ApplicationCall) {
         val caller = call.extractCaller()
@@ -67,58 +57,52 @@ class RateLimiter(
         }
 
         if (caller.remoteHost !in whiteListedHosts && caller.principal !in whiteListedPrincipals && caller.userAgent !in whiteListedAgents) {
-            val (ipCallCountLock, ipCallCount) = callStoreLock.withLock {
-                callStore.getOrPut(call.extractCaller()) {
-                    logger.debug("Putting new call count for call by ${caller.toIdentifier()}")
-                    reentrantLock() to CallCount()
+            val (bucketLock, bucket) = bucketsLock.withLock {
+                buckets.getOrPut(call.extractCaller()) {
+                    logger.debug("Putting new bucket for ${caller.toIdentifier()}")
+                    reentrantLock() to Bucket(
+                        volumeChangeRate = volumeChangeRate,
+                        capacity = capacity,
+                        capacityUnit = capacityUnit,
+                        timeWindow = timeWindow,
+                        type = bucketType,
+                        volumeUpdateScope = call.application,
+                    )
                 }
             }
 
-            ipCallCountLock.withLock {
-                with(ipCallCount) {
-                    val isBurst =
-                        (now().toEpochMilliseconds() - lastResetTime.toEpochMilliseconds()) <= (timeWindow.inWholeMilliseconds * (limit.milliseconds / burstLimit.milliseconds))
+            bucketLock.withLock {
+                when (val bucketResponse = bucket.handleCall(call)) {
+                    is BucketResponse.NotLimited -> logger.debug(
+                        debugDetails(
+                            caller = caller,
+                            bucket = bucket,
+                            bucketResponse = bucketResponse
+                        )
+                    )
 
-                    if ((isBurst && count >= burstLimit) || (!isBurst && count >= limit)) {
+                    is BucketResponse.LimitedBy -> {
                         if (logRateLimitHits) {
                             logger.warn("$RATE_LIMIT_EXCEEDED_MESSAGE: $caller")
                         }
-                        logger.debug(debugDetails(caller = caller, callCount = this, isBurst = isBurst, limited = true))
-                        rateLimitExceededCallHandler.invoke(call, count)
-                    } else {
-                        logger.debug(debugDetails(caller = caller, callCount = this, isBurst = isBurst))
-                        count++
+                        logger.debug(debugDetails(caller = caller, bucket = bucket, bucketResponse = bucketResponse))
+                        rateLimitExceededCallHandler.invoke(call, bucketResponse)
                     }
                 }
             }
         }
     }
 
-    internal fun handleCallFailure(call: ApplicationCall) {
-        callStore.release(callStoreLock, call)
-    }
-
-    internal fun handleCallResponse(call: ApplicationCall) {
-        callStore.release(callStoreLock, call)
-    }
-
-    private fun CallStore.release(lock: ReentrantLock, call: ApplicationCall) {
-        val (ipCallCountLock, ipCallCount) = lock.withLock {
-            get(call.extractCaller()) ?: return
-        }
-        ipCallCountLock.withLock {
-            ipCallCount.count--
-            ipCallCount.lastResetTime = now()
-        }
-    }
-
     private fun debugDetails(
         caller: Caller,
-        callCount: CallCount,
-        isBurst: Boolean,
-        limited: Boolean = false
+        bucket: Bucket,
+        bucketResponse: BucketResponse,
     ) =
-        "call from $caller ${if (limited) "" else "not"} limited, limit: $limit, count: ${callCount.count}, " + "last reset time: ${callCount.lastResetTime}, is burst: $isBurst"
+        "call from $caller ${if (bucketResponse is BucketResponse.LimitedBy) "" else "not"} limited ${
+            if (bucketResponse is BucketResponse.LimitedBy) {
+                bucketResponse.message
+            } else ""
+        }"
 
     private fun ApplicationCall.extractCaller(): Caller {
         val remoteHost = this.request.origin.remoteHost
@@ -134,11 +118,6 @@ class RateLimiter(
     }
 }
 
-internal class CallCount {
-    var count: Int = 0
-    var lastResetTime: Instant = now()
-}
-
 internal data class Caller(
     val remoteHost: String,
     val userAgent: String?,
@@ -147,5 +126,3 @@ internal data class Caller(
     fun toIdentifier() = "$remoteHost|${userAgent ?: ""}|${principal ?: ""}"
     override fun toString() = toIdentifier()
 }
-
-internal typealias CallStore = Map<Caller, Pair<ReentrantLock, CallCount>>

@@ -1,10 +1,7 @@
 package io.github.flaxoos.ktor.server.plugins.ratelimiter
 
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.Bucket
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketCapacityUnit
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketResponse
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.BucketType
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.buckets.TimeWindow
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.RateLimitProvider
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.RateLimiterResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -18,15 +15,10 @@ import io.ktor.util.logging.Logger
 import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
-import kotlin.time.Duration
 
 
 class RateLimiter(
-    val bucketType: BucketType,
-    val capacityUnit: BucketCapacityUnit = BucketCapacityUnit.Calls(),
-    val capacity: Double,
-    val volumeChangeRate: Pair<Duration, Double>,
-    val timeWindow: TimeWindow? = null,
+    val provider: () -> RateLimitProvider,
 
     val whiteListedHosts: Set<String> = emptySet(),
     val whiteListedPrincipals: Set<Principal> = emptySet(),
@@ -37,15 +29,21 @@ class RateLimiter(
     val blackListedCallerCallHandler: suspend (ApplicationCall) -> Unit = { call ->
         call.respond(HttpStatusCode.Forbidden)
     },
-    val rateLimitExceededCallHandler: suspend ApplicationCall.(BucketResponse.LimitedBy) -> Unit,
+    val rateLimitExceededCallHandler: suspend ApplicationCall.(RateLimiterResponse.LimitedBy) -> Unit,
     val logRateLimitHits: Boolean = false,
     val loggerProvider: Application.() -> Logger = { log },
     application: Application
 ) {
 
-    private val buckets = mutableMapOf<Caller, Pair<ReentrantLock, Bucket>>()
-    private val bucketsLock = reentrantLock()
+    private val providers = mutableMapOf<Caller, Pair<ReentrantLock, RateLimitProvider>>()
+    private val providersLock = reentrantLock()
     private val logger = loggerProvider(application)
+    fun stop() =
+        providersLock.withLock {
+            providers.forEach {
+                it.value.second.stop()
+            }
+        }
 
     suspend fun handleCall(call: ApplicationCall) {
         val caller = call.extractCaller()
@@ -57,36 +55,19 @@ class RateLimiter(
         }
 
         if (caller.remoteHost !in whiteListedHosts && caller.principal !in whiteListedPrincipals && caller.userAgent !in whiteListedAgents) {
-            val (bucketLock, bucket) = bucketsLock.withLock {
-                buckets.getOrPut(call.extractCaller()) {
-                    logger.debug("Putting new bucket for ${caller.toIdentifier()}")
-                    reentrantLock() to Bucket(
-                        volumeChangeRate = volumeChangeRate,
-                        capacity = capacity,
-                        capacityUnit = capacityUnit,
-                        timeWindow = timeWindow,
-                        type = bucketType,
-                        volumeUpdateScope = call.application,
-                    )
+            val (bucketLock, provider) = providersLock.withLock {
+                providers.getOrPut(call.extractCaller()) {
+                    logger.debug("Putting new rate limiter for ${caller.toIdentifier()}")
+                    reentrantLock() to provider()
                 }
             }
 
             bucketLock.withLock {
-                when (val bucketResponse = bucket.handleCall(call)) {
-                    is BucketResponse.NotLimited -> logger.debug(
-                        debugDetails(
-                            caller = caller,
-                            bucket = bucket,
-                            bucketResponse = bucketResponse
-                        )
-                    )
-
-                    is BucketResponse.LimitedBy -> {
-                        if (logRateLimitHits) {
-                            logger.warn("$RATE_LIMIT_EXCEEDED_MESSAGE: $caller")
-                        }
-                        logger.debug(debugDetails(caller = caller, bucket = bucket, bucketResponse = bucketResponse))
-                        rateLimitExceededCallHandler.invoke(call, bucketResponse)
+                with(provider.tryAccept(call)) {
+                    logger.debug(debugDetails(caller = caller, rateLimiterResponse = this))
+                    if (this is RateLimiterResponse.LimitedBy) {
+                        if (logRateLimitHits) logger.warn("$RATE_LIMIT_EXCEEDED_MESSAGE: $caller")
+                        rateLimitExceededCallHandler.invoke(call, this)
                     }
                 }
             }
@@ -95,12 +76,11 @@ class RateLimiter(
 
     private fun debugDetails(
         caller: Caller,
-        bucket: Bucket,
-        bucketResponse: BucketResponse,
+        rateLimiterResponse: RateLimiterResponse,
     ) =
-        "call from $caller ${if (bucketResponse is BucketResponse.LimitedBy) "" else "not"} limited ${
-            if (bucketResponse is BucketResponse.LimitedBy) {
-                bucketResponse.message
+        "call from $caller ${if (rateLimiterResponse is RateLimiterResponse.LimitedBy) "" else "not"} limited ${
+            if (rateLimiterResponse is RateLimiterResponse.LimitedBy) {
+                rateLimiterResponse.message
             } else ""
         }"
 

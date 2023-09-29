@@ -1,8 +1,12 @@
 package io.github.flaxoos.ktor.server.plugins.ratelimiter
 
+import io.ktor.server.application.ApplicationStopPreparing
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.PluginBuilder
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.createRouteScopedPlugin
+import io.ktor.server.application.hooks.MonitoringEvent
 import io.ktor.server.auth.AuthenticationChecked
 
 /**
@@ -35,11 +39,7 @@ val RouteRateLimiting = createRouteScopedPlugin(
 
 private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
     val rateLimiter = RateLimiter(
-        bucketType = pluginConfig.bucketType,
-        capacityUnit = pluginConfig.capacityUnit,
-        volumeChangeRate = pluginConfig.volumeChangeRate,
-        capacity = pluginConfig.capacity,
-        timeWindow = pluginConfig.timeWindow,
+        provider = pluginConfig.providerConfiguration.toProvider(application = application),
         whiteListedHosts = pluginConfig.whiteListedHosts,
         whiteListedPrincipals = pluginConfig.whiteListedPrincipals,
         whiteListedAgents = pluginConfig.whiteListedAgents,
@@ -47,7 +47,7 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
         blackListedPrincipals = pluginConfig.blackListedPrincipals,
         blackListedAgents = pluginConfig.blackListedAgents,
         blackListedCallerCallHandler = pluginConfig.blackListedCallerCallHandler,
-        rateLimitExceededCallHandler = pluginConfig.rateLimitExceededCallHandler,
+        rateLimitExceededCallHandler = pluginConfig.rateLimitExceededHandler,
         logRateLimitHits = pluginConfig.logRateLimitHits,
         loggerProvider = pluginConfig.loggerProvider,
         application = application
@@ -55,5 +55,15 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
 
     on(AuthenticationChecked) { call ->
         rateLimiter.handleCall(call)
+    }
+
+    on(MonitoringEvent(ApplicationStopPreparing)) {
+        rateLimiter.stop()
+    }
+    on(MonitoringEvent(ApplicationStopping)) {
+        rateLimiter.stop()
+    }
+    on(MonitoringEvent(ApplicationStopped)) {
+        rateLimiter.stop()
     }
 }

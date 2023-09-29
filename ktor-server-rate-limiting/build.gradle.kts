@@ -1,17 +1,15 @@
+import io.github.flaxoos.ktor.library
+import io.github.flaxoos.ktor.projectDependencies
+
 plugins {
     id("ktor-server-plugin-conventions")
 }
 
 kotlin {
     sourceSets {
-        commonMain {
+        val commonTest by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:atomicfu:0.21.0")
-            }
-        }
-        commonTest{
-            dependencies{
-                implementation(libs.mockk)
+                implementation(libs.ktor.server.host.common)
             }
         }
     }
@@ -26,5 +24,11 @@ koverReport {
             }
             onCheck = true
         }
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs = freeCompilerArgs + "-Xcontext-receivers"
     }
 }

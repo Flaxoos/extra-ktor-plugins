@@ -8,5 +8,6 @@
         <appender-ref ref="STDOUT"/>
     </root>
     <logger name="io.netty" level="INFO"/>
-    <logger name="io.github.flaxoos" level="info"/>
+    <logger name="io.ktor" level="debug"/>
+    <logger name="io.github.flaxoos.ktor.server.plugins.ratelimiter.providers" level="trace"/>
 </configuration>

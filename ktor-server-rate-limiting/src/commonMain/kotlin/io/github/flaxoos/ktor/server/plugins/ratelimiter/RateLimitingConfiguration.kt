@@ -9,6 +9,7 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.log
 import io.ktor.server.auth.Principal
 import io.ktor.server.response.respond
+import kotlinx.datetime.Clock.System.now
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.INFINITE
@@ -71,24 +72,40 @@ class RateLimitingConfiguration {
      */
     val callAcceptedHandler: suspend ApplicationCall.(RateLimiterResponse.NotLimited) -> Unit = {
         response.headers.append("$X_RATE_LIMIT-Remaining", "${it.remaining}")
-        response.headers.append("$X_RATE_LIMIT-Measured-by", it.provider.callVolumeUnit.name)
+        response.headers.append("$X_RATE_LIMIT-Measured-by", it.rateLimiter.callVolumeUnit.name)
     }
 
     /**
      * The call handler for rate limited IPs, use to define the response for rate limited IPs, default is respond with 429 and appropriate X-RateLimit headers
      */
     val rateLimitExceededHandler: suspend ApplicationCall.(RateLimiterResponse.LimitedBy) -> Unit =
-        {
-            respond(HttpStatusCode.TooManyRequests, "$RATE_LIMIT_EXCEEDED_MESSAGE: ${it.message}")
-            response.headers.append("$X_RATE_LIMIT-Limit", "${it.provider.capacity}")
-            response.headers.append("$X_RATE_LIMIT-Measured-by", it.provider.callVolumeUnit.name)
-            response.headers.append("$X_RATE_LIMIT-Reset", "${it.resetIn.inWholeMilliseconds}")
+        { rateLimiterResponse ->
+            respond(HttpStatusCode.TooManyRequests, "$RATE_LIMIT_EXCEEDED_MESSAGE: ${rateLimiterResponse.message}")
+            this.response.headers.append("$X_RATE_LIMIT-Limit", "${rateLimiterResponse.rateLimiter.capacity}")
+            this.response.headers.append("$X_RATE_LIMIT-Measured-by", rateLimiterResponse.rateLimiter.callVolumeUnit.name)
+            this.response.headers.append("$X_RATE_LIMIT-Reset", "${rateLimiterResponse.resetIn.inWholeMilliseconds}")
         }
 
     class RateLimiterConfiguration(
+        /**
+         * The rate limiter implementation
+         */
         var type: KClass<out RateLimiter> = TokenBucket::class,
+        /**
+         * The rate limiter rate
+         */
         var rate: Duration = INFINITE,
+        /**
+         * The rate limiter capacity
+         */
         var capacity: Int = Int.MAX_VALUE,
+        /**
+         * A time provider in milliseconds
+         */
+        var clock: () -> Long = { now().toEpochMilliseconds() },
+        /**
+         * The unit by which the rate limiter capacity is measured, not applicable for [LeakyBucket]
+         */
         var callVolumeUnit: CallVolumeUnit = CallVolumeUnit.Calls()
     ) {
         init {
@@ -97,52 +114,55 @@ class RateLimitingConfiguration {
             }
         }
 
-        fun toProvider(application: Application): () -> RateLimiter = when (type) {
+        fun provideRateLimiter(application: Application): () -> RateLimiter = when (type) {
             LeakyBucket::class -> {
                 when (callVolumeUnit) {
                     is CallVolumeUnit.Bytes -> {
                         application.log.warn(
                             "LeakyBucket does not support CallVolumeUnit.Bytes, " +
-                                "will use CallVolumeUnit.Calls"
+                                    "will use CallVolumeUnit.Calls"
                         )
                     }
 
                     is CallVolumeUnit.Calls -> if (callVolumeUnit.size.compareTo(1) != 0) {
                         application.log.warn(
                             "LeakyBucket does not support CallVolumeUnit.Calls with size " +
-                                "!= 1, 1 will be effectively used"
+                                    "!= 1, 1 will be effectively used"
                         )
                     }
                 }
-                (
-                    {
-                        LeakyBucket(
-                            rate = rate,
-                            capacity = capacity
-                        )
-                    }
+
+                {
+                    LeakyBucket(
+                        rate = rate,
+                        capacity = capacity,
+                        clock = clock
                     )
+                }
+
             }
 
             SlidingWindow::class -> (
-                {
-                    SlidingWindow(
-                        rate = rate,
-                        capacity = capacity,
-                        callVolumeUnit = callVolumeUnit
+                    {
+                        SlidingWindow(
+                            rate = rate,
+                            capacity = capacity,
+                            callVolumeUnit = callVolumeUnit,
+                            clock = clock
+                        )
+                    }
                     )
-                }
-                )
 
             TokenBucket::class -> (
-                {
-                    TokenBucket(
-                        rate = rate,
-                        capacity = capacity,
-                        callVolumeUnit = callVolumeUnit
+                    {
+                        TokenBucket(
+                            rate = rate,
+                            capacity = capacity,
+                            callVolumeUnit = callVolumeUnit,
+                            clock = clock
+                        )
+                    }
                     )
-                }
-                )
 
             else -> {
                 error("Unsupported provider type: $type")

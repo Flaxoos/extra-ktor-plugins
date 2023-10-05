@@ -41,15 +41,15 @@ abstract class RateLimiter {
 }
 
 sealed interface RateLimiterResponse {
-    val provider: RateLimiter
+    val rateLimiter: RateLimiter
 
     data class NotLimited(
-        override val provider: RateLimiter,
+        override val rateLimiter: RateLimiter,
         val remaining: Number? = null
     ) : RateLimiterResponse
 
     data class LimitedBy(
-        override val provider: RateLimiter,
+        override val rateLimiter: RateLimiter,
         val exceededBy: Number,
         val resetIn: Duration,
         val message: String

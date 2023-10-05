@@ -203,7 +203,7 @@ class RateLimiterTest : FunSpec() {
 
     private fun RateLimiterResponse.shouldBeLimitedBy(provider: RateLimiter) {
         shouldBeTypeOf<RateLimiterResponse.LimitedBy>()
-        this.provider shouldBe provider
+        this.rateLimiter shouldBe provider
     }
 
     private fun RateLimiterResponse.shouldNotBeLimited() {

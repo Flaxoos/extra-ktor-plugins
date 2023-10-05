@@ -13,6 +13,12 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * Sliding window, allows a given weight of calls to be made over a given duration.
+ *
+ * The configured [rate] will be the time window over which the calls will be counted.
+ * The call weight is defined by the [callVolumeUnit]
+ */
 data class SlidingWindow(
     override val rate: Duration,
     override val capacity: Int,

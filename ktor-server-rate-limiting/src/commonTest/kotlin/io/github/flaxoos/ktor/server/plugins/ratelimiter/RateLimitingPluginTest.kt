@@ -264,7 +264,7 @@ class RateLimitingPluginTest : FunSpec() {
                 routing {
                     authenticate("auth-basic", strategy = AuthenticationStrategy.Required) {
                         route(LIMITED_PATH) {
-                            install(RouteRateLimiting) {
+                            install(RateLimiting) {
                                 config(implementation, modifyConfiguration)
                             }
                             get {

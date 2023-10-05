@@ -15,11 +15,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * Route rate limiting plugin, apply to route to provide route scoped rate limiting,
+ * Rate limiting plugin, apply to route to provide route scoped rate limiting,
  * see [RateLimitingConfiguration] for details on how to configure
  */
-val RouteRateLimiting = createRouteScopedPlugin(
-    name = "RouteRateLimiting",
+val RateLimiting = createRouteScopedPlugin(
+    name = "RateLimiting",
     createConfiguration = ::RateLimitingConfiguration
 ) { applyNewRateLimiter() }
 
@@ -68,7 +68,7 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
             val provider = rateLimitersLock.withLock {
                 rateLimiters.getOrPut(call.extractCaller()) {
                     application.log.debug("Putting new rate limiter for ${caller.toIdentifier()}")
-                    rateLimiterConfiguration.toProvider(application = application).invoke()
+                    rateLimiterConfiguration.provideRateLimiter(application = application).invoke()
                 }
             }
 

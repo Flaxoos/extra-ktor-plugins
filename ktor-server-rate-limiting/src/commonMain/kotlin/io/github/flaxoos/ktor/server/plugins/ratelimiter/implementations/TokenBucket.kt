@@ -62,8 +62,8 @@ class TokenBucket(
                 resetIn = rate,
                 exceededBy = callSize,
                 message = "Insufficient tokens to accept call. tokens: $currentVolume, " +
-                        "measured in ${callVolumeUnit::class.simpleName?.lowercase()} of size ${callVolumeUnit.size}. " +
-                        "call size: $callSize"
+                    "measured in ${callVolumeUnit::class.simpleName?.lowercase()} of size ${callVolumeUnit.size}. " +
+                    "call size: $callSize"
             )
         }
     }
@@ -74,10 +74,11 @@ class TokenBucket(
             logger.debug { "${call.id()}: Checking if should add tokens: ${Instant.fromEpochMilliseconds(clock())}, time since last update: $timeSinceLastUpdate" }
             if (this > 0) {
                 ((timeSinceLastUpdate / rate.inWholeMilliseconds) * this) * callVolumeUnit.size()
-            } else 0.0
+            } else {
+                0.0
+            }
         }?.let {
             logger.debug { "${call.id()}: Added $it tokens" }
         } ?: logger.debug { "${call.id()}: No tokens were added" }
     }
 }
-

@@ -13,7 +13,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
 
-
 data class SlidingWindow(
     override val rate: Duration,
     override val capacity: Int,
@@ -28,13 +27,15 @@ data class SlidingWindow(
 
     override suspend fun tryAccept(call: ApplicationCall): RateLimiterResponse {
         val now = clock()
-        logger.debug { "${call.id()}: Attempted at: ${now}, timestamps: $timestamps" }
+        logger.debug { "${call.id()}: Attempted at: $now, timestamps: $timestamps" }
 
         updateWeight(now)
 
         val callSize = callVolumeUnit.callSize(call)
-        if (timestamps.tryAdd(now, callSize)) return RateLimiterResponse.NotLimited(this).also {
-            logger.debug { "${call.id()}: Passed with size: $callSize" }
+        if (timestamps.tryAdd(now, callSize)) {
+            return RateLimiterResponse.NotLimited(this).also {
+                logger.debug { "${call.id()}: Passed with size: $callSize" }
+            }
         }
 
         val nextTimestampToBeTrimmed =
@@ -45,7 +46,7 @@ data class SlidingWindow(
             this,
             resetIn = resetIn,
             exceededBy = callSize,
-            message = "$capacity calls were already made during $rate",
+            message = "$capacity calls were already made during $rate"
         )
     }
 
@@ -57,7 +58,6 @@ data class SlidingWindow(
         }
     }
 }
-
 
 internal expect fun <T> provideListForQueue(): MutableList<T>
 
@@ -92,7 +92,9 @@ class ConcurrentFixedSizeWeightedQueue<T>(
             list.add(t to weight).also {
                 logger.debug { "Added $t with weight $weight, current weight is now ${this.weight}" }
             }
-        } else false
+        } else {
+            false
+        }
     }
 
     fun peekNext() = list.firstOrNull()
@@ -115,6 +117,8 @@ class ConcurrentFixedSizeWeightedQueue<T>(
         val insertionPoint = if (index < 0) -index - 1 else index
         return if (insertionPoint > 0) {
             list.subList(0, insertionPoint)
-        } else null
+        } else {
+            null
+        }
     }
 }

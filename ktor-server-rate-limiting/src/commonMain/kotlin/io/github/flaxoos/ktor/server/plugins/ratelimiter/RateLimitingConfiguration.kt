@@ -67,10 +67,9 @@ class RateLimitingConfiguration {
     }
 
     /**
-     * The call handler for accepted calls, use to define the response for accepted calls, default is respond with 200 and appropriate X-RateLimit headers
+     * The call handler for accepted calls, use to define the response for accepted calls, by default, adds appropriate X-RateLimit headers
      */
     val callAcceptedHandler: suspend ApplicationCall.(RateLimiterResponse.NotLimited) -> Unit = {
-        respond(HttpStatusCode.OK)
         response.headers.append("$X_RATE_LIMIT-Remaining", "${it.remaining}")
         response.headers.append("$X_RATE_LIMIT-Measured-by", it.provider.callVolumeUnit.name)
     }
@@ -85,7 +84,6 @@ class RateLimitingConfiguration {
             response.headers.append("$X_RATE_LIMIT-Measured-by", it.provider.callVolumeUnit.name)
             response.headers.append("$X_RATE_LIMIT-Reset", "${it.resetIn.inWholeMilliseconds}")
         }
-
 
     class RateLimiterConfiguration(
         var type: KClass<out RateLimiter> = TokenBucket::class,
@@ -105,40 +103,46 @@ class RateLimitingConfiguration {
                     is CallVolumeUnit.Bytes -> {
                         application.log.warn(
                             "LeakyBucket does not support CallVolumeUnit.Bytes, " +
-                                    "will use CallVolumeUnit.Calls"
+                                "will use CallVolumeUnit.Calls"
                         )
                     }
 
                     is CallVolumeUnit.Calls -> if (callVolumeUnit.size.compareTo(1) != 0) {
                         application.log.warn(
                             "LeakyBucket does not support CallVolumeUnit.Calls with size " +
-                                    "!= 1, 1 will be effectively used"
+                                "!= 1, 1 will be effectively used"
                         )
                     }
                 }
-                ({
-                    LeakyBucket(
-                        rate = rate,
-                        capacity = capacity,
+                (
+                    {
+                        LeakyBucket(
+                            rate = rate,
+                            capacity = capacity
+                        )
+                    }
                     )
-                })
             }
 
-            SlidingWindow::class -> ({
-                SlidingWindow(
-                    rate = rate,
-                    capacity = capacity,
-                    callVolumeUnit = callVolumeUnit
+            SlidingWindow::class -> (
+                {
+                    SlidingWindow(
+                        rate = rate,
+                        capacity = capacity,
+                        callVolumeUnit = callVolumeUnit
+                    )
+                }
                 )
-            })
 
-            TokenBucket::class -> ({
-                TokenBucket(
-                    rate = rate,
-                    capacity = capacity,
-                    callVolumeUnit = callVolumeUnit
+            TokenBucket::class -> (
+                {
+                    TokenBucket(
+                        rate = rate,
+                        capacity = capacity,
+                        callVolumeUnit = callVolumeUnit
+                    )
+                }
                 )
-            })
 
             else -> {
                 error("Unsupported provider type: $type")

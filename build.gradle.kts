@@ -3,6 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
+import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 
 plugins {
     id("conventions")
@@ -28,7 +29,7 @@ tasks.withType(Test::class) {
             exceptionFormat = FULL
         }
 
-        info.events(FAILED, PASSED)
+        info.events(FAILED, PASSED, SKIPPED)
     }
 }
 

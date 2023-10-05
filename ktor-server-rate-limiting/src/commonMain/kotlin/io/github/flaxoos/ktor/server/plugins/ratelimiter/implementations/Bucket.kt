@@ -37,7 +37,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         shouldUpdateTime: Boolean = false,
         consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
     ): Double? {
-        by.assertPositive()
+        by.assertNotNegative()
         return reduceVolume(call, by, shouldUpdateTime, consideringLastUpdateTime)
     }
 
@@ -53,7 +53,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         shouldUpdateTime: Boolean = false,
         consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
     ): Double? {
-        by.assertPositive()
+        by.assertNotNegative()
         return tryUpdateVolume(call, shouldUpdateTime) { volume, timeSinceLastUpdate ->
             volume - by.consideringLastUpdateTime(timeSinceLastUpdate).coerceAtLeast(0.0)
         }
@@ -71,7 +71,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         shouldUpdateTime: Boolean = false,
         consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
     ): Double? {
-        by.assertPositive()
+        by.assertNotNegative()
         return increaseVolume(call, by, shouldUpdateTime, consideringLastUpdateTime)
     }
 
@@ -87,9 +87,9 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         shouldUpdateTime: Boolean = false,
         consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
     ): Double? {
-        by.assertPositive()
+        by.assertNotNegative()
         return tryUpdateVolume(call, shouldUpdateTime) { volume, timeSinceLastUpdate ->
-            volume + by.consideringLastUpdateTime(timeSinceLastUpdate).coerceAtMost(capacity.toDouble())
+            volume + (consideringLastUpdateTime(by, timeSinceLastUpdate)).coerceAtMost(capacity.toDouble())
         }
     }
 
@@ -106,15 +106,14 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         shouldUpdateTime: Boolean = false,
         update: suspend (Double, Long) -> Double
     ): Double? {
-
         return currentVolumeMutex.withLock {
             val now = clock()
             val lastUpdateTime = _lastUpdateTime.value
             val timeSinceLastUpdate = now - lastUpdateTime
             log.trace {
                 "${call.id()}: Maybe updating volume at now: ${fromEpochMilliseconds(now)}, " +
-                        "lastUpdateTime: ${fromEpochMilliseconds(lastUpdateTime)}, " +
-                        "diff: $timeSinceLastUpdate"
+                    "lastUpdateTime: ${fromEpochMilliseconds(lastUpdateTime)}, " +
+                    "diff: $timeSinceLastUpdate"
             }
 
             val updatedVolume = update(currentVolume, timeSinceLastUpdate)
@@ -137,8 +136,8 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         }
     }
 
-    private fun Double.assertPositive(): Double {
-        check(this > 0) { "Volume change figure must be positive" }
+    private fun Double.assertNotNegative(): Double {
+        check(this >= 0) { "Volume change figure must not be negative. was: $this" }
         return this
     }
 }

@@ -1,5 +1,6 @@
 package io.github.flaxoos.ktor.server.plugins.ratelimiter
 
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.CallVolumeUnit.Bytes
 import io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations.LeakyBucket
 import io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations.SlidingWindow
 import io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations.TokenBucket
@@ -7,12 +8,11 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.spec.style.scopes.FunSpecContainerScope
+import io.kotest.datatest.withData
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainOnly
-import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.comparables.shouldBeLessThan
-import io.kotest.matchers.longs.shouldBeLessThan
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
@@ -32,6 +32,7 @@ import io.ktor.server.auth.basic
 import io.ktor.server.auth.principal
 import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
@@ -67,15 +68,24 @@ private fun encodeBasicAuth(name: String) = Base64.encode("$name:$BASIC_AUTH_PAS
 
 private val logger = KotlinLogging.logger { }
 
-class TokenBucketPluginTest : RateLimitingPluginTest(TokenBucket::class)
-class LeakyBucketPluginTest : RateLimitingPluginTest(LeakyBucket::class)
-class SlidingWindowPluginTest : RateLimitingPluginTest(SlidingWindow::class)
-
-@Suppress("LeakingThis")
-abstract class RateLimitingPluginTest(private val implementation: KClass<out RateLimiter>) : FunSpec() {
+class RateLimitingPluginTest : FunSpec() {
 
     init {
-        context("Rate Limiting Tests") {
+        context("Rate Limiting Plugin Tests") {
+            context("Installation") {
+                testRateLimiting(
+                    "If call volume unit is bytes, should install double receive plugin",
+                    modifyConfiguration = {
+                        this.rateLimiterConfiguration.callVolumeUnit = Bytes(1)
+                    }
+                ) {
+                    it.testCalls(
+                        times = 2
+                    ) {
+                        shouldBeOk()
+                    }
+                }
+            }
             context("Basic Functionality") {
                 testRateLimiting("Exceeding rate limit on applied route should return Too Many Requests status") {
                     it.testCalls(
@@ -89,14 +99,14 @@ abstract class RateLimitingPluginTest(private val implementation: KClass<out Rat
                     it.testCalls(
                         times = LIMIT + EXCEED,
                         path = UNLIMITED_PATH
-                    ) { shouldNotBeLimited() }
+                    ) { shouldBeOk() }
                 }
 
                 testRateLimiting("Should distinguish between callers") {
                     it.testCalls(
                         times = LIMIT,
-                        callers = listOf(CALLER1, CALLER2),
-                    ) { shouldNotBeLimited() }
+                        callers = listOf(CALLER1, CALLER2)
+                    ) { shouldBeOk() }
                 }
 
                 testRateLimiting("Following requests should pass") {
@@ -109,18 +119,18 @@ abstract class RateLimitingPluginTest(private val implementation: KClass<out Rat
 
                     it.testCalls(
                         times = 1
-                    ) { shouldNotBeLimited() }
+                    ) { shouldBeOk() }
                 }
             }
 
             context("Bursts") {
                 testRateLimiting(
-                    "Should handle bursts",
+                    "Should handle bursts"
                 ) {
                     it.testCalls(
                         times = LIMIT
                     ) {
-                        shouldNotBeLimited()
+                        shouldBeOk()
                         val earliestRequestTime = minOf { response ->
                             response.requestTime.timestamp
                         }
@@ -155,20 +165,19 @@ abstract class RateLimitingPluginTest(private val implementation: KClass<out Rat
             context("Whitelisting") {
                 testRateLimiting(
                     "Should let whitelisted users pass",
-                    { whiteListedPrincipals = setOf(UserIdPrincipal(CALLER1)) },
+                    { whiteListedPrincipals = setOf(UserIdPrincipal(CALLER1)) }
                 ) {
                     it.testCalls(
-                        times = LIMIT + EXCEED,
-                    ) { shouldNotBeLimited() }
+                        times = LIMIT + EXCEED
+                    ) { shouldBeOk() }
                 }
-
 
                 testRateLimiting("Should let whitelisted hosts pass", {
                     whiteListedHosts = setOf(LOCALHOST)
                 }) {
                     it.testCalls(
                         times = LIMIT + EXCEED
-                    ) { shouldNotBeLimited() }
+                    ) { shouldBeOk() }
                 }
 
                 testRateLimiting("Should let whitelisted user agents pass", {
@@ -177,36 +186,35 @@ abstract class RateLimitingPluginTest(private val implementation: KClass<out Rat
                     it.testCalls(
                         times = LIMIT + EXCEED,
                         userAgent = USER_AGENT
-                    ) { shouldNotBeLimited() }
+                    ) { shouldBeOk() }
                 }
             }
-        }
 
-        context("Blacklisting") {
-            testRateLimiting("Should not let blacklisted users pass", {
-                blackListedPrincipals = setOf(UserIdPrincipal(CALLER1))
-            }) {
-                it.testCalls(
-                    times = 1
-                ) { shouldBeForbidden() }
+            context("Blacklisting") {
+                testRateLimiting("Should not let blacklisted users pass", {
+                    blackListedPrincipals = setOf(UserIdPrincipal(CALLER1))
+                }) {
+                    it.testCalls(
+                        times = 1
+                    ) { shouldBeForbidden() }
+                }
 
-            }
+                testRateLimiting("Should not let blacklisted hosts pass", {
+                    blackListedHosts = setOf(LOCALHOST)
+                }) {
+                    it.testCalls(
+                        times = 1
+                    ) { shouldBeForbidden() }
+                }
 
-            testRateLimiting("Should not let blacklisted hosts pass", {
-                blackListedHosts = setOf(LOCALHOST)
-            }) {
-                it.testCalls(
-                    times = 1
-                ) { shouldBeForbidden() }
-            }
-
-            testRateLimiting("Should not let blacklisted user agents pass", {
-                blackListedAgents = setOf(USER_AGENT)
-            }) {
-                it.testCalls(
-                    times = 1,
-                    userAgent = USER_AGENT
-                ) { shouldBeForbidden() }
+                testRateLimiting("Should not let blacklisted user agents pass", {
+                    blackListedAgents = setOf(USER_AGENT)
+                }) {
+                    it.testCalls(
+                        times = 1,
+                        userAgent = USER_AGENT
+                    ) { shouldBeForbidden() }
+                }
             }
         }
     }
@@ -216,10 +224,13 @@ abstract class RateLimitingPluginTest(private val implementation: KClass<out Rat
         modifyConfiguration: RateLimitingConfiguration.() -> Unit = {},
         block: suspend (RateLimiterTestScope) -> Unit
     ) {
-        test("${implementation.simpleName}: $testName") {
+        withData(
+            nameFn = { "${it.simpleName}: $testName" },
+            listOf(TokenBucket::class, LeakyBucket::class, SlidingWindow::class)
+        ) { implementation ->
             logger.info { "--------------------------" }
             logger.info { "Starting test: $testName" }
-            val engine = createAppEngine(modifyConfiguration)
+            val engine = createAppEngine(implementation, modifyConfiguration)
             try {
                 engine.start()
                 block(RateLimiterTestScope(engine.client, implementation))
@@ -230,47 +241,53 @@ abstract class RateLimitingPluginTest(private val implementation: KClass<out Rat
     }
 
     private fun createAppEngine(
-        modifyConfiguration: RateLimitingConfiguration.() -> Unit,
-    ) = TestApplicationEngine(createTestEnvironment {
-        module {
-            install(Authentication) {
-                basic("auth-basic") {
-                    validate { credentials ->
-                        UserIdPrincipal(credentials.name)
+        implementation: KClass<out RateLimiter>,
+        modifyConfiguration: RateLimitingConfiguration.() -> Unit
+    ) = TestApplicationEngine(
+        createTestEnvironment {
+            module {
+                install(Authentication) {
+                    basic("auth-basic") {
+                        validate { credentials ->
+                            UserIdPrincipal(credentials.name)
+                        }
                     }
                 }
-            }
-            install(StatusPages) {
-                exception<Throwable> { call, cause ->
-                    call.respondText(text = "500: $cause", status = InternalServerError)
+                install(StatusPages) {
+                    exception<Throwable> { call, cause ->
+                        call.respondText(text = "500: ${cause.stackTraceToString()}", status = InternalServerError)
+                    }
                 }
-            }
-            install(CallId) {
-                retrieveFromHeader(HttpHeaders.XRequestId)
-            }
-            routing {
-                authenticate("auth-basic", strategy = AuthenticationStrategy.Required) {
-                    route(LIMITED_PATH) {
-                        install(RouteRateLimiting) {
-                            config(modifyConfiguration)
-                        }
-                        get {
-                            call.respondText(
+                install(CallId) {
+                    retrieveFromHeader(HttpHeaders.XRequestId)
+                }
+                routing {
+                    authenticate("auth-basic", strategy = AuthenticationStrategy.Required) {
+                        route(LIMITED_PATH) {
+                            install(RouteRateLimiting) {
+                                config(implementation, modifyConfiguration)
+                            }
+                            get {
+                                // Invoke double receive
+                                call.receive(ByteArray::class)
+
                                 call.principal<UserIdPrincipal>()?.name ?: error("no principal")
-                            )
+                                call.respond(OK)
+                            }
                         }
                     }
-                }
-                route(UNLIMITED_PATH) {
-                    get {
-                        call.respond(OK)
+                    route(UNLIMITED_PATH) {
+                        get {
+                            call.respond(OK)
+                        }
                     }
                 }
             }
         }
-    })
+    )
 
     private fun RateLimitingConfiguration.config(
+        implementation: KClass<out RateLimiter>,
         configuration: RateLimitingConfiguration.() -> Unit
     ) {
         this.rateLimiterConfiguration.type = implementation
@@ -295,7 +312,7 @@ abstract class RateLimitingPluginTest(private val implementation: KClass<out Rat
                         client.get(path) {
                             val auth = encodeBasicAuth(caller)
                             headers.append("Authorization", "Basic $auth")
-                            headers.append(HttpHeaders.XRequestId, "caller: $caller index: $index")
+                            headers.append(HttpHeaders.XRequestId, "${this.url}, caller: $caller index: $index")
                             userAgent?.let { headers.append(HttpHeaders.UserAgent, it) }
                         }
                     }
@@ -313,10 +330,10 @@ abstract class RateLimitingPluginTest(private val implementation: KClass<out Rat
         }
     }
 
-    private suspend fun Iterable<HttpResponse>.shouldNotBeLimited() {
+    private suspend fun Iterable<HttpResponse>.shouldBeOk() {
         withClue("Should not be limited") {
             logErrors()
-            map { it.status } shouldNotContain TooManyRequests
+            map { it.status }.shouldContainOnly(OK)
         }
     }
 

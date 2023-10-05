@@ -43,19 +43,17 @@ abstract class RateLimiter {
 sealed interface RateLimiterResponse {
     val provider: RateLimiter
 
-
     data class NotLimited(
         override val provider: RateLimiter,
-        val remaining: Number? = null,
+        val remaining: Number? = null
     ) : RateLimiterResponse
 
     data class LimitedBy(
         override val provider: RateLimiter,
         val exceededBy: Number,
         val resetIn: Duration,
-        val message: String,
+        val message: String
     ) : RateLimiterResponse
-
 }
 
 interface CallVolumeUnit {

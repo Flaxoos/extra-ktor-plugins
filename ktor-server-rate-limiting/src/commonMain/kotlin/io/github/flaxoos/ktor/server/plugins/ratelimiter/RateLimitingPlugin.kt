@@ -3,10 +3,12 @@ package io.github.flaxoos.ktor.server.plugins.ratelimiter
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.PluginBuilder
 import io.ktor.server.application.createRouteScopedPlugin
+import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.server.auth.AuthenticationChecked
 import io.ktor.server.auth.Principal
 import io.ktor.server.auth.principal
+import io.ktor.server.plugins.doublereceive.DoubleReceive
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.userAgent
 import kotlinx.coroutines.sync.Mutex
@@ -21,11 +23,16 @@ val RouteRateLimiting = createRouteScopedPlugin(
     createConfiguration = ::RateLimitingConfiguration
 ) { applyNewRateLimiter() }
 
-
 private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
-
     val rateLimiters = mutableMapOf<Caller, RateLimiter>()
     val rateLimitersLock = Mutex()
+
+    if (pluginConfig.rateLimiterConfiguration.callVolumeUnit is CallVolumeUnit.Bytes) {
+        this.application.install(DoubleReceive) {
+            this@applyNewRateLimiter.application.log.info("Installing double receive plugin because call volume unit is bytes")
+            this.cacheRawRequest = true
+        }
+    }
 
     on(AuthenticationChecked) { call ->
         with(pluginConfig) {
@@ -35,11 +42,11 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
             if (caller.remoteHost in blackListedHosts || caller.principal in blackListedPrincipals || caller.userAgent in blackListedAgents) {
                 application.log.debug(
                     "User ${caller.toIdentifier()} is blacklisted by ${
-                        listOfNotNull(
-                            if (caller.remoteHost in blackListedHosts) "host" else null,
-                            if (caller.principal in blackListedPrincipals) "principal" else null,
-                            if (caller.userAgent in blackListedAgents) "user agent" else null
-                        ).joinToString(",")
+                    listOfNotNull(
+                        if (caller.remoteHost in blackListedHosts) "host" else null,
+                        if (caller.principal in blackListedPrincipals) "principal" else null,
+                        if (caller.userAgent in blackListedAgents) "user agent" else null
+                    ).joinToString(",")
                     }"
                 )
                 blackListedCallerCallHandler(call)
@@ -48,11 +55,11 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
             if (caller.remoteHost in whiteListedHosts || caller.principal in whiteListedPrincipals || caller.userAgent in whiteListedAgents) {
                 application.log.debug(
                     "User ${caller.toIdentifier()} is whitelisted by ${
-                        listOfNotNull(
-                            if (caller.remoteHost in whiteListedHosts) "host" else null,
-                            if (caller.principal in whiteListedPrincipals) "principal" else null,
-                            if (caller.userAgent in whiteListedAgents) "user agent" else null
-                        ).joinToString(",")
+                    listOfNotNull(
+                        if (caller.remoteHost in whiteListedHosts) "host" else null,
+                        if (caller.principal in whiteListedPrincipals) "principal" else null,
+                        if (caller.userAgent in whiteListedAgents) "user agent" else null
+                    ).joinToString(",")
                     }"
                 )
                 return@with
@@ -84,12 +91,14 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
 }
 
 private fun RateLimiterResponse.debugDetails(
-    caller: Caller,
+    caller: Caller
 ) =
     "call from $caller ${if (this is RateLimiterResponse.LimitedBy) "" else "not"} limited ${
-        if (this is RateLimiterResponse.LimitedBy) {
-            this.message
-        } else ""
+    if (this is RateLimiterResponse.LimitedBy) {
+        this.message
+    } else {
+        ""
+    }
     }"
 
 private fun ApplicationCall.extractCaller(): Caller {
@@ -113,4 +122,3 @@ private data class Caller(
     fun toIdentifier() = "$remoteHost|${userAgent ?: ""}|${principal ?: ""}"
     override fun toString() = toIdentifier()
 }
-

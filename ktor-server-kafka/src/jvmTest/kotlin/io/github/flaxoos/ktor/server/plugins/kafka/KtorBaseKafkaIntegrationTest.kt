@@ -35,7 +35,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalKotest::class)
-class KtorKafkaIntegrationTest : KafkaIntegrationTest() {
+class KtorBaseKafkaIntegrationTest : BaseKafkaIntegrationTest() {
     private val logger: Logger = KtorSimpleLogger(javaClass.simpleName)
     private val testTopics = listOf(named("topic1"), named("topic2"))
     private val invocations = 2

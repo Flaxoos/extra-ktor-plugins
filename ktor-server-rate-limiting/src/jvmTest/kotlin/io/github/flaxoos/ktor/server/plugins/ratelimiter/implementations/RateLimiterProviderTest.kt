@@ -42,7 +42,7 @@ const val leakGraceMs = 1
 private val logger = KotlinLogging.logger {}
 
 @OptIn(ExperimentalTime::class)
-class RateLimitProviderTest : FunSpec() {
+class RateLimiterTest : FunSpec() {
     private val callVolumeUnit = mockk<CallVolumeUnit.Calls> {
         every { size } returns 1
         every { size() } returns 1.0
@@ -59,7 +59,6 @@ class RateLimitProviderTest : FunSpec() {
             }
         }
         coEvery { callVolumeUnit.callSize(this@mockk) } returns sizeAndWeight.second
-
     }
 
     private val callIndexAttributeKey = AttributeKey<Int>("callIndex")
@@ -68,7 +67,6 @@ class RateLimitProviderTest : FunSpec() {
         coroutineTestScope = true
         invocationTimeout = 30.seconds.inWholeMilliseconds
         coroutineDebugProbes = false
-
 
         context("Rate Limiter Provider tests") {
             withData(
@@ -82,12 +80,12 @@ class RateLimitProviderTest : FunSpec() {
                 withData(
                     nameFn = {
                         "Measure by ${it::class.simpleName!!} should deny calls when ${
-                            when (type) {
-                                TokenBucket::class -> "empty"
-                                LeakyBucket::class -> "full"
-                                SlidingWindow::class -> "full"
-                                else -> error("Unknown provider type: $type")
-                            }
+                        when (type) {
+                            TokenBucket::class -> "empty"
+                            LeakyBucket::class -> "full"
+                            SlidingWindow::class -> "full"
+                            else -> error("Unknown provider type: $type")
+                        }
                         }"
                     },
                     listOf(callVolumeUnit, bytesVolumeUnit)
@@ -107,7 +105,7 @@ class RateLimitProviderTest : FunSpec() {
                     makeCalls(
                         rateLimiter = provider,
                         invocations = invocations,
-                        differentSizeAndWeightOn = mapOf(invocations - 1 to (callSize * 2 to callWeight * 2)),
+                        differentSizeAndWeightOn = mapOf(invocations - 1 to (callSize * 2 to callWeight * 2))
                     ) { callIndex, theProvider ->
                         if (callIndex < invocations) {
                             shouldNotBeLimited()
@@ -136,7 +134,7 @@ class RateLimitProviderTest : FunSpec() {
                     )
                     beforeBurst.elapsedNow().apply {
                         when (provider) {
-                            is LeakyBucket -> shouldBe((rateSeconds.seconds * (capacity - 1)) + leakGraceMs.milliseconds)
+                            is LeakyBucket -> shouldBe((rateSeconds.seconds * capacity) + leakGraceMs.milliseconds)
                             is TokenBucket -> shouldBeLessThan(rateSeconds.seconds)
                             is SlidingWindow -> shouldBeLessThan(rateSeconds.seconds)
                         }
@@ -203,7 +201,6 @@ class RateLimitProviderTest : FunSpec() {
         }.joinAll()
     }
 
-
     private fun RateLimiterResponse.shouldBeLimitedBy(provider: RateLimiter) {
         shouldBeTypeOf<RateLimiterResponse.LimitedBy>()
         this.provider shouldBe provider
@@ -211,7 +208,6 @@ class RateLimitProviderTest : FunSpec() {
 
     private fun RateLimiterResponse.shouldNotBeLimited() {
         shouldBeTypeOf<RateLimiterResponse.NotLimited>()
-
     }
 
     private fun TestScope.provider(

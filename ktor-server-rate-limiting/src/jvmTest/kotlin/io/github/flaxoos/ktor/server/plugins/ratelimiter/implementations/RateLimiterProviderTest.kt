@@ -1,7 +1,10 @@
 @file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class)
 
-package io.github.flaxoos.ktor.server.plugins.ratelimiter.providers
+package io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations
 
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.CallVolumeUnit
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.RateLimiter
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.RateLimiterResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
@@ -18,6 +21,7 @@ import io.ktor.util.Attributes
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -25,15 +29,16 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-const val capacity = 10
+const val capacity = 5
 const val rateSeconds = 1
 const val bytesToAdd = 10
 const val callSize = 10
 const val callWeight = 1.0
-
+const val leakGraceMs = 1
 private val logger = KotlinLogging.logger {}
 
 @OptIn(ExperimentalTime::class)
@@ -44,8 +49,9 @@ class RateLimitProviderTest : FunSpec() {
     }
     private val bytesVolumeUnit = CallVolumeUnit.Bytes(bytesToAdd)
 
-    private fun mockCall(sizeAndWeight: Pair<Int, Double>): ApplicationCall = mockk(relaxed = true) {
+    private fun mockCall(sizeAndWeight: Pair<Int, Double>, index: Int): ApplicationCall = mockk(relaxed = true) {
         coEvery { receive<Any>() } returns sizeAndWeight.first
+        coEvery { this@mockk.toString() } returns "Test call: $index"
         coEvery { attributes } returns Attributes()
         every { request } returns mockk(relaxed = true) {
             every { pipeline } returns mockk {
@@ -53,13 +59,14 @@ class RateLimitProviderTest : FunSpec() {
             }
         }
         coEvery { callVolumeUnit.callSize(this@mockk) } returns sizeAndWeight.second
+
     }
 
     private val callIndexAttributeKey = AttributeKey<Int>("callIndex")
 
     init {
         coroutineTestScope = true
-        timeout = 30.seconds.inWholeMilliseconds
+        invocationTimeout = 30.seconds.inWholeMilliseconds
         coroutineDebugProbes = false
 
 
@@ -85,8 +92,7 @@ class RateLimitProviderTest : FunSpec() {
                     },
                     listOf(callVolumeUnit, bytesVolumeUnit)
                 ) { unit ->
-                    val provider = provider(type, unit)
-                    testCoroutineScheduler.advanceTimeBy(rateSeconds.seconds)
+                    val provider = spyk(provider(type, unit))
                     if (coroutineTestScope == true) testCoroutineScheduler.runCurrent()
 
                     // calls before limit should pass (token bucket / sliding window last call is double sized), next should fail
@@ -94,11 +100,12 @@ class RateLimitProviderTest : FunSpec() {
                         when (provider) {
                             is TokenBucket, is SlidingWindow -> 0
                             is LeakyBucket -> 1
+                            else -> error("Unknown provider type: $type")
                         }
                     )
 
                     makeCalls(
-                        rateLimitProvider = provider,
+                        rateLimiter = provider,
                         invocations = invocations,
                         differentSizeAndWeightOn = mapOf(invocations - 1 to (callSize * 2 to callWeight * 2)),
                     ) { callIndex, theProvider ->
@@ -123,20 +130,20 @@ class RateLimitProviderTest : FunSpec() {
                     logger.info { "Firing burst of $capacity calls" }
                     val beforeBurst = testCoroutineScheduler.timeSource.markNow()
                     makeCalls(
-                        rateLimitProvider = provider,
+                        rateLimiter = provider,
                         invocations = capacity,
                         burst = true
                     )
                     beforeBurst.elapsedNow().apply {
                         when (provider) {
-                            is LeakyBucket -> shouldBe(rateSeconds.seconds * capacity)
+                            is LeakyBucket -> shouldBe((rateSeconds.seconds * (capacity - 1)) + leakGraceMs.milliseconds)
                             is TokenBucket -> shouldBeLessThan(rateSeconds.seconds)
                             is SlidingWindow -> shouldBeLessThan(rateSeconds.seconds)
                         }
                     }
 
                     makeCalls(
-                        rateLimitProvider = provider,
+                        rateLimiter = provider,
                         invocations = 1,
                         burst = true
                     ) { _, theProvider ->
@@ -147,7 +154,6 @@ class RateLimitProviderTest : FunSpec() {
                             is SlidingWindow -> shouldBeLimitedBy(theProvider)
                         }
                     }
-                    if (provider is Bucket) provider.stop()
                 }
             }
         }
@@ -155,29 +161,35 @@ class RateLimitProviderTest : FunSpec() {
 
     @Suppress("SuspendFunctionOnCoroutineScope")
     private suspend fun TestScope.makeCalls(
-        rateLimitProvider: RateLimitProvider,
+        rateLimiter: RateLimiter,
         invocations: Int,
         defaultSizeAndWeight: Pair<Int, Double> = callSize to callWeight,
         differentSizeAndWeightOn: Map<Int, Pair<Int, Double>> = emptyMap(),
         burst: Boolean = false,
-        checkForCallIndex: RateLimiterResponse.(Int, RateLimitProvider) -> Unit = { _, _ -> this.shouldNotBeLimited() }
+        checkForCallIndex: RateLimiterResponse.(Int, RateLimiter) -> Unit = { _, _ -> this.shouldNotBeLimited() }
     ) {
         val results = (1..invocations).map { callIndex ->
             val sizeAndWeight = differentSizeAndWeightOn[callIndex] ?: defaultSizeAndWeight
-            val call = mockCall(sizeAndWeight)
+            val call = mockCall(sizeAndWeight, callIndex)
             call.attributes.put(callIndexAttributeKey, callIndex)
             async {
                 val response =
                     runCatching {
-                        logger.info { "Trying call: $callIndex" }
-                        rateLimitProvider.tryAccept(call)
+                        if (rateLimiter is LeakyBucket) {
+                            // make sure all calls are added to bucket before leaks start
+                            coEvery { rateLimiter.tryIncreaseVolume(any(), any(), any(), any()) } coAnswers {
+                                val response = this.callOriginal()
+                                delay(leakGraceMs.milliseconds)
+                                response
+                            }
+                        }
+                        rateLimiter.tryAccept(call)
                     }.getOrElse {
-                        if (rateLimitProvider is Bucket) rateLimitProvider.stop()
                         fail("Call index $callIndex: ${it.message}", it)
                     }
                 return@async {
                     withClue("Call index $callIndex, response: $response") {
-                        response.checkForCallIndex(callIndex, rateLimitProvider)
+                        response.checkForCallIndex(callIndex, rateLimiter)
                     }
                 }
             }
@@ -192,7 +204,7 @@ class RateLimitProviderTest : FunSpec() {
     }
 
 
-    private fun RateLimiterResponse.shouldBeLimitedBy(provider: RateLimitProvider) {
+    private fun RateLimiterResponse.shouldBeLimitedBy(provider: RateLimiter) {
         shouldBeTypeOf<RateLimiterResponse.LimitedBy>()
         this.provider shouldBe provider
     }
@@ -203,24 +215,24 @@ class RateLimitProviderTest : FunSpec() {
     }
 
     private fun TestScope.provider(
-        type: KClass<out RateLimitProvider>,
+        type: KClass<out RateLimiter>,
         unit: CallVolumeUnit
-    ): RateLimitProvider {
+    ): RateLimiter {
         return when (type) {
             TokenBucket::class -> {
                 TokenBucket(
-                    coroutineScope = this,
                     rate = rateSeconds.seconds,
                     capacity = capacity,
-                    callVolumeUnit = unit
+                    callVolumeUnit = unit,
+                    clock = { testCoroutineScheduler.currentTime }
                 )
             }
 
             LeakyBucket::class -> {
                 LeakyBucket(
-                    coroutineScope = this,
                     rate = rateSeconds.seconds,
                     capacity = capacity,
+                    clock = { testCoroutineScheduler.currentTime }
                 )
             }
 

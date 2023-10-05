@@ -1,4 +1,4 @@
-package io.github.flaxoos.ktor.server.plugins.ratelimiter.providers
+package io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations
 
 import java.util.LinkedList
 

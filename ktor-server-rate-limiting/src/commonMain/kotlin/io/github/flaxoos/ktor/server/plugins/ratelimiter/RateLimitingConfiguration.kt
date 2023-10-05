@@ -1,22 +1,17 @@
 package io.github.flaxoos.ktor.server.plugins.ratelimiter
 
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.CallVolumeUnit
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.LeakyBucket
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.RateLimitProvider
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.RateLimiterResponse
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.SlidingWindow
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.TokenBucket
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations.LeakyBucket
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations.SlidingWindow
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations.TokenBucket
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.log
 import io.ktor.server.auth.Principal
 import io.ktor.server.response.respond
-import io.ktor.util.logging.Logger
-import kotlin.properties.Delegates
 import kotlin.reflect.KClass
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.INFINITE
 
 internal const val RATE_LIMIT_EXCEEDED_MESSAGE = "Rate limit exceeded"
 internal const val X_RATE_LIMIT = "X-RateLimit"
@@ -30,9 +25,9 @@ internal const val X_RATE_LIMIT = "X-RateLimit"
  */
 class RateLimitingConfiguration {
     /**
-     * What type of bucket to use for the rate limiter, defaults to [BucketType.TOKEN]
+     * Configuration for the rate limiter
      */
-    var providerConfiguration: RateLimitProviderConfiguration = RateLimitProviderConfiguration()
+    var rateLimiterConfiguration: RateLimiterConfiguration = RateLimiterConfiguration()
 
     /**
      * Any Hosts that are whitelisted, i.e. will be allowed through without rate limiting
@@ -67,7 +62,7 @@ class RateLimitingConfiguration {
     /**
      * The call handler for blacklisted Callers, use to define the response for blacklisted Callers, default is respond with 403
      */
-    var blackListedCallerCallHandler: suspend (ApplicationCall) -> Unit = { call ->
+    var blackListedCallerCallHandler: suspend RateLimitingConfiguration.(ApplicationCall) -> Unit = { call ->
         call.respond(HttpStatusCode.Forbidden)
     }
 
@@ -91,37 +86,11 @@ class RateLimitingConfiguration {
             response.headers.append("$X_RATE_LIMIT-Reset", "${it.resetIn.inWholeMilliseconds}")
         }
 
-    /**
-     * Should log rate limit hits
-     */
-    var logRateLimitHits: Boolean = false
 
-    /**
-     * Logger provider to use for logging by the plugin
-     */
-    var loggerProvider: Application.() -> Logger = { log }
-
-    /**
-     * Define the [RateLimitProvider]
-     */
-    inline fun <reified T : RateLimitProvider> provider(
-        rate: Duration,
-        capacity: Int,
-        callVolumeUnit: CallVolumeUnit = CallVolumeUnit.Calls(),
-    ) {
-        providerConfiguration = RateLimitProviderConfiguration(
-            type = T::class,
-            rate = rate,
-            capacity = capacity,
-            callVolumeUnit = callVolumeUnit
-        )
-    }
-
-
-    class RateLimitProviderConfiguration(
-        var type: KClass<out RateLimitProvider> = TokenBucket::class,
-        var rate: Duration = 100.milliseconds,
-        var capacity: Int = 10,
+    class RateLimiterConfiguration(
+        var type: KClass<out RateLimiter> = TokenBucket::class,
+        var rate: Duration = INFINITE,
+        var capacity: Int = Int.MAX_VALUE,
         var callVolumeUnit: CallVolumeUnit = CallVolumeUnit.Calls()
     ) {
         init {
@@ -130,7 +99,7 @@ class RateLimitingConfiguration {
             }
         }
 
-        fun toProvider(application: Application): () -> RateLimitProvider = when (type) {
+        fun toProvider(application: Application): () -> RateLimiter = when (type) {
             LeakyBucket::class -> {
                 when (callVolumeUnit) {
                     is CallVolumeUnit.Bytes -> {
@@ -140,20 +109,19 @@ class RateLimitingConfiguration {
                         )
                     }
 
-                    is CallVolumeUnit.Calls -> if (callVolumeUnit.size != 1) {
+                    is CallVolumeUnit.Calls -> if (callVolumeUnit.size.compareTo(1) != 0) {
                         application.log.warn(
                             "LeakyBucket does not support CallVolumeUnit.Calls with size " +
                                     "!= 1, 1 will be effectively used"
                         )
                     }
                 }
-                {
+                ({
                     LeakyBucket(
-                        coroutineScope = application,
                         rate = rate,
                         capacity = capacity,
                     )
-                }
+                })
             }
 
             SlidingWindow::class -> ({
@@ -166,7 +134,6 @@ class RateLimitingConfiguration {
 
             TokenBucket::class -> ({
                 TokenBucket(
-                    coroutineScope = application,
                     rate = rate,
                     capacity = capacity,
                     callVolumeUnit = callVolumeUnit

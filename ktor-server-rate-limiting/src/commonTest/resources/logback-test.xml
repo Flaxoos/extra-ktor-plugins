@@ -9,5 +9,5 @@
     </root>
     <logger name="io.netty" level="INFO"/>
     <logger name="io.ktor" level="debug"/>
-    <logger name="io.github.flaxoos.ktor.server.plugins.ratelimiter.providers" level="trace"/>
+    <logger name="io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations" level="debug"/>
 </configuration>

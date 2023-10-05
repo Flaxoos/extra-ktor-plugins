@@ -1,41 +1,27 @@
-@file:OptIn(
-    ExperimentalStdlibApi::class,
-    KtorServerPluginUnstableAPI::class,
-    ExperimentalEncodingApi::class,
-    ExperimentalCoroutinesApi::class,
-    ExperimentalEncodingApi::class
-)
-@file:Suppress("SuspendFunctionOnCoroutineScope")
-
 package io.github.flaxoos.ktor.server.plugins.ratelimiter
 
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.RateLimitProvider
-import io.github.flaxoos.ktor.server.plugins.ratelimiter.providers.TokenBucket
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations.LeakyBucket
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations.SlidingWindow
+import io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations.TokenBucket
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.kotest.assertions.withClue
-import io.kotest.core.config.configuration
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.core.spec.style.scopes.ContainerScope
-import io.kotest.core.test.TestScope
-import io.kotest.core.test.testCoroutineScheduler
-import io.kotest.datatest.withData
+import io.kotest.core.spec.style.scopes.FunSpecContainerScope
+import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainOnly
 import io.kotest.matchers.collections.shouldNotContain
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.kotest.mpp.log
+import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.longs.shouldBeLessThan
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.Forbidden
+import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.HttpStatusCode.Companion.TooManyRequests
-import io.ktor.server.application.Application
-import io.ktor.server.application.Plugin
-import io.ktor.server.application.PluginInstance
-import io.ktor.server.application.RouteScopedPlugin
 import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
@@ -44,6 +30,7 @@ import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.basic
 import io.ktor.server.auth.principal
+import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -52,131 +39,126 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.createTestEnvironment
-import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.utils.io.core.toByteArray
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 private const val LIMIT = 5
-private const val EXCEED = 1
+private const val EXCEED = 2
 private const val REQUEST_DELAY_MS = 10
 private const val RATE_LIMITER_RATE_MS = 100
-private const val BASIC_AUTH_NAME = "test"
+private const val CALLER1 = "testCaller1"
+private const val CALLER2 = "testCaller2"
 private const val BASIC_AUTH_PASSWORD = "password"
 private const val LIMITED_PATH = "limited"
 private const val UNLIMITED_PATH = "unlimited"
-
-private val encodedBasicAuth = Base64.encode("$BASIC_AUTH_NAME:$BASIC_AUTH_PASSWORD".toByteArray())
-
-private fun encodeBasicAuth(name: String) = Base64.encode("$name:$BASIC_AUTH_PASSWORD".toByteArray())
-
 private const val USER_AGENT = "some.agent"
-
 private const val LOCALHOST = "localhost"
 
-class RateLimitingPluginTest : FunSpec() {
+@OptIn(ExperimentalEncodingApi::class)
+private fun encodeBasicAuth(name: String) = Base64.encode("$name:$BASIC_AUTH_PASSWORD".toByteArray())
+
+private val logger = KotlinLogging.logger { }
+
+class TokenBucketPluginTest : RateLimitingPluginTest(TokenBucket::class)
+class LeakyBucketPluginTest : RateLimitingPluginTest(LeakyBucket::class)
+class SlidingWindowPluginTest : RateLimitingPluginTest(SlidingWindow::class)
+
+@Suppress("LeakingThis")
+abstract class RateLimitingPluginTest(private val implementation: KClass<out RateLimiter>) : FunSpec() {
 
     init {
-
-        coroutineTestScope = true
-        invocationTimeout = 30.seconds.inWholeMilliseconds
-
         context("Rate Limiting Tests") {
             context("Basic Functionality") {
-//                testRateLimiting("Exceeding rate limit on applied route should return Too Many Requests status") {
-//                    it.call(
-//                        times = LIMIT + EXCEED
-//                    ) { shouldBeLimited() }
-//                }
-//
-//                testRateLimiting(
-//                    "Failed calls should release call count",
-//                    callShouldFail = true
-//                ) {
-//                    it.call(
-//                        times = LIMIT
-//                    ) { shouldNotBeLimited() }
-//                }
-//
-//                testRateLimiting(
-//                    "Other routes should not be affected",
-//                    exclude = ApplicationRateLimiting
-//                ) {
-//                    it.call(
-//                        times = LIMIT + EXCEED,
-//                        path = UNLIMITED_PATH
-//                    ) { shouldNotBeLimited() }
-//                }
-//
-//                testRateLimiting("Should distinguish between callers") {
-//                    val callers = 2
-//                    it.call(
-//                        times = LIMIT,
-//                        basicAuthFn = { callIndex ->
-//                            encodeBasicAuth(
-//                                (callIndex % callers).toString()
-//                            )
-//                        }
-//                    ) { shouldNotBeLimited() }
-//                }
+                testRateLimiting("Exceeding rate limit on applied route should return Too Many Requests status") {
+                    it.testCalls(
+                        times = LIMIT + EXCEED
+                    ) { shouldBeLimited() }
+                }
+
+                testRateLimiting(
+                    "Other routes should not be affected"
+                ) {
+                    it.testCalls(
+                        times = LIMIT + EXCEED,
+                        path = UNLIMITED_PATH
+                    ) { shouldNotBeLimited() }
+                }
+
+                testRateLimiting("Should distinguish between callers") {
+                    it.testCalls(
+                        times = LIMIT,
+                        callers = listOf(CALLER1, CALLER2),
+                    ) { shouldNotBeLimited() }
+                }
 
                 testRateLimiting("Following requests should pass") {
-                    it.call(
+                    it.testCalls(
                         times = LIMIT + EXCEED
                     ) { shouldBeLimited() }
 
-                    testCoroutineScheduler.advanceTimeBy(RATE_LIMITER_RATE_MS.milliseconds)
+                    logger.info { "waiting..." }
+                    delay(RATE_LIMITER_RATE_MS.milliseconds * 1.1)
 
-                    it.call(
+                    it.testCalls(
                         times = 1
                     ) { shouldNotBeLimited() }
                 }
             }
 
-            xcontext("Bursts") {
+            context("Bursts") {
                 testRateLimiting(
-                    "Bursts should pass if within time window",
-                    modifyConfiguration = { providerConfiguration.capacity = LIMIT }
+                    "Should handle bursts",
                 ) {
-                    it.call(
-                        times = LIMIT + EXCEED
-                    ) { shouldNotBeLimited() }
+                    it.testCalls(
+                        times = LIMIT
+                    ) {
+                        shouldNotBeLimited()
+                        val earliestRequestTime = minOf { response ->
+                            response.requestTime.timestamp
+                        }
+                        when (it.implementation) {
+                            TokenBucket::class, SlidingWindow::class -> {
+                                forAll { response ->
+                                    (response.responseTime.timestamp - earliestRequestTime).milliseconds shouldBeLessThan RATE_LIMITER_RATE_MS.milliseconds
+                                }
+                            }
 
-                }
+                            LeakyBucket::class -> {
+                                // Check they are spaced by the rate
+                                asSequence().sortedBy { response -> response.responseTime.timestamp }
+                                    .windowed(2).map { responses ->
+                                        (responses[1].responseTime.timestamp - responses[0].responseTime.timestamp).milliseconds
+                                    }.onEach { duration ->
+                                        // Grace period of 20ms for inaccuracies
+                                        duration.shouldBeLessThan((RATE_LIMITER_RATE_MS + 20L).milliseconds)
+                                    }.sumOf { duration ->
+                                        duration.inWholeMilliseconds
+                                    }.shouldBeLessThan(RATE_LIMITER_RATE_MS * LIMIT.toLong())
+                            }
 
-                testRateLimiting(
-                    "Bursts should not pass if not within time window",
-                    modifyConfiguration = { providerConfiguration.capacity = LIMIT }
-                ) {
-                    it.call(
-                        times = LIMIT + 10
-                    ) { shouldBeLimited() }
-
+                            else -> {
+                                error("Unknown implementation")
+                            }
+                        }
+                    }
                 }
             }
 
-            xcontext("Whitelisting") {
-                // TODO: solve problem with no authentication available in [TestApplicationCall] and remove exclusion
-                // more info: https://medium.com/@emirhanemmez/write-test-for-authenticated-requests-in-ktor-630f2fd0ca25
+            context("Whitelisting") {
                 testRateLimiting(
                     "Should let whitelisted users pass",
-                    { whiteListedPrincipals = setOf(UserIdPrincipal(BASIC_AUTH_NAME)) },
-                    exclude = ApplicationRateLimiting
+                    { whiteListedPrincipals = setOf(UserIdPrincipal(CALLER1)) },
                 ) {
-                    it.call(
-                        times = LIMIT + EXCEED
+                    it.testCalls(
+                        times = LIMIT + EXCEED,
                     ) { shouldNotBeLimited() }
                 }
 
@@ -184,7 +166,7 @@ class RateLimitingPluginTest : FunSpec() {
                 testRateLimiting("Should let whitelisted hosts pass", {
                     whiteListedHosts = setOf(LOCALHOST)
                 }) {
-                    it.call(
+                    it.testCalls(
                         times = LIMIT + EXCEED
                     ) { shouldNotBeLimited() }
                 }
@@ -192,7 +174,7 @@ class RateLimitingPluginTest : FunSpec() {
                 testRateLimiting("Should let whitelisted user agents pass", {
                     whiteListedAgents = setOf(USER_AGENT)
                 }) {
-                    it.call(
+                    it.testCalls(
                         times = LIMIT + EXCEED,
                         userAgent = USER_AGENT
                     ) { shouldNotBeLimited() }
@@ -200,13 +182,11 @@ class RateLimitingPluginTest : FunSpec() {
             }
         }
 
-        xcontext("Blacklisting") {
-            // TODO: solve problem with no authentication available in [TestApplicationCall] and remove exclusion
-            // more info: https://medium.com/@emirhanemmez/write-test-for-authenticated-requests-in-ktor-630f2fd0ca25
+        context("Blacklisting") {
             testRateLimiting("Should not let blacklisted users pass", {
-                blackListedPrincipals = setOf(UserIdPrincipal(BASIC_AUTH_NAME))
-            }, exclude = ApplicationRateLimiting) {
-                it.call(
+                blackListedPrincipals = setOf(UserIdPrincipal(CALLER1))
+            }) {
+                it.testCalls(
                     times = 1
                 ) { shouldBeForbidden() }
 
@@ -215,7 +195,7 @@ class RateLimitingPluginTest : FunSpec() {
             testRateLimiting("Should not let blacklisted hosts pass", {
                 blackListedHosts = setOf(LOCALHOST)
             }) {
-                it.call(
+                it.testCalls(
                     times = 1
                 ) { shouldBeForbidden() }
             }
@@ -223,7 +203,7 @@ class RateLimitingPluginTest : FunSpec() {
             testRateLimiting("Should not let blacklisted user agents pass", {
                 blackListedAgents = setOf(USER_AGENT)
             }) {
-                it.call(
+                it.testCalls(
                     times = 1,
                     userAgent = USER_AGENT
                 ) { shouldBeForbidden() }
@@ -231,48 +211,28 @@ class RateLimitingPluginTest : FunSpec() {
         }
     }
 
-    @OptIn(KtorServerPluginUnstableAPI::class)
-    private suspend fun ContainerScope.testRateLimiting(
+    private suspend fun FunSpecContainerScope.testRateLimiting(
         testName: String,
         modifyConfiguration: RateLimitingConfiguration.() -> Unit = {},
-        callShouldFail: Boolean = false,
-        exclude: Plugin<Application, RateLimitingConfiguration, PluginInstance>? = null,
-        bucketTypes: List<KClass<out RateLimitProvider>> = listOf(
-            TokenBucket::class,
-//            LeakyBucket::class,
-//            SlidingWindow::class
-        ),
-        test: suspend (TestClientScope) -> Unit
+        block: suspend (RateLimiterTestScope) -> Unit
     ) {
-        withData(
-            nameFn = { "${it.first.key.name} - ${it.second.simpleName}: $testName" },
-            ts = listOf(RouteRateLimiting, ApplicationRateLimiting).let { plugins ->
-                exclude?.let { plugins.minus(it) } ?: plugins
-            }.flatMap { plugin ->
-                bucketTypes.map { plugin to it }
-            }
-        ) { (rateLimiter, bucketType) ->
-            println("\n\n$testName")
-            val engine = createAppEngine(rateLimiter, bucketType, testName, modifyConfiguration, callShouldFail)
+        test("${implementation.simpleName}: $testName") {
+            logger.info { "--------------------------" }
+            logger.info { "Starting test: $testName" }
+            val engine = createAppEngine(modifyConfiguration)
             try {
                 engine.start()
-                test(TestClientScope(this@testRateLimiting, engine.client))
+                block(RateLimiterTestScope(engine.client, implementation))
             } finally {
                 engine.stop()
             }
         }
     }
 
-    @OptIn(KtorServerPluginUnstableAPI::class)
-    private fun ContainerScope.createAppEngine(
-        rateLimiter: Plugin<Application, RateLimitingConfiguration, PluginInstance>,
-        bucketType: KClass<out RateLimitProvider>,
-        testName: String,
+    private fun createAppEngine(
         modifyConfiguration: RateLimitingConfiguration.() -> Unit,
-        callShouldFail: Boolean
     ) = TestApplicationEngine(createTestEnvironment {
         module {
-            val applicationScope = rateLimiter !is RouteScopedPlugin
             install(Authentication) {
                 basic("auth-basic") {
                     validate { credentials ->
@@ -282,30 +242,22 @@ class RateLimitingPluginTest : FunSpec() {
             }
             install(StatusPages) {
                 exception<Throwable> { call, cause ->
-                    call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
+                    call.respondText(text = "500: $cause", status = InternalServerError)
                 }
             }
-            if (applicationScope) {
-                install(ApplicationRateLimiting) {
-                    configureForTest(rateLimiter, bucketType, testName, modifyConfiguration)
-                }
+            install(CallId) {
+                retrieveFromHeader(HttpHeaders.XRequestId)
             }
             routing {
                 authenticate("auth-basic", strategy = AuthenticationStrategy.Required) {
                     route(LIMITED_PATH) {
-                        if (!applicationScope) {
-                            install(RouteRateLimiting) {
-                                configureForTest(rateLimiter, bucketType, testName, modifyConfiguration)
-                            }
+                        install(RouteRateLimiting) {
+                            config(modifyConfiguration)
                         }
                         get {
-                            if (callShouldFail) {
-                                error("Call failed")
-                            } else {
-                                call.respondText(
-                                    call.principal<UserIdPrincipal>()?.name ?: error("no principal")
-                                )
-                            }
+                            call.respondText(
+                                call.principal<UserIdPrincipal>()?.name ?: error("no principal")
+                            )
                         }
                     }
                 }
@@ -318,76 +270,71 @@ class RateLimitingPluginTest : FunSpec() {
         }
     })
 
-    private fun RateLimitingConfiguration.configureForTest(
-        rateLimiter: Plugin<Application, RateLimitingConfiguration, PluginInstance>,
-        bucketType: KClass<out RateLimitProvider>,
-        testName: String,
-        modifyConfiguration: RateLimitingConfiguration.() -> Unit
+    private fun RateLimitingConfiguration.config(
+        configuration: RateLimitingConfiguration.() -> Unit
     ) {
-        this.providerConfiguration.type = bucketType
-        this.providerConfiguration.capacity = LIMIT
-        this.providerConfiguration.rate = RATE_LIMITER_RATE_MS.milliseconds
-        this.loggerProvider = { KtorSimpleLogger("io.github.flaxoos.${rateLimiter.key.name}: $testName") }
-        modifyConfiguration()
+        this.rateLimiterConfiguration.type = implementation
+        this.rateLimiterConfiguration.capacity = LIMIT
+        this.rateLimiterConfiguration.rate = RATE_LIMITER_RATE_MS.milliseconds
+        configuration()
     }
 
-    private suspend fun TestClientScope.call(
+    private suspend fun RateLimiterTestScope.testCalls(
         path: String = LIMITED_PATH,
         times: Int = LIMIT,
-        delay: Duration = REQUEST_DELAY_MS.milliseconds,
-        basicAuthFn: (Int) -> String = { _ -> encodedBasicAuth },
+        callDelay: Duration = REQUEST_DELAY_MS.milliseconds,
+        callers: List<String> = listOf(CALLER1),
         userAgent: String? = null,
-        check: List<HttpResponse>.() -> Unit
+        checkResponses: suspend List<HttpResponse>.() -> Unit
     ) {
-        (1..times).map { index ->
-            testScope.testCoroutineScheduler.advanceTimeBy(delay)
-            client.get(path) {
-                headers.append("Authorization", "Basic ${basicAuthFn(index)}")
-                userAgent?.let { headers.append(HttpHeaders.UserAgent, it) }
+        coroutineScope {
+            (1..times).flatMap { index ->
+                callers.map { caller ->
+                    async {
+                        delay(callDelay)
+                        client.get(path) {
+                            val auth = encodeBasicAuth(caller)
+                            headers.append("Authorization", "Basic $auth")
+                            headers.append(HttpHeaders.XRequestId, "caller: $caller index: $index")
+                            userAgent?.let { headers.append(HttpHeaders.UserAgent, it) }
+                        }
+                    }
+                }
+            }.let {
+                checkResponses(it.awaitAll())
             }
-        }.let {
-            check(it)
         }
     }
 
-    private fun Iterable<HttpResponse>.shouldBeLimited() {
+    private suspend fun Iterable<HttpResponse>.shouldBeLimited() {
         withClue("Should be limited") {
+            logErrors()
             map { it.status } shouldContain TooManyRequests
         }
     }
 
-    private fun Iterable<HttpResponse>.shouldNotBeLimited() {
+    private suspend fun Iterable<HttpResponse>.shouldNotBeLimited() {
         withClue("Should not be limited") {
+            logErrors()
             map { it.status } shouldNotContain TooManyRequests
         }
     }
 
-    private fun Iterable<HttpResponse>.shouldBeForbidden() {
+    private suspend fun Iterable<HttpResponse>.shouldBeForbidden() {
         withClue("Should be forbidden") {
+            logErrors()
             map { it.status }.shouldContainOnly(Forbidden)
         }
     }
 
-    private fun HttpResponse.shouldBeLimited() {
-        withClue("Should be limited") {
-            status.shouldBe(TooManyRequests)
-        }
-    }
-
-    private fun HttpResponse.shouldNotBeLimited() {
-        withClue("Should not be limited") {
-            status.shouldNotBe(TooManyRequests)
-        }
-    }
-
-    private fun HttpResponse.shouldBeForbidden() {
-        withClue("Should be forbidden") {
-            status.shouldBe(Forbidden)
+    private suspend fun Iterable<HttpResponse>.logErrors() {
+        filter { it.status.value == InternalServerError.value }.forEach {
+            it.bodyAsText().let { logger.error { it } }
         }
     }
 }
 
-data class TestClientScope(
-    val testScope: TestScope,
-    val client: HttpClient
-) : CoroutineScope by testScope
+data class RateLimiterTestScope(
+    val client: HttpClient,
+    val implementation: KClass<out RateLimiter>
+)

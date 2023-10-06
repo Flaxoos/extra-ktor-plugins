@@ -37,11 +37,9 @@ tasks.register("publishToMavenLocalWithShadowedJvm") {
     group = "publishing"
     dependsOn(
         subprojects.map { subproject ->
-            listOf(
-                subproject.tasks.publishKotlinMultiplatformPublicationToMavenLocal,
-                subproject.tasks.publishShadowJvmPublicationToMavenLocal,
-                subproject.tasks.publishNativePublicationToMavenLocal
-            )
+            subproject.tasks.withType<PublishToMavenLocal>()
+                .filterNot { it.name.contains("jvm", ignoreCase = true) }
+                .plus(subproject.tasks.publishShadowJvmPublicationToMavenLocal)
         }
     )
 }
@@ -50,14 +48,9 @@ tasks.register("publishWithShadowedJvm") {
     group = "publishing"
     dependsOn(
         subprojects.map { subproject ->
-            listOf(
-                subproject.tasks.publishKotlinMultiplatformPublicationToMavenLocal,
-                subproject.tasks.publishShadowJvmPublicationToMavenLocal,
-                subproject.tasks.publishNativePublicationToMavenLocal,
-                subproject.tasks.publishKotlinMultiplatformPublicationToGitHubPackagesRepository,
-                subproject.tasks.publishShadowJvmPublicationToGitHubPackagesRepository,
-                subproject.tasks.publishNativePublicationToGitHubPackagesRepository
-            )
+            subproject.tasks.withType<AbstractPublishToMaven>()
+                .filterNot { it.name.contains("jvm", ignoreCase = true) }
+                .plus(subproject.tasks.publishShadowJvmPublicationToMavenLocal)
         }
     )
 }

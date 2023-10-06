@@ -33,7 +33,7 @@ To apply the `RateLimitingPlugin`, you need to `install` it in your Ktor route a
 routing {
   route("limited-route") {
     install(RateLimiting) {
-      rateLimiterConfiguration {
+      rateLimiter {
         type = TokenBucket::class
         rate = 1.seconds
         capacity = 100

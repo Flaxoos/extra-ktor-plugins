@@ -12,12 +12,10 @@ import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.testing.Test
-
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.DependencyHandlerScope
@@ -258,11 +256,14 @@ class KtorClientPluginConventions : Conventions() {
     @OptIn(ExternalVariantApi::class)
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
         with(this.project) {
+            extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
+                js()
+                ios()
+            }
             sourceSets.apply {
                 commonMain {
                     dependencies {
                         implementation(library("ktor-client-core"))
-                        implementation(library("ktor-client-cio"))
                     }
                 }
                 commonTest {

@@ -1,7 +1,7 @@
 [versions]
 # Core technologies
 kotlin = "1.9.10"
-java = "11"
+java = "17"
 gradle = "8.2.1"
 shadow = "8.1.1"
 kotlinx-serialization = "1.6.0"
@@ -9,6 +9,9 @@ ksp = "1.9.10-1.0.13"
 
 # Web Framework
 ktor = "2.3.2"
+
+# Android
+android = "8.1.0"
 
 # Logging
 logback = "1.4.11"
@@ -129,9 +132,16 @@ ksp-symbolProcessing-api = { module = "com.google.devtools.ksp:symbol-processing
 kmock = { module = "tech.antibytes.kmock:kmock", version.ref = "kmock" }
 kmock-gradlePlugin = { module = "tech.antibytes.kmock:kmock-gradle", version.ref = "kmock" }
 
+# Android
+android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "android" }
 
 [plugins]
+# Build
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+
+# Android
+android-library = { id = "com.android.library", version.ref = "android" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
 # Code quality and coverage
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

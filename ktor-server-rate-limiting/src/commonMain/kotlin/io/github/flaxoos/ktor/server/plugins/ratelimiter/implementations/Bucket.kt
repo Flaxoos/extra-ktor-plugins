@@ -37,7 +37,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         shouldUpdateTime: Boolean = false,
         consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
     ): Double? {
-        by.assertNotNegative()
+        by.checkNotNegative()
         return reduceVolume(call, by, shouldUpdateTime, consideringLastUpdateTime)
     }
 
@@ -53,7 +53,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         shouldUpdateTime: Boolean = false,
         consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
     ): Double? {
-        by.assertNotNegative()
+        by.checkNotNegative()
         return tryUpdateVolume(call, shouldUpdateTime) { volume, timeSinceLastUpdate ->
             volume - by.consideringLastUpdateTime(timeSinceLastUpdate).coerceAtLeast(0.0)
         }
@@ -71,7 +71,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         shouldUpdateTime: Boolean = false,
         consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
     ): Double? {
-        by.assertNotNegative()
+        by.checkNotNegative()
         return increaseVolume(call, by, shouldUpdateTime, consideringLastUpdateTime)
     }
 
@@ -87,7 +87,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         shouldUpdateTime: Boolean = false,
         consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
     ): Double? {
-        by.assertNotNegative()
+        by.checkNotNegative()
         return tryUpdateVolume(call, shouldUpdateTime) { volume, timeSinceLastUpdate ->
             volume + (consideringLastUpdateTime(by, timeSinceLastUpdate)).coerceAtMost(capacity.toDouble())
         }
@@ -136,7 +136,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         }
     }
 
-    private fun Double.assertNotNegative(): Double {
+    private fun Double.checkNotNegative(): Double {
         check(this >= 0) { "Volume change figure must not be negative. was: $this" }
         return this
     }

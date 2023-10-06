@@ -120,14 +120,14 @@ class RateLimitingConfiguration {
                     is CallVolumeUnit.Bytes -> {
                         application.log.warn(
                             "LeakyBucket does not support CallVolumeUnit.Bytes, " +
-                                    "will use CallVolumeUnit.Calls"
+                                "will use CallVolumeUnit.Calls"
                         )
                     }
 
                     is CallVolumeUnit.Calls -> if (callVolumeUnit.size.compareTo(1) != 0) {
                         application.log.warn(
                             "LeakyBucket does not support CallVolumeUnit.Calls with size " +
-                                    "!= 1, 1 will be effectively used"
+                                "!= 1, 1 will be effectively used"
                         )
                     }
                 }
@@ -139,30 +139,29 @@ class RateLimitingConfiguration {
                         clock = clock
                     )
                 }
-
             }
 
             SlidingWindow::class -> (
-                    {
-                        SlidingWindow(
-                            rate = rate,
-                            capacity = capacity,
-                            callVolumeUnit = callVolumeUnit,
-                            clock = clock
-                        )
-                    }
+                {
+                    SlidingWindow(
+                        rate = rate,
+                        capacity = capacity,
+                        callVolumeUnit = callVolumeUnit,
+                        clock = clock
                     )
+                }
+                )
 
             TokenBucket::class -> (
-                    {
-                        TokenBucket(
-                            rate = rate,
-                            capacity = capacity,
-                            callVolumeUnit = callVolumeUnit,
-                            clock = clock
-                        )
-                    }
+                {
+                    TokenBucket(
+                        rate = rate,
+                        capacity = capacity,
+                        callVolumeUnit = callVolumeUnit,
+                        clock = clock
                     )
+                }
+                )
 
             else -> {
                 error("Unsupported provider type: $type")

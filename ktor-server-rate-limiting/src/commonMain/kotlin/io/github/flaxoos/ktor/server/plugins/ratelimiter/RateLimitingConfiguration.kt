@@ -17,6 +17,9 @@ import kotlin.time.Duration.Companion.INFINITE
 internal const val RATE_LIMIT_EXCEEDED_MESSAGE = "Rate limit exceeded"
 internal const val X_RATE_LIMIT = "X-RateLimit"
 
+@DslMarker
+annotation class RateLimitingDsl
+
 /**
  * Rate limit plugin configuration.
  *
@@ -24,11 +27,12 @@ internal const val X_RATE_LIMIT = "X-RateLimit"
  * user-agent by manipulating the headers, it is safest to use [Principal] whitelisting,
  * as it relies on authentication.
  */
+@RateLimitingDsl
 class RateLimitingConfiguration {
     /**
      * Configuration for the rate limiter
      */
-    var rateLimiterConfiguration: RateLimiterConfiguration = RateLimiterConfiguration()
+    internal var rateLimiterConfiguration: RateLimiterConfiguration = RateLimiterConfiguration()
 
     /**
      * Any Hosts that are whitelisted, i.e. will be allowed through without rate limiting
@@ -82,7 +86,10 @@ class RateLimitingConfiguration {
         { rateLimiterResponse ->
             respond(HttpStatusCode.TooManyRequests, "$RATE_LIMIT_EXCEEDED_MESSAGE: ${rateLimiterResponse.message}")
             this.response.headers.append("$X_RATE_LIMIT-Limit", "${rateLimiterResponse.rateLimiter.capacity}")
-            this.response.headers.append("$X_RATE_LIMIT-Measured-by", rateLimiterResponse.rateLimiter.callVolumeUnit.name)
+            this.response.headers.append(
+                "$X_RATE_LIMIT-Measured-by",
+                rateLimiterResponse.rateLimiter.callVolumeUnit.name
+            )
             this.response.headers.append("$X_RATE_LIMIT-Reset", "${rateLimiterResponse.resetIn.inWholeMilliseconds}")
         }
 
@@ -91,6 +98,12 @@ class RateLimitingConfiguration {
      */
     var excludePaths: Set<Regex> = emptySet()
 
+    @RateLimitingDsl
+    fun rateLimiter(configuration: RateLimiterConfiguration.() -> Unit) {
+        rateLimiterConfiguration = RateLimiterConfiguration().apply(configuration)
+    }
+
+    @RateLimitingDsl
     class RateLimiterConfiguration(
         /**
          * The rate limiter implementation
@@ -119,7 +132,7 @@ class RateLimitingConfiguration {
             }
         }
 
-        fun provideRateLimiter(application: Application): () -> RateLimiter = when (type) {
+        internal fun provideRateLimiter(application: Application): () -> RateLimiter = when (type) {
             LeakyBucket::class -> {
                 when (callVolumeUnit) {
                     is CallVolumeUnit.Bytes -> {

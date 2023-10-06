@@ -3,6 +3,7 @@ package io.github.flaxoos.ktor
 import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
+import io.github.flaxoos.ktor.extensions.jitpackArtifacts
 import io.github.flaxoos.ktor.extensions.jvmShadow
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
@@ -12,12 +13,9 @@ import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.testing.Test
-
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.DependencyHandlerScope
@@ -35,7 +33,6 @@ import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
-import java.net.URI
 
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics() {}
@@ -55,9 +52,10 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("dokka"))
                 apply(project.plugin("detekt"))
                 apply(project.plugin("ktlint"))
+                apply(project.plugin("gradle-release"))
             }
             group = "io.github.flaxoos"
-            version = project.property("VERSION") as String
+            version = project.property("version") as String
             repositories {
                 mavenCentral()
                 maven {
@@ -188,16 +186,7 @@ open class Conventions : Plugin<Project> {
 
             jvmShadow()
 
-            with(the<PublishingExtension>()) {
-                repositories {
-                    maven {
-                        name = "GitHubPackages"
-                        url =
-                            URI("https://maven.pkg.github.com/flaxoos/${project.findProperty("github.repository.name") ?: project.name}")
-                        gprWriteCredentials()
-                    }
-                }
-            }
+            jitpackArtifacts()
 
             extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
                 enforceLogback()
@@ -206,12 +195,6 @@ open class Conventions : Plugin<Project> {
             extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
                 enforceLogback()
             }
-
-            tasks.register("createReleaseTag") {
-                doLast {
-                    createReleaseTag()
-                }
-            }.let { tasks.named("publish") { dependsOn(it) } }
 
             extensions.findByType(AtomicFUPluginExtension::class)?.apply {
                 dependenciesVersion = versionOf("atomicFu")
@@ -258,11 +241,14 @@ class KtorClientPluginConventions : Conventions() {
     @OptIn(ExternalVariantApi::class)
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
         with(this.project) {
+            extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
+                js()
+                ios()
+            }
             sourceSets.apply {
                 commonMain {
                     dependencies {
                         implementation(library("ktor-client-core"))
-                        implementation(library("ktor-client-cio"))
                     }
                 }
                 commonTest {
@@ -294,20 +280,6 @@ private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTest(configure: Kotl
     get("jvmTest").apply { configure() }
 
 private fun Project.ktorVersion() = versionOf("ktor")
-
-/**
- * Deletes the current tag and recreates it
- */
-internal fun Project.createReleaseTag() {
-    val tagName = "release/$version"
-    try {
-        runCommands("git", "tag", "-d", tagName)
-    } catch (e: Exception) {
-        logger.warn("Failed deleting release tag. if the tag $tagName doesn't exist then this is expected", e.message)
-    }
-    runCommands("git", "status")
-    runCommands("git", "tag", tagName)
-}
 
 /**
  * Run a command

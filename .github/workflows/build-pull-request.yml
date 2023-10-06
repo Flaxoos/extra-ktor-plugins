@@ -20,17 +20,17 @@ jobs:
 
       - name: Detect modified subprojects
         id: detect-modified-subprojects
-        uses: flaxoos/detect-modified-projects@main
+        uses: ./.github/actions/detect-modified-projects
         with:
           project_prefixes: ktor-client,ktor-server
 
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
         id: execute-gradle-tasks-on-projects
-        uses: flaxoos/execute-gradle-tasks-on-projects@main
+        uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build
           execute_on_root_anyway: true
         env:
-          GPR_USER: ${{ vars.GPR_USER }}
+          GPR_USER: ${{ secrets.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}

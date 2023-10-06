@@ -28,7 +28,7 @@ private const val CONFIG_PATH_PLACEHOLDER = "CONFIG_PATH"
 private const val GROUP_ID_PLACEHOLDER = "GROUP_ID"
 private const val CLIENT_ID_PLACEHOLDER = "CLIENT_ID"
 
-open class KafkaIntegrationTest : FunSpec() {
+abstract class BaseKafkaIntegrationTest : FunSpec() {
 
     private lateinit var applicationConfigFile: File
     private lateinit var applicationConfigFileContent: String

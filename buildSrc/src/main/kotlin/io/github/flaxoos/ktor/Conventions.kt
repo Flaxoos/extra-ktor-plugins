@@ -12,12 +12,15 @@ import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.testing.Test
+
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
+import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.named
@@ -27,6 +30,7 @@ import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -64,6 +68,8 @@ open class Conventions : Plugin<Project> {
             tasks.withType(KotlinCompilationTask::class) {
                 compilerOptions {
                     freeCompilerArgs.add("-Xcontext-receivers")
+                    languageVersion.set(KOTLIN_1_9)
+                    apiVersion.set(KOTLIN_1_9)
                 }
             }
 
@@ -98,6 +104,7 @@ open class Conventions : Plugin<Project> {
                     }
                 }
 
+
                 this.sourceSets.apply {
                     commonMain {
                         dependencies {
@@ -105,6 +112,7 @@ open class Conventions : Plugin<Project> {
                             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${versionOf("kotlinx_coroutines")}")
                             implementation("io.arrow-kt:arrow-core:${versionOf("arrow")}")
                             implementation("io.arrow-kt:arrow-fx-coroutines:${versionOf("arrow")}")
+                            implementation(library("kotlin-logging"))
                         }
                     }
 
@@ -122,6 +130,7 @@ open class Conventions : Plugin<Project> {
                         dependencies {
                             implementation("io.kotest:kotest-runner-junit5:${versionOf("kotest")}")
                             implementation("ch.qos.logback:logback-classic:${project.versionOf("logback")}")
+                            implementation(library("mockk"))
                         }
                     }
                 }
@@ -150,7 +159,7 @@ open class Conventions : Plugin<Project> {
             }
 
             tasks.withType<Wrapper> {
-                gradleVersion = "8.2.1"
+                gradleVersion = "8.3"
                 distributionType = Wrapper.DistributionType.BIN
             }
             extensions.findByType(KoverReportExtension::class)?.apply {
@@ -350,6 +359,9 @@ fun Project.library(name: String): String =
 
 fun Project.plugin(name: String): String =
     this.libs().get().findPlugin(name).get().get().pluginId
+
+fun Project.projectDependencies(configuration: DependencyHandlerScope.() -> Unit) =
+    DependencyHandlerScope.of(dependencies).configuration()
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
 @Retention(AnnotationRetention.RUNTIME)

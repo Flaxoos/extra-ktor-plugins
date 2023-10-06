@@ -20,7 +20,7 @@ jobs:
 
       - name: Detect modified subprojects
         id: detect-modified-subprojects
-        uses: flaxoos/detect-modified-projects@main
+        uses: /.github/actions/detect-modified-projects
         with:
           project_prefixes: ktor-client,ktor-server
 

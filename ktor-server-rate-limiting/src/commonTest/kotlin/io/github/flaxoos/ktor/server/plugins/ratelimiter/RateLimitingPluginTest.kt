@@ -76,7 +76,7 @@ class RateLimitingPluginTest : FunSpec() {
                 testRateLimiting(
                     "If call volume unit is bytes, should install double receive plugin",
                     modifyConfiguration = {
-                        this.rateLimiterConfiguration.callVolumeUnit = Bytes(1)
+                        rateLimiter { callVolumeUnit = Bytes(1) }
                     }
                 ) {
                     it.testCalls(
@@ -309,9 +309,11 @@ class RateLimitingPluginTest : FunSpec() {
         implementation: KClass<out RateLimiter>,
         configuration: RateLimitingConfiguration.() -> Unit
     ) {
-        this.rateLimiterConfiguration.type = implementation
-        this.rateLimiterConfiguration.capacity = LIMIT
-        this.rateLimiterConfiguration.rate = RATE_LIMITER_RATE_MS.milliseconds
+        rateLimiter {
+            this.type = implementation
+            this.capacity = LIMIT
+            this.rate = RATE_LIMITER_RATE_MS.milliseconds
+        }
         configuration()
     }
 

@@ -11,20 +11,20 @@ These plugins offer a wide range of functionalities designed to provide addition
 
 ---
 
-### 🖥️ **Server Plugins**
+### **Server Plugins**
 
-| 📦 Plugin              | 🎯 Supported Platforms | 📜 Description                                                                                                                                                                                       |
-|------------------------|------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Kafka Plugin**       | ☕ JVM                 | Sets up a Kafka client admin, producer, and consumer using a dedicated DSL. Allows consumption logic definition during the installation phase.                                                      |
-| **Rate Limiting Plugin**| ☕ JVM / 💾 Native      | Limits the number of requests a client can make within a specific time window. Offers whitelist and blacklist features for hosts, principals, and user-agents. Custom responses can be configured. |
+| Plugin                                         | Supported Platforms | Description                                                                                                                                                                  |
+|------------------------------------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **[Kafka](ktor-server-kafka)**                 | **JVM**              | Sets up a Kafka client admin, producer, and consumer using a dedicated DSL. Allows consumption logic definition during the installation phase.                                 |
+| **[Rate Limiting](ktor-server-rate-limiting)** | **JVM / Native**   | Highly configurable rate limiter with offering different startegies, request weighting, blacklisting and whitelisting of requests based on authentication, host and user agents |
 
 ---
 
-### 🖱️ **Client Plugins**
+### **Client Plugins**
 
-| 📦 Plugin                     | 🎯 Supported Platforms | 📜 Description                                                                                                                                                                                                     |
-|-------------------------------|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Circuit Breaker Plugin**    | ☕ JVM / 💾 Native      | Enhances system resilience by halting requests to failing services once a defined error threshold is reached. Automatically switches between open and closed states based on the health of the targeted service. |
+| Plugin                                             | Supported Platforms                                | Description                                                                                                                                                                                                     |
+|----------------------------------------------------|----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **[Circuit Breaker](ktor-client-circuit-breaker)** | **JVM / Native / JS** | Enhances system resilience by halting requests to failing services once a defined error threshold is reached. Automatically switches between open and closed states based on the health of the targeted service. |
 
 ---
 

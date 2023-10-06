@@ -102,6 +102,18 @@ class RateLimitingPluginTest : FunSpec() {
                     ) { shouldBeOk() }
                 }
 
+                testRateLimiting(
+                    "Excluded routes should not be affected",
+                    modifyConfiguration = {
+                        excludePaths = setOf(Regex("$LIMITED_PATH/$UNLIMITED_PATH/.*"))
+                    }
+                ) {
+                    it.testCalls(
+                        times = LIMIT + EXCEED,
+                        path = "$LIMITED_PATH/$UNLIMITED_PATH/$UNLIMITED_PATH"
+                    ) { shouldBeOk() }
+                }
+
                 testRateLimiting("Should distinguish between callers") {
                     it.testCalls(
                         times = LIMIT,
@@ -273,6 +285,13 @@ class RateLimitingPluginTest : FunSpec() {
 
                                 call.principal<UserIdPrincipal>()?.name ?: error("no principal")
                                 call.respond(OK)
+                            }
+                            route(UNLIMITED_PATH) {
+                                route(UNLIMITED_PATH) {
+                                    get {
+                                        call.respond(OK)
+                                    }
+                                }
                             }
                         }
                     }

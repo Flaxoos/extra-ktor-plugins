@@ -10,6 +10,7 @@ import io.ktor.server.auth.Principal
 import io.ktor.server.auth.principal
 import io.ktor.server.plugins.doublereceive.DoubleReceive
 import io.ktor.server.plugins.origin
+import io.ktor.server.request.path
 import io.ktor.server.request.userAgent
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,6 +37,10 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
 
     on(AuthenticationChecked) { call ->
         with(pluginConfig) {
+            if (excludePaths.any { call.request.path().trimStart { c -> c == '/' }.matches(it) }) {
+                return@with
+            }
+
             val caller = call.extractCaller()
             application.log.debug("Handling call by ${caller.toIdentifier()}")
 

@@ -86,6 +86,11 @@ class RateLimitingConfiguration {
             this.response.headers.append("$X_RATE_LIMIT-Reset", "${rateLimiterResponse.resetIn.inWholeMilliseconds}")
         }
 
+    /**
+     * Regexes for paths to exclude from this rate limiter
+     */
+    var excludePaths: Set<Regex> = emptySet()
+
     class RateLimiterConfiguration(
         /**
          * The rate limiter implementation

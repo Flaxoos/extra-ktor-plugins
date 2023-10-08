@@ -24,11 +24,6 @@ kotlin {
                 implementation(libs.ktor.server.call.id)
             }
         }
-        commonTest{
-            dependencies{
-                implementation(libs.mockk)
-            }
-        }
     }
 }
 

@@ -55,7 +55,7 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("gradle-release"))
             }
             group = "io.github.flaxoos"
-            version = project.property("VERSION") as String
+            version = project.property("version") as String
             repositories {
                 mavenCentral()
                 maven {

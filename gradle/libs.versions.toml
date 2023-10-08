@@ -54,9 +54,6 @@ dokka = "1.8.20"
 # Github
 gradle-release = "3.0.2"
 
-# Miscellaneous
-krontab = "2.2.1"
-
 [libraries]
 # Core libraries
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -142,9 +139,6 @@ android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref 
 
 # Github
 gradle-release-gradlePlugin = { module = "net.researchgate:gradle-release", version.ref = "gradle-release" }
-
-# Miscellaneous
-krontab = { module = "dev.inmo:krontab", version.ref = "krontab" }
 
 [plugins]
 # Build

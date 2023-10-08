@@ -8,6 +8,7 @@ jobs:
   build-and-publish-main:
     permissions:
       contents: write
+      pull-requests: read
     name: Build and Publish Main
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
@@ -34,20 +35,30 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Set up Git user
-        run: |
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
-
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
         id: execute-gradle-tasks-on-projects
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build,publishWithShadowedJvm -xtest
-          parent_project_task: koverLog release -Prelease.useAutomaticVersion=true -xtest
+          parent_project_task: koverLog
           execute_on_root_anyway: true
         env:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
+
+      - name: Extract version
+        id: get_version
+        run: |
+          echo "VERSION_NAME=$(grep "version" gradle.properties | awk -F'=' '{print $2}')" >> $GITHUB_ENV
+
+      - name: Create Release
+        id: create_release
+        uses: avakar/tag-and-release@v1
+        with:
+          tag_name: v${{ env.VERSION_NAME }}
+          release_name: Release v${{ env.VERSION_NAME }}
+          body: ${{ github.event.head_commit.message }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

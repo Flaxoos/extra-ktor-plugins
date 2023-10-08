@@ -186,17 +186,6 @@ open class Conventions : Plugin<Project> {
 
             jvmShadow()
 
-            with(the<PublishingExtension>()) {
-                repositories {
-                    maven {
-                        name = "GitHubPackages"
-                        setUrl("https://maven.pkg.github.com/flaxoos/${project.findProperty("github.repository.name") ?: project.name}")
-                        gprWriteCredentials()
-                    }
-
-                }
-            }
-
             extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
                 enforceLogback()
             }

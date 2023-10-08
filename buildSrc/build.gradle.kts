@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.dokka.gradlePlugin)
     implementation(libs.detekt.gradlePlugin)
     implementation(libs.shadow.gradlePlugin)
+    implementation(libs.gradle.release.gradlePlugin)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.mockk)

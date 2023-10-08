@@ -51,6 +51,9 @@ avro = "1.11.2"
 # Documentation
 dokka = "1.8.20"
 
+# Github
+gradle-release = "3.0.2"
+
 [libraries]
 # Core libraries
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -127,13 +130,15 @@ dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", versi
 ksp-gradlePlugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 ksp-symbolProcessing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 
-
 # Kmock
 kmock = { module = "tech.antibytes.kmock:kmock", version.ref = "kmock" }
 kmock-gradlePlugin = { module = "tech.antibytes.kmock:kmock-gradle", version.ref = "kmock" }
 
 # Android
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "android" }
+
+# Github
+gradle-release-gradlePlugin = { module = "net.researchgate:gradle-release", version.ref = "gradle-release" }
 
 [plugins]
 # Build
@@ -160,6 +165,8 @@ atomicfu = { id = "kotlinx-atomicfu", version.ref = "atomicFu" }
 # Ksp
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
-
 # Kmock
 kmock = { id = "tech.antibytes.kmock.kmock-gradle", version.ref = "kmock" }
+
+# Github
+gradle-release = { id = "net.researchgate.release", version.ref = "gradle-release" }

@@ -2,7 +2,6 @@ package io.github.flaxoos.ktor.server.plugins.taskscheduler
 
 import io.ktor.server.application.Application
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Delay
 import kotlin.time.Duration
 
 @DslMarker

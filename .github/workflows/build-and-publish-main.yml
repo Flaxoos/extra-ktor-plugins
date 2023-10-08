@@ -1,15 +1,15 @@
-name: Build and Publish Main
+name: Build and Release Main
 on:
   push:
     branches:
       - main
 
 jobs:
-  build-and-publish-main:
+  build-and-release-main:
     permissions:
       contents: write
       pull-requests: read
-    name: Build and Publish Main
+    name: Build and Release Main
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
@@ -40,7 +40,7 @@ jobs:
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,build,publishWithShadowedJvm -xtest
+          tasks: clean,build -xtest
           parent_project_task: koverLog
           execute_on_root_anyway: true
         env:

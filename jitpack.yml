@@ -1,0 +1,5 @@
+jdk:
+  - openjdk11
+install:
+  - echo "Custom Jitpack install - Publishing to maven local..."
+  - ./gradlew clean publishToMavenLocalWithShadowedJvm -xtest

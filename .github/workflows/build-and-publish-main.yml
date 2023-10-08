@@ -32,13 +32,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Set up Git user
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
         id: execute-gradle-tasks-on-projects
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,build,publishWithShadowedJvm,createReleaseTag
-          parent_project_task: koverLog
+          tasks: clean,build,publishWithShadowedJvm,release
+          parent_project_task: koverLog release
           execute_on_root_anyway: true
         env:
           GPR_USER: ${{ vars.GPR_USER }}

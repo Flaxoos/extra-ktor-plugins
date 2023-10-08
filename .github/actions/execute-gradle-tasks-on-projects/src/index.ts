@@ -19,7 +19,7 @@ async function run() {
         let executeOnRootAnyway = core.getInput('execute_on_root_anyway', {
             trimWhitespace: true,
         })?.toLowerCase() === 'true' ?? false;
-        let rootProjectTask = core.getInput('root_project_task', {
+        let rootProjectTask = core.getInput('parent_project_task', {
             required: false
         });
 

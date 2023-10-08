@@ -1,5 +1,10 @@
 jdk:
   - openjdk11
+before_install:
+  - sdk install java 11.0.10-open
+  - sdk use java 11.0.10-open
+  - sdk install gradle
+  - gradle -v
 install:
   - echo "Custom Jitpack install - Publishing to maven local..."
   - ./gradlew clean publishToMavenLocalWithShadowedJvm -xtest

@@ -7,6 +7,7 @@ import io.github.flaxoos.ktor.extensions.jvmShadow
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
+import net.researchgate.release.ReleaseExtension
 import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
@@ -19,6 +20,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.DependencyHandlerScope
+import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.named
@@ -53,6 +55,7 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("dokka"))
                 apply(project.plugin("detekt"))
                 apply(project.plugin("ktlint"))
+                apply(project.plugin("gradle-release"))
             }
             group = "io.github.flaxoos"
             version = project.property("VERSION") as String
@@ -190,9 +193,11 @@ open class Conventions : Plugin<Project> {
                 repositories {
                     maven {
                         name = "GitHubPackages"
-                        url =
-                            URI("https://maven.pkg.github.com/flaxoos/${project.findProperty("github.repository.name") ?: project.name}")
+                        setUrl("https://maven.pkg.github.com/flaxoos/${project.findProperty("github.repository.name") ?: project.name}")
                         gprWriteCredentials()
+                    }
+                    maven {
+                        setUrl("https://jitpack.io")
                     }
                 }
             }
@@ -204,12 +209,6 @@ open class Conventions : Plugin<Project> {
             extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
                 enforceLogback()
             }
-
-            tasks.register("createReleaseTag") {
-                doLast {
-                    createReleaseTag()
-                }
-            }.let { tasks.named("publish") { dependsOn(it) } }
 
             extensions.findByType(AtomicFUPluginExtension::class)?.apply {
                 dependenciesVersion = versionOf("atomicFu")
@@ -295,20 +294,6 @@ private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTest(configure: Kotl
     get("jvmTest").apply { configure() }
 
 private fun Project.ktorVersion() = versionOf("ktor")
-
-/**
- * Deletes the current tag and recreates it
- */
-internal fun Project.createReleaseTag() {
-    val tagName = "release/$version"
-    try {
-        runCommands("git", "tag", "-d", tagName)
-    } catch (e: Exception) {
-        logger.warn("Failed deleting release tag. if the tag $tagName doesn't exist then this is expected", e.message)
-    }
-    runCommands("git", "status")
-    runCommands("git", "tag", tagName)
-}
 
 /**
  * Run a command

@@ -1,5 +1,3 @@
-
-
 plugins {
     id("ktor-server-plugin-conventions")
 }
@@ -22,11 +20,6 @@ kotlin {
             dependencies {
                 implementation(libs.ktor.server.host.common)
                 implementation(libs.ktor.server.call.id)
-            }
-        }
-        commonTest{
-            dependencies{
-                implementation(libs.mockk)
             }
         }
     }

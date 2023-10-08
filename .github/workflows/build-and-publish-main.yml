@@ -42,8 +42,8 @@ jobs:
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,build,publishWithShadowedJvm,release
-          parent_project_task: koverLog release
+          tasks: clean,build,publishWithShadowedJvm
+          parent_project_task: koverLog release -Prelease.useAutomaticVersion=true
           execute_on_root_anyway: true
         env:
           GPR_USER: ${{ vars.GPR_USER }}

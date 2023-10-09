@@ -6,7 +6,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 
 plugins {
-    id("conventions")
+    id(libs.plugins.kover.asProvider().get().pluginId)
 }
 
 dependencies {
@@ -16,7 +16,7 @@ dependencies {
 }
 
 subprojects {
-    tasks.find { it.name == "build" }?.dependsOn(tasks.ktlintFormat)
+    tasks.find { it.name == "build" }?.dependsOn(tasks.named("ktlintFormat"))
 }
 
 tasks.withType(Test::class) {
@@ -33,24 +33,24 @@ tasks.withType(Test::class) {
     }
 }
 
-tasks.register("publishToMavenLocalWithShadowedJvm") {
-    group = "publishing"
-    dependsOn(
-        subprojects.map { subproject ->
-            subproject.tasks.withType<PublishToMavenLocal>()
-                .filterNot { it.name.contains("jvm", ignoreCase = true) }
-                .plus(subproject.tasks.publishShadowJvmPublicationToMavenLocal)
-        }
-    )
-}
-
-tasks.register("publishWithShadowedJvm") {
-    group = "publishing"
-    dependsOn(
-        subprojects.map { subproject ->
-            subproject.tasks.withType<AbstractPublishToMaven>()
-                .filterNot { it.name.contains("jvm", ignoreCase = true) }
-                .plus(subproject.tasks.publishShadowJvmPublicationToMavenLocal)
-        }
-    )
-}
+//tasks.register("publishToMavenLocalWithShadowedJvm") {
+//    group = "publishing"
+//    dependsOn(
+//        subprojects.map { subproject ->
+//            subproject.tasks.withType<PublishToMavenLocal>()
+//                .filterNot { it.name.contains("jvm", ignoreCase = true) }
+//                .plus(subproject.tasks.publishShadowJvmPublicationToMavenLocal)
+//        }
+//    )
+//}
+//
+//tasks.register("publishWithShadowedJvm") {
+//    group = "publishing"
+//    dependsOn(
+//        subprojects.map { subproject ->
+//            subproject.tasks.withType<AbstractPublishToMaven>()
+//                .filterNot { it.name.contains("jvm", ignoreCase = true) }
+//                .plus(subproject.tasks.publishShadowJvmPublicationToMavenLocal)
+//        }
+//    )
+//}

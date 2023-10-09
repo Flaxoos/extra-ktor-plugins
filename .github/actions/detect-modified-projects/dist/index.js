@@ -59,7 +59,7 @@ function run() {
                 .join(',');
         }
         if (modifiedProjects) {
-            core.debug(`Modified subprojects: ${modifiedProjects}`);
+            core.info(`Modified subprojects: ${modifiedProjects}`);
             core.setOutput('modified_projects', modifiedProjects);
         }
         else {

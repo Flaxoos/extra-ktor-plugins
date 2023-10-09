@@ -48,17 +48,20 @@ jobs:
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
 
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
       - name: Extract version
         id: get_version
         run: |
           echo "VERSION_NAME=$(grep "version" gradle.properties | awk -F'=' '{print $2}')" >> $GITHUB_ENV
 
-      - name: Create Release
-        id: create_release
-        uses: avakar/tag-and-release@v1
+      - uses: ncipollo/release-action@v1
         with:
-          tag_name: v${{ env.VERSION_NAME }}
-          release_name: Release v${{ env.VERSION_NAME }}
-          body: ${{ github.event.head_commit.message }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          generateReleaseNotes: true
+          tag: ${{ env.VERSION_NAME }}
+          artifacts: "build/all-artifacts*.txt"
+

@@ -3,7 +3,6 @@ package io.github.flaxoos.ktor
 import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
-import io.github.flaxoos.ktor.extensions.jitpackArtifacts
 import io.github.flaxoos.ktor.extensions.jvmShadow
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
@@ -52,7 +51,6 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("dokka"))
                 apply(project.plugin("detekt"))
                 apply(project.plugin("ktlint"))
-                apply(project.plugin("gradle-release"))
             }
             group = "io.github.flaxoos"
             version = project.property("version") as String
@@ -185,8 +183,6 @@ open class Conventions : Plugin<Project> {
             }
 
             jvmShadow()
-
-            jitpackArtifacts()
 
             extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
                 enforceLogback()

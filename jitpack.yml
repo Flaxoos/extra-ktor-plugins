@@ -6,5 +6,5 @@ before_install:
   - sdk install gradle
   - gradle -v
 install:
-  - echo "Custom Jitpack install - Publishing to maven local..."
-  - ./gradlew clean publishToMavenLocalWithShadowedJvm -xtest
+  - echo "Custom Jitpack install - Copying artifacts for Jitpack and Publishing to maven local..."
+  - ./gradlew clean copyArtifactsForJitpack publishToMavenLocalWithShadowedJvm -xtest

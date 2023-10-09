@@ -7,6 +7,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
 import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
 import org.gradle.api.specs.Spec
 import org.gradle.api.tasks.TaskContainer
@@ -21,6 +22,7 @@ import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.the
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 private const val JVM = "jvm"
@@ -46,6 +48,7 @@ fun Project.jvmShadow() {
             exclude(dependency("org.slf4j:slf4j-api"))
         }
         this.configurations
+        mustRunAfter(tasks.named("generateMetadataFileForJvmPublication"))
     }
     with(the<PublishingExtension>()) {
         publications {
@@ -57,6 +60,13 @@ fun Project.jvmShadow() {
                     (asNode().get("dependencies") as NodeList).clear()
                 }
             }
+        }
+    }
+    tasks.withType(AbstractPublishToMaven::class) {
+        if (publication.name.contains(JVM, ignoreCase = true)
+            && !publication.name.contains("shadow", ignoreCase = true)
+        ) {
+            enabled = false
         }
     }
 }

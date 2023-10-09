@@ -1,16 +1,22 @@
-name: Build and Publish Main
+name: Build Main and Release
 on:
   push:
     branches:
       - main
-
 jobs:
-  build-and-publish-main:
+  build-main:
+    strategy:
+      matrix:
+        include:
+          - project_prefix: ktor-server
+            image_name: ubuntu-latest
+          - project_prefix: ktor-client
+            image_name: macos-latest
     permissions:
       contents: write
       pull-requests: read
-    name: Build and Publish Main
-    runs-on: ubuntu-latest
+    name: Build Main - ${{ matrix.project_prefix }}
+    runs-on: ${{ matrix.image_name }}
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
       - name: Checkout Repository
@@ -25,7 +31,8 @@ jobs:
         uses: ./.github/actions/detect-modified-projects
         id: detect-modified-subprojects
         with:
-          project_prefixes: ktor-client,ktor-server
+          project_prefixes: ${{ matrix.project_prefix }}
+          required_projects: ${{ matrix.project_prefix == 'ktor-server' && 'ktor-server-kafka,ktor-server-rate-limiting' || 'ktor-client-circuit-breaker' }}
 
       - name: Cache Gradle packages
         uses: actions/cache@v2
@@ -35,30 +42,61 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
+      - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects == '' && 'root' || steps.detect-modified-subprojects.outputs.modified_projects }}
         id: execute-gradle-tasks-on-projects
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,build,publishWithShadowedJvm -xtest
-          parent_project_task: koverLog
-          execute_on_root_anyway: true
+          tasks: clean,publishToMavenLocal --scan --stacktrace
         env:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
+
+      - name: Upload Build Artifact for ${{ matrix.project_prefix }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifacts-${{ matrix.project_prefix }}
+          path: |
+            build/libs
+            ${{ matrix.project_prefix }}-*/build/libs
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: build-main
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Download ktor-server Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifacts-ktor-server
+          path: build-artifacts
+
+      - name: Download ktor-client Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifacts-ktor-client
+          path: build-artifacts
 
       - name: Extract version
         id: get_version
         run: |
           echo "VERSION_NAME=$(grep "version" gradle.properties | awk -F'=' '{print $2}')" >> $GITHUB_ENV
 
-      - name: Create Release
-        id: create_release
-        uses: avakar/tag-and-release@v1
-        with:
-          tag_name: v${{ env.VERSION_NAME }}
-          release_name: Release v${{ env.VERSION_NAME }}
-          body: ${{ github.event.head_commit.message }}
+      - name: Set Short SHA
+        id: vars
+        run: echo "::set-output name=short_sha::${GITHUB_SHA::8}"
+
+      - name: Recreate Release
+        uses: GongT/actions-recreate-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION_NAME }}
+          release_name: ${{ env.VERSION_NAME }}

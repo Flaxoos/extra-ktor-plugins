@@ -1,10 +1,11 @@
 jdk:
   - openjdk11
 before_install:
-  - sdk install java 11.0.10-open
-  - sdk use java 11.0.10-open
-  - sdk install gradle
-  - gradle -v
+  - echo "Running a custom before_install command"
+  - echo "Stub command to verify that before_install works"
 install:
-  - echo "Custom Jitpack install - Copying artifacts for Jitpack and Publishing to maven local..."
-  - ./gradlew clean copyArtifactsForJitpack publishToMavenLocalWithShadowedJvm -xtest
+  - echo "Running a custom install command"
+  - gradle wrapper
+env:
+  MYVAR: "custom environment variable"
+  - ./gradlew clean publishToMavenLocal -xtest

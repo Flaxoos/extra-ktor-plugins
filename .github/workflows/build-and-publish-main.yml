@@ -48,11 +48,6 @@ jobs:
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
 
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
       - name: Extract version
         id: get_version
         run: |
@@ -63,5 +58,4 @@ jobs:
           allowUpdates: true
           generateReleaseNotes: true
           tag: ${{ env.VERSION_NAME }}
-          artifacts: "build/all-artifacts*.txt"
-
+          artifacts: "build/libs/*,*/build/libs/*"

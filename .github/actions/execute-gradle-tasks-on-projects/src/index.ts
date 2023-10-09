@@ -31,7 +31,7 @@ async function run() {
         core.debug("Task array: " + taskArr);
         let gradleProjectsTasks: string;
         if (projects === 'buildSrc') {
-            core.debug(`only buildSrc has changed, setting gradleProjectsTasks to ${tasks}`);
+            core.debug(`only buildSrc has changed, setting gradleProjectsTasks to ${tasks.replace(",", " ")}`);
             gradleProjectsTasks = `${tasks} `;
         } else {
             const projArr: string[] = projects.split(',').filter((p) => p.trim() !== '');

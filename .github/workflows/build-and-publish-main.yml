@@ -8,14 +8,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - project_prefix: ktor-server
+          - projects: ktor-server-kafka,ktor-server-rate-limiting
             image_name: ubuntu-latest
-          - project_prefix: ktor-client
+          - projects: ktor-client-circuit-breaker
             image_name: macos-latest
     permissions:
       contents: write
       pull-requests: read
-    name: Build Main - ${{ matrix.project_prefix }}
+    name: Build Main - ${{ matrix.projects }}
     runs-on: ${{ matrix.image_name }}
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
@@ -27,12 +27,6 @@ jobs:
         with:
           java-version: 11
 
-      - name: Detect modified subprojects
-        uses: ./.github/actions/detect-modified-projects
-        id: detect-modified-subprojects
-        with:
-          project_prefixes: ${{ matrix.project_prefix }}
-
       - name: Cache Gradle packages
         uses: actions/cache@v2
         with:
@@ -41,11 +35,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects == '' && 'root' || steps.detect-modified-subprojects.outputs.modified_projects }}
+      - name: Execute gradle tasks on ${{ matrix.projects }}
         id: execute-gradle-tasks-on-projects
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
-          projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
+          projects: ${{ matrix.projects }}
           tasks: clean,build
           parent_project_task: koverLog --scan -xtest --stacktrace
           execute_on_root_anyway: false
@@ -54,13 +48,13 @@ jobs:
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
 
-      - name: Upload Build Artifacts-${{ matrix.project_prefix }}
+      - name: Upload Build Artifacts-${{ matrix.projects }}
         uses: actions/upload-artifact@v2
         with:
           name: build-artifacts
           path: |
             build/libs
-            ${{ matrix.project_prefix }}-*/build/libs
+            ktor-*/build/libs
 
   release:
     name: Release

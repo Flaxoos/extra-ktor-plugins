@@ -3,14 +3,20 @@ on:
   push:
     branches:
       - main
-
 jobs:
   build-main:
+    strategy:
+      matrix:
+        include:
+          - project_prefix: ktor-server
+            image_name: ubuntu-latest
+          - project_prefix: ktor-client
+            image_name: macos-latest
     permissions:
       contents: write
       pull-requests: read
-    name: Build Main
-    runs-on: macos-13
+    name: Build Main - ${{ matrix.project_prefix }}
+    runs-on: ${{ matrix.image_name }}
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
       - name: Checkout Repository
@@ -25,7 +31,7 @@ jobs:
         uses: ./.github/actions/detect-modified-projects
         id: detect-modified-subprojects
         with:
-          project_prefixes: ktor-client,ktor-server
+          project_prefixes: ${{ matrix.project_prefix }}
 
       - name: Cache Gradle packages
         uses: actions/cache@v2
@@ -48,14 +54,14 @@ jobs:
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
 
-      - name: Upload Build Artifacts
+      - name: Upload Build Artifacts-${{ matrix.project_prefix }}
         uses: actions/upload-artifact@v2
         with:
           name: build-artifacts
           path: |
             build/libs
-            ktor-*/build/libs
-            
+            ${{ matrix.project_prefix }}-*/build/libs
+
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -67,10 +73,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Download Build Artifacts
+      - name: Download ktor-server Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: build-artifacts
+          name: build-artifacts-ktor-server
+          path: build-artifacts
+
+      - name: Download ktor-client Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifacts-ktor-client
           path: build-artifacts
 
       - name: Extract version

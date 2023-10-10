@@ -9,6 +9,11 @@ plugins {
     id(libs.plugins.kover.asProvider().get().pluginId)
 }
 
+buildScan {
+    termsOfServiceUrl = "https://gradle.com/terms-of-service"
+    termsOfServiceAgree = "yes"
+}
+
 dependencies {
     kover(projects.ktorServerRateLimiting)
     kover(projects.ktorClientCircuitBreaker)

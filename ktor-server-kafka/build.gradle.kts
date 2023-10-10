@@ -31,6 +31,7 @@ kotlin {
                 implementation(libs.ktor.client.contentNegotiation)
             }
         }
+
         jvmTest {
             dependencies {
                 implementation(platform(libs.testcontainers.bom.get()))

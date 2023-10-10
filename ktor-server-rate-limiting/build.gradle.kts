@@ -18,6 +18,7 @@ kotlin {
                 implementation(libs.ktor.server.double.receive)
             }
         }
+
         val commonTest by getting {
             dependencies {
                 implementation(libs.ktor.server.host.common)

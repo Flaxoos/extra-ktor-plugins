@@ -48,7 +48,7 @@ jobs:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean,build
           parent_project_task: koverLog --scan -xtest --stacktrace
-          execute_on_root_anyway: true
+          execute_on_root_anyway: false
         env:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}

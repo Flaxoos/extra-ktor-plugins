@@ -72,4 +72,4 @@ jobs:
           allowUpdates: true
           generateReleaseNotes: true
           tag: ${{ env.VERSION_NAME }}
-          artifacts: artifacts/*
+          artifacts: artifacts/**/*.jar

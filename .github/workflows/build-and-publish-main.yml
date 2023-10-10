@@ -35,7 +35,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
+      - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects == '' && 'root' || steps.detect-modified-subprojects.outputs.modified_projects }}
         id: execute-gradle-tasks-on-projects
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
@@ -54,7 +54,7 @@ jobs:
           name: build-artifacts
           path: |
             build/libs
-            **/build/libs
+            ktor-*/build/libs
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v2

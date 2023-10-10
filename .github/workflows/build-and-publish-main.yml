@@ -10,7 +10,7 @@ jobs:
       contents: write
       pull-requests: read
     name: Build Main
-    runs-on: ubuntu-latest
+    runs-on: macos-13
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
       - name: Checkout Repository

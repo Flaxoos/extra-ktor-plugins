@@ -40,7 +40,7 @@ jobs:
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,build -xtest --info --stacktrace
+          tasks: clean,build -xtest --debug --stacktrace
           parent_project_task: koverLog
           execute_on_root_anyway: true
         env:

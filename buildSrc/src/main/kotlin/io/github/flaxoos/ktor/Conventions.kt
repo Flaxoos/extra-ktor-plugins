@@ -82,24 +82,6 @@ open class Conventions : Plugin<Project> {
                         )
                     }
                 }
-                val hostOs = System.getProperty("os.name")
-                val arch = System.getProperty("os.arch")
-                val nativeTarget = when {
-                    hostOs == "Mac OS X" && arch == "x86_64" -> macosX64("native")
-                    hostOs == "Mac OS X" && arch == "aarch64" -> macosArm64("native")
-                    hostOs == "Linux" -> linuxX64("native")
-                    // TODO: support IOS and android for client plugins, split to two conventions for server and client
-                    // Other supported targets are listed here: https://ktor.io/docs/native-server.html#targets
-                    else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-                }
-                nativeTarget.apply {
-                    binaries {
-                        sharedLib {
-                            baseName = "ktor"
-                        }
-                    }
-                }
-
 
                 this.sourceSets.apply {
                     commonMain {
@@ -211,6 +193,16 @@ open class Conventions : Plugin<Project> {
 class KtorServerPluginConventions : Conventions() {
 
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
+        // Support mac OS?
+        // macosArm64()
+        // macosX64()
+        linuxX64("native") {
+            binaries {
+                sharedLib {
+                    baseName = "ktor"
+                }
+            }
+        }
         sourceSets.apply {
             commonMain {
                 with(this.project) {
@@ -237,10 +229,8 @@ class KtorClientPluginConventions : Conventions() {
     @OptIn(ExternalVariantApi::class)
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
         with(this.project) {
-            extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
-                js()
-                ios()
-            }
+            js()
+            ios()
             sourceSets.apply {
                 commonMain {
                     dependencies {

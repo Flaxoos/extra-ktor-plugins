@@ -1,15 +1,15 @@
-name: Build and Publish Main
+name: Build Main and Release
 on:
   push:
     branches:
       - main
 
 jobs:
-  build-and-publish-main:
+  build-main:
     permissions:
       contents: write
       pull-requests: read
-    name: Build and Publish Main
+    name: Build Main
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
@@ -59,7 +59,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: build-and-publish-main
+    needs: build-main
     permissions:
       contents: write
       pull-requests: read
@@ -71,7 +71,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: build-artifacts
-          path: artifacts
+          path: build-artifacts
 
       - name: Extract version
         id: get_version
@@ -83,4 +83,4 @@ jobs:
           allowUpdates: true
           generateReleaseNotes: true
           tag: ${{ env.VERSION_NAME }}
-          artifacts: artifacts/**/*.jar
+          artifacts: build-artifacts/**/*.jar

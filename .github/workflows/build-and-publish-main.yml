@@ -55,6 +55,17 @@ jobs:
           path: |
             build/libs
             ktor-*/build/libs
+            
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: build-and-publish-main
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v2

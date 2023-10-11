@@ -93,5 +93,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
+          tag_name: ${GITHUB_SHA::8}
           release_name: Release at ${{ github.ref }}

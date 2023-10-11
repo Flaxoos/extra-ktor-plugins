@@ -42,3 +42,4 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
         freeCompilerArgs += "-Xcontext-receivers"
         freeCompilerArgs += "-Xuse-ir"
     }
+}

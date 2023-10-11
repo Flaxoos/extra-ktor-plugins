@@ -88,6 +88,12 @@ jobs:
         run: |
           echo "VERSION_NAME=$(grep "version" gradle.properties | awk -F'=' '{print $2}')" >> $GITHUB_ENV
 
+      - name: Delete Release
+        uses: liudonghua123/delete-release-action@v1
+        with:
+          release_name: ${{ env.VERSION_NAME }}
+          suppress_errors: true
+
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true

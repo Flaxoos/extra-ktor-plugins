@@ -6,14 +6,18 @@ function run() {
         const subprojectPrefixes = core.getInput('project_prefixes')?.split(",") ?? [];
 
         core.debug("executing git fetch");
-        execSync('git fetch');
+        execSync('git fetch --unshallow', { encoding: 'utf-8' });
 
         const githubSha = process.env.GITHUB_SHA;
         if (!githubSha) {
             core.setFailed('GITHUB_SHA not set')
         }
-        const diffCmd = `git diff --name-only HEAD~1..${githubSha}`
-        core.debug("Calling: " + diffCmd);
+        const diffCmd = `git diff --name-only HEAD~1..${githubSha}`;
+
+        core.debug(`Executing: ${diffCmd}`);
+        core.debug(`Git Status: ${execSync(`git status`, { encoding: 'utf-8' }).trim()}`);
+        core.debug(`SHA Exists: ${execSync(`git cat-file -e ${githubSha}`, { encoding: 'utf-8' }).trim()}`);
+
         let modifiedProjects = execSync(diffCmd, {encoding: 'utf8'});
         core.debug("Result:" + modifiedProjects)
         if (modifiedProjects.includes('buildSrc/') && !modifiedProjects.includes('ktor-')) {

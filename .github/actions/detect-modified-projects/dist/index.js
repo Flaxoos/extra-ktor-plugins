@@ -35,7 +35,7 @@ function run() {
         if (!githubSha) {
             core.setFailed('GITHUB_SHA not set');
         }
-        const diffCmd = `git diff --name-only HEAD~1..${{ githubSha }}`;
+        const diffCmd = `git diff --name-only HEAD~1..${githubSha}`;
         core.debug("Calling: " + diffCmd);
         let modifiedProjects = (0, child_process_1.execSync)(diffCmd, { encoding: 'utf8' });
         core.debug("Result:" + modifiedProjects);

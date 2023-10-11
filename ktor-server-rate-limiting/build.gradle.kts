@@ -20,7 +20,7 @@ kotlin {
         }
         val commonTest by getting {
             dependencies {
-                implementation(libs.ktor.server.host.common)
+                implementation(libs.ktor.server.host.common
                 implementation(libs.ktor.server.call.id)
             }
         }

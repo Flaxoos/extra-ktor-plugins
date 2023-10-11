@@ -4,8 +4,8 @@ inputs:
   project_prefixes:
     required: false
     description: 'Prefix for projects to detect, if not provided, all subprojects will be detected'
-  projects:
-    required_projects: false
+  required_projects:
+    required: false
     description: 'Projects to run the tasks on anyway'
 
 outputs:

@@ -88,16 +88,10 @@ jobs:
         run: |
           echo "VERSION_NAME=$(grep "version" gradle.properties | awk -F'=' '{print $2}')" >> $GITHUB_ENV
 
-      - name: Delete Release
-        uses: liudonghua123/delete-release-action@v1
+      - name: Recreate Release
+        uses: GongT/actions-recreate-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          release_name: ${{ env.VERSION_NAME }}
-          suppress_errors: true
-
-      - uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          generateReleaseNotes: true
-          tag: ${{ env.VERSION_NAME }}
-          commit: ${{ github.sha }}
-          artifacts: build-artifacts/**/*.jar
+          tag_name: ${{ github.ref }}
+          release_name: Release at ${{ github.ref }}

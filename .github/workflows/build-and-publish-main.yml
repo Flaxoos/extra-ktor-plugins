@@ -93,4 +93,5 @@ jobs:
           allowUpdates: true
           generateReleaseNotes: true
           tag: ${{ env.VERSION_NAME }}
+          commit: ${{ github.sha }}
           artifacts: build-artifacts/**/*.jar

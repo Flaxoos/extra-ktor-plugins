@@ -52,10 +52,10 @@ jobs:
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
 
-      - name: Upload Build Artifacts-${{ matrix.project_prefix }}
+      - name: Upload Build Artifact for ${{ matrix.project_prefix }}
         uses: actions/upload-artifact@v2
         with:
-          name: build-artifacts
+          name: build-artifacts-${{ matrix.project_prefix }}
           path: |
             build/libs
             ${{ matrix.project_prefix }}-*/build/libs

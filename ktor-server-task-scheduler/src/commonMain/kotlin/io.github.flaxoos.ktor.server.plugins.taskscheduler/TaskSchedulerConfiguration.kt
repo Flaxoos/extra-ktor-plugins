@@ -30,18 +30,6 @@ class TaskSchedulerConfiguration {
     }
 }
 
-fun m() {
-    TaskSchedulerConfiguration().apply {
-        kronTask {
-            buildSchedule {
-                seconds {
-                    from(0) to 1
-                }
-            }
-        }
-    }
-}
-
 @TaskSchedulerDsl
 sealed class Task {
     val id: Uuid = uuid4()

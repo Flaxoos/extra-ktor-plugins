@@ -88,10 +88,14 @@ jobs:
         run: |
           echo "VERSION_NAME=$(grep "version" gradle.properties | awk -F'=' '{print $2}')" >> $GITHUB_ENV
 
+      - name: Set Short SHA
+        id: vars
+        run: echo "::set-output name=short_sha::${GITHUB_SHA::8}"
+
       - name: Recreate Release
         uses: GongT/actions-recreate-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${GITHUB_SHA::8}
+          tag_name: ${{ steps.vars.outputs.short_sha }}
           release_name: Release at ${{ github.ref }}

@@ -47,56 +47,58 @@ jobs:
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,publishToMavenLocal --scan --stacktrace
+          tasks: clean publish --scan --stacktrace
         env:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
 
-      - name: Upload Build Artifact for ${{ matrix.project_prefix }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-artifacts-${{ matrix.project_prefix }}
-          path: |
-            build/libs
-            ${{ matrix.project_prefix }}-*/build/libs
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    needs: build-main
-    permissions:
-      contents: write
-      pull-requests: read
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Download ktor-server Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: build-artifacts-ktor-server
-          path: build-artifacts
-
-      - name: Download ktor-client Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: build-artifacts-ktor-client
-          path: build-artifacts
-
-      - name: Extract version
-        id: get_version
-        run: |
-          echo "VERSION_NAME=$(grep "version" gradle.properties | awk -F'=' '{print $2}')" >> $GITHUB_ENV
-
-      - name: Set Short SHA
-        id: vars
-        run: echo "::set-output name=short_sha::${GITHUB_SHA::8}"
-
-      - name: Recreate Release
-        uses: GongT/actions-recreate-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.VERSION_NAME }}
-          release_name: ${{ env.VERSION_NAME }}
+#      - name: Upload Build Artifact for ${{ matrix.project_prefix }}
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: build-artifacts-${{ matrix.project_prefix }}
+#          path: |
+#            build/libs
+#            ${{ matrix.project_prefix }}-*/build/libs
+#
+#  release:
+#    name: Release
+#    runs-on: ubuntu-latest
+#    needs: build-main
+#    permissions:
+#      contents: write
+#      pull-requests: read
+#    steps:
+#      - name: Checkout Repository
+#        uses: actions/checkout@v2
+#
+#      - name: Download ktor-server Artifacts
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: build-artifacts-ktor-server
+#          path: build-artifacts
+#
+#      - name: Download ktor-client Artifacts
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: build-artifacts-ktor-client
+#          path: build-artifacts
+#
+#      - name: Extract version
+#        id: get_version
+#        run: |
+#          echo "VERSION_NAME=$(grep "version" gradle.properties | awk -F'=' '{print $2}')" >> $GITHUB_ENV
+#
+#      - name: Set Short SHA
+#        id: vars
+#        run: echo "::set-output name=short_sha::${GITHUB_SHA::8}"
+#
+#      - name: Recreate Release
+#        uses: GongT/actions-recreate-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          tag_name: ${{ env.VERSION_NAME }}
+#          release_name: ${{ env.VERSION_NAME }}

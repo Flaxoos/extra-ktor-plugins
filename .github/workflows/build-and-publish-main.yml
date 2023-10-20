@@ -50,8 +50,8 @@ jobs:
           tasks: clean publish --scan --stacktrace
         env:
           GPR_USER: ${{ vars.GPR_USER }}
-          GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
-          GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
+          GPR_READ_KEY: ${{ secrets.GPR_READ_KEY }}
+          GPR_WRITE_KEY: ${{ secrets.GPR_WRITE_KEY }}
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}

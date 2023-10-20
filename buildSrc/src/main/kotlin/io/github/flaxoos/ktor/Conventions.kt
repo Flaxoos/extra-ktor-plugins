@@ -16,7 +16,7 @@ import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
@@ -31,16 +31,16 @@ import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
+import org.gradle.plugins.signing.Sign
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
-import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinSoftwareComponentWithCoordinatesAndPublication
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import java.util.Base64
 
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics() {}
@@ -204,20 +204,24 @@ open class Conventions : Plugin<Project> {
     private fun Project.configurePublishing() {
         the<PublishingExtension>().apply {
             repositories {
-                maven {
-                    name = "sonatype"
-                    url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                    ossrhCredentials()
-                }
-                maven {
-                    name = "sonatype-snapshots"
-                    url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-                    ossrhCredentials()
+                if (version.toString().endsWith("SNAPSHOT")) {
+                    maven {
+                        name = "sonatype-snapshots"
+                        url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+                        ossrhCredentials()
+                    }
+                } else {
+                    maven {
+                        name = "sonatype"
+                        url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                        ossrhCredentials()
+                    }
                 }
             }
             publications.withType<MavenPublication>().configureEach {
                 pom {
                     name.set("extra ktor plugins")
+                    packaging = "jar"
                     description.set(
                         "This project provides a suite of feature-rich, efficient, and highly customizable " +
                                 "plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
@@ -247,24 +251,25 @@ open class Conventions : Plugin<Project> {
                     }
                 }
             }
-            publications.withType(MavenPublication::class) {
-                the<SigningExtension>().apply {
-                    useInMemoryPgpKeys(signingKeyId, signingKeyAscii, signingPassword)
-                    sign(this@withType)
-                }
-            }
         }
         val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
         val dokkaJar = tasks.register<Jar>("dokkaJar") {
             archiveClassifier.set("javadoc")
             from(dokkaHtml.get().outputDirectory)
         }
-        tasks.withType<PublishToMavenRepository>().configureEach {
-
+        tasks.withType<AbstractPublishToMaven>().configureEach {
             artifacts {
                 add("archives", tasks.named("sourcesJar"))
                 add("archives", dokkaJar)
             }
+        }
+        tasks.withType<AbstractPublishToMaven>().configureEach {
+            val signingTasks = tasks.withType<Sign>()
+            mustRunAfter(signingTasks)
+        }
+        the<SigningExtension>().apply {
+            useInMemoryPgpKeys(Base64.getDecoder().decode(signingKeyArmorBase64).decodeToString(), signingPassword)
+            sign(the<PublishingExtension>().publications)
         }
     }
 }
@@ -390,8 +395,9 @@ val Project.gprReadKey: String by projectOrSystemEnv()
 val Project.gprUser: String by projectOrSystemEnv()
 val Project.ossrhUsername: String by projectOrSystemEnv()
 val Project.ossrhPassword: String by projectOrSystemEnv()
-val Project.signingKeyId: String by projectOrSystemEnv()
-val Project.signingKeyAscii: String by projectOrSystemEnv()
+
+val Project.signingKeyBase64: String by projectOrSystemEnv()
+val Project.signingKeyArmorBase64: String by projectOrSystemEnv()
 val Project.signingPassword: String by projectOrSystemEnv()
 
 fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")

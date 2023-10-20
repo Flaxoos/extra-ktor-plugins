@@ -7,13 +7,16 @@ import io.github.flaxoos.ktor.extensions.jvmShadow
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
-import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
@@ -21,11 +24,15 @@ import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.named
+import org.gradle.kotlin.dsl.provideDelegate
+import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
+import org.gradle.plugins.signing.SigningExtension
+import org.jetbrains.dokka.gradle.AbstractDokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
@@ -42,6 +49,7 @@ open class Conventions : Plugin<Project> {
                 apply("java-library-distribution")
                 apply("org.jetbrains.kotlin.multiplatform")
                 apply("maven-publish")
+                apply("signing")
                 apply("idea")
                 apply("io.kotest.multiplatform")
                 apply(project.plugin("loggingCapabilities"))
@@ -186,6 +194,75 @@ open class Conventions : Plugin<Project> {
                     setProperty("termsOfServiceAgree", "yes")
                 }
             }
+
+            configurePublishing()
+        }
+    }
+
+    private fun Project.configurePublishing() {
+        the<PublishingExtension>().apply {
+            repositories {
+                maven {
+                    name = "sonatype"
+                    url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    ossrhCredentials()
+                }
+                maven {
+                    name = "sonatype-snapshots"
+                    url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+                    ossrhCredentials()
+                }
+            }
+            publications.withType<MavenPublication>().configureEach {
+                pom {
+                    name.set("extra ktor plugins")
+                    description.set(
+                        "This project provides a suite of feature-rich, efficient, and highly customizable " +
+                                "plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
+                    )
+                    url.set("https://github.com/Flaxoos/extra-ktor-plugins")
+                    inceptionYear.set("2023")
+
+                    scm {
+                        connection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
+                        developerConnection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
+                        url.set("https://github.com/Flaxoos/extra-ktor-plugins")
+                    }
+
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("https://opensource.org/license/mit/")
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id.set("flaxoos")
+                            name.set("Ido Flax")
+                            email.set("idoflax@gmail.com")
+                        }
+                    }
+                }
+            }
+            the<SigningExtension>().apply {
+                val signingKey: String? by project
+                val signingPassword: String? by project
+                useInMemoryPgpKeys(signingKey, signingPassword)
+                sign(publications)
+            }
+        }
+        val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
+        val dokkaJar = tasks.register<Jar>("dokkaJar") {
+            archiveClassifier.set("javadoc")
+            from(dokkaHtml.get().outputDirectory)
+        }
+        tasks.withType<PublishToMavenRepository>().configureEach {
+
+            artifacts {
+                add("archives", tasks.named("sourcesJar"))
+                add("archives", dokkaJar)
+            }
         }
     }
 }
@@ -298,6 +375,14 @@ private fun MavenArtifactRepository.gprReadCredentials() {
     }
 }
 
+context(Project)
+private fun MavenArtifactRepository.ossrhCredentials() {
+    credentials {
+        username = ossrhUsername
+        password = ossrhPassword
+    }
+}
+
 private val Project.gprWriteToken
     get() = findProperty("gpr.write.key") as String? ?: System.getenv("GPR_WRITE_TOKEN")
 
@@ -306,6 +391,11 @@ private val Project.gprReadToken
 
 private val Project.gprUser
     get() = findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
+
+private val Project.ossrhUsername: String
+    get() = findProperty("ossrh.username") as String? ?: System.getenv("OSSRH_USERNAME")
+val Project.ossrhPassword: String
+    get() = findProperty("ossrh.password") as String? ?: System.getenv("OSSRH_PASSWORD")
 
 fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")
 

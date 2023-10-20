@@ -44,6 +44,7 @@ fun Project.jvmShadow() {
         }
         this.configurations
         mustRunAfter(tasks.named("generateMetadataFileForJvmPublication"))
+        mustRunAfter(tasks.named("signJvmPublication"))
     }
     with(the<PublishingExtension>()) {
         publications {

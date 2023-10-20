@@ -13,6 +13,7 @@ class ProjectPropertyDelegate {
                         "(upper case, underscore separated)."
             )
 
+
     companion object {
         private fun String.camelCaseToLowerDots(): String {
             return this.replace(Regex("([a-z])([A-Z])"), "$1.$2").lowercase()

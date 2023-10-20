@@ -11,7 +11,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 
-val TaskScheduler = createApplicationPlugin(
+val TaskSchedulerPlugin = createApplicationPlugin(
     name = "TaskScheduler",
     createConfiguration = ::TaskSchedulerConfiguration
 ) {

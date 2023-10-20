@@ -72,6 +72,7 @@ open class Conventions : Plugin<Project> {
             }
 
             extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
+                explicitApi()
                 jvm {
                     jvmToolchain(versionOf("java").toInt())
                     tasks.named("jvmJar", Jar::class).configure {

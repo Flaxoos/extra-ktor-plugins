@@ -54,5 +54,5 @@ jobs:
           GPR_WRITE_KEY: ${{ secrets.GPR_WRITE_KEY }}
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          SIGNING_KEY_ARMOR_BASE_64: ${{ secrets.SIGNING_KEY_ARMOR_BASE_64 }}
+          SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}

@@ -3,6 +3,7 @@ package io.github.flaxoos.ktor
 import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
+import io.github.flaxoos.ktor.ProjectPropertyDelegate.Companion.projectOrSystemEnv
 import io.github.flaxoos.ktor.extensions.jvmShadow
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
@@ -16,7 +17,6 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
-import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
@@ -363,7 +363,7 @@ context(Project)
 private fun MavenArtifactRepository.gprWriteCredentials() {
     credentials {
         username = gprUser
-        password = gprWriteToken
+        password = gprWriteKey
     }
 }
 
@@ -371,7 +371,7 @@ context(Project)
 private fun MavenArtifactRepository.gprReadCredentials() {
     credentials {
         username = gprUser
-        password = gprReadToken
+        password = gprReadKey
     }
 }
 
@@ -383,19 +383,11 @@ private fun MavenArtifactRepository.ossrhCredentials() {
     }
 }
 
-private val Project.gprWriteToken
-    get() = findProperty("gpr.write.key") as String? ?: System.getenv("GPR_WRITE_TOKEN")
-
-private val Project.gprReadToken
-    get() = findProperty("gpr.read.key") as String? ?: System.getenv("GPR_READ_TOKEN")
-
-private val Project.gprUser
-    get() = findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
-
-private val Project.ossrhUsername: String
-    get() = findProperty("ossrh.username") as String? ?: System.getenv("OSSRH_USERNAME")
-val Project.ossrhPassword: String
-    get() = findProperty("ossrh.password") as String? ?: System.getenv("OSSRH_PASSWORD")
+private val Project.gprWriteKey:String by projectOrSystemEnv()
+private val Project.gprReadKey:String by projectOrSystemEnv()
+private val Project.gprUser:String by projectOrSystemEnv()
+private val Project.ossrhUsername:String by projectOrSystemEnv()
+private val Project.ossrhPassword:String by projectOrSystemEnv()
 
 fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")
 

@@ -54,6 +54,8 @@ jobs:
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
 
 #      - name: Upload Build Artifact for ${{ matrix.project_prefix }}
 #        uses: actions/upload-artifact@v2

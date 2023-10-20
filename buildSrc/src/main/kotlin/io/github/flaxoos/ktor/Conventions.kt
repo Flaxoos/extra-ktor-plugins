@@ -35,9 +35,11 @@ import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinSoftwareComponentWithCoordinatesAndPublication
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 open class Conventions : Plugin<Project> {
@@ -245,11 +247,11 @@ open class Conventions : Plugin<Project> {
                     }
                 }
             }
-            the<SigningExtension>().apply {
-                val signingKey: String? by project
-                val signingPassword: String? by project
-                useInMemoryPgpKeys(signingKey, signingPassword)
-                sign(publications)
+            publications.withType(MavenPublication::class) {
+                the<SigningExtension>().apply {
+                    useInMemoryPgpKeys(signingKeyId, signingKeyAscii, signingPassword)
+                    sign(this@withType)
+                }
             }
         }
         val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
@@ -383,11 +385,14 @@ private fun MavenArtifactRepository.ossrhCredentials() {
     }
 }
 
-private val Project.gprWriteKey:String by projectOrSystemEnv()
-private val Project.gprReadKey:String by projectOrSystemEnv()
-private val Project.gprUser:String by projectOrSystemEnv()
-private val Project.ossrhUsername:String by projectOrSystemEnv()
-private val Project.ossrhPassword:String by projectOrSystemEnv()
+val Project.gprWriteKey: String by projectOrSystemEnv()
+val Project.gprReadKey: String by projectOrSystemEnv()
+val Project.gprUser: String by projectOrSystemEnv()
+val Project.ossrhUsername: String by projectOrSystemEnv()
+val Project.ossrhPassword: String by projectOrSystemEnv()
+val Project.signingKeyId: String by projectOrSystemEnv()
+val Project.signingKeyAscii: String by projectOrSystemEnv()
+val Project.signingPassword: String by projectOrSystemEnv()
 
 fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")
 

@@ -54,6 +54,9 @@ dokka = "1.8.20"
 # Github
 gradle-release = "3.0.2"
 
+# Nexus
+nexusPublish = "2.0.0-rc-1"
+
 [libraries]
 # Core libraries
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -170,3 +173,6 @@ kmock = { id = "tech.antibytes.kmock.kmock-gradle", version.ref = "kmock" }
 
 # Github
 gradle-release = { id = "net.researchgate.release", version.ref = "gradle-release" }
+
+# Nexus
+nexusPublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPublish" }

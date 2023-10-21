@@ -62,8 +62,6 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("detekt"))
                 apply(project.plugin("ktlint"))
             }
-            group = "io.github.flaxoos"
-            version = project.property("version") as String
             repositories {
                 mavenCentral()
                 maven {

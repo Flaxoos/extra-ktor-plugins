@@ -1,4 +1,4 @@
-rootProject.name = "flax-ktor-plugins"
+rootProject.name = "extra-ktor-plugins"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

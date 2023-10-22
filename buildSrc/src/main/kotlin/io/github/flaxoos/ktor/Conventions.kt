@@ -3,8 +3,8 @@ package io.github.flaxoos.ktor
 import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
-import io.github.flaxoos.ktor.ProjectPropertyDelegate.Companion.projectOrSystemEnv
-import io.github.flaxoos.ktor.extensions.jvmShadow
+import io.github.flaxoos.ktor.extensions.configurePublishing
+import io.github.flaxoos.ktor.extensions.gprReadCredentials
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
@@ -12,11 +12,7 @@ import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.publish.PublishingExtension
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
@@ -24,23 +20,17 @@ import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.named
-import org.gradle.kotlin.dsl.provideDelegate
-import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
-import org.gradle.plugins.signing.Sign
-import org.gradle.plugins.signing.SigningExtension
-import org.jetbrains.dokka.gradle.AbstractDokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
-import java.util.Base64
 
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics() {}
@@ -172,8 +162,6 @@ open class Conventions : Plugin<Project> {
                 )
             }
 
-            jvmShadow()
-
             extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
                 enforceLogback()
             }
@@ -195,79 +183,9 @@ open class Conventions : Plugin<Project> {
                 }
             }
 
-            configurePublishing()
-        }
-    }
-
-    private fun Project.configurePublishing() {
-        the<PublishingExtension>().apply {
-            repositories {
-                if (version.toString().endsWith("SNAPSHOT")) {
-                    maven {
-                        name = "sonatype-snapshots"
-                        url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-                        ossrhCredentials()
-                    }
-                } else {
-                    maven {
-                        name = "sonatype"
-                        url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                        ossrhCredentials()
-                    }
-                }
+            afterEvaluate {
+                configurePublishing()
             }
-            publications.withType<MavenPublication>().configureEach {
-                pom {
-                    name.set("extra ktor plugins")
-                    packaging = "jar"
-                    description.set(
-                        "This project provides a suite of feature-rich, efficient, and highly customizable " +
-                                "plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
-                    )
-                    url.set("https://github.com/Flaxoos/extra-ktor-plugins")
-                    inceptionYear.set("2023")
-
-                    scm {
-                        connection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
-                        developerConnection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
-                        url.set("https://github.com/Flaxoos/extra-ktor-plugins")
-                    }
-
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("https://opensource.org/license/mit/")
-                        }
-                    }
-
-                    developers {
-                        developer {
-                            id.set("flaxoos")
-                            name.set("Ido Flax")
-                            email.set("idoflax@gmail.com")
-                        }
-                    }
-                }
-            }
-        }
-        val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
-        val dokkaJar = tasks.register<Jar>("dokkaJar") {
-            archiveClassifier.set("javadoc")
-            from(dokkaHtml.get().outputDirectory)
-        }
-        tasks.withType<AbstractPublishToMaven>().configureEach {
-            artifacts {
-                add("archives", tasks.named("sourcesJar"))
-                add("archives", dokkaJar)
-            }
-        }
-        tasks.withType<AbstractPublishToMaven>().configureEach {
-            val signingTasks = tasks.withType<Sign>()
-            mustRunAfter(signingTasks)
-        }
-        the<SigningExtension>().apply {
-            useInMemoryPgpKeys(Base64.getDecoder().decode(signingKeyArmorBase64).decodeToString(), signingPassword)
-            sign(the<PublishingExtension>().publications)
         }
     }
 }
@@ -311,7 +229,7 @@ class KtorClientPluginConventions : Conventions() {
     @OptIn(ExternalVariantApi::class)
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
         with(this.project) {
-            js()
+//            js()
             ios()
             sourceSets.apply {
                 commonMain {
@@ -348,55 +266,6 @@ private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTest(configure: Kotl
     get("jvmTest").apply { configure() }
 
 private fun Project.ktorVersion() = versionOf("ktor")
-
-/**
- * Run a command
- */
-private fun runCommands(vararg commands: String): String {
-    val process = ProcessBuilder(*commands).redirectErrorStream(true).start()
-    process.waitFor()
-    var result = ""
-    process.inputStream.bufferedReader().use { it.lines().forEach { line -> result += line + "\n" } }
-    val errorResult = process.exitValue() == 0
-    if (!errorResult) {
-        throw IllegalStateException(result)
-    }
-    return result
-}
-
-context(Project)
-private fun MavenArtifactRepository.gprWriteCredentials() {
-    credentials {
-        username = gprUser
-        password = gprWriteKey
-    }
-}
-
-context(Project)
-private fun MavenArtifactRepository.gprReadCredentials() {
-    credentials {
-        username = gprUser
-        password = gprReadKey
-    }
-}
-
-context(Project)
-private fun MavenArtifactRepository.ossrhCredentials() {
-    credentials {
-        username = ossrhUsername
-        password = ossrhPassword
-    }
-}
-
-val Project.gprWriteKey: String by projectOrSystemEnv()
-val Project.gprReadKey: String by projectOrSystemEnv()
-val Project.gprUser: String by projectOrSystemEnv()
-val Project.ossrhUsername: String by projectOrSystemEnv()
-val Project.ossrhPassword: String by projectOrSystemEnv()
-
-val Project.signingKeyBase64: String by projectOrSystemEnv()
-val Project.signingKeyArmorBase64: String by projectOrSystemEnv()
-val Project.signingPassword: String by projectOrSystemEnv()
 
 fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")
 

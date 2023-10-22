@@ -1,6 +1,6 @@
 import com.gradle.enterprise.gradleplugin.GradleEnterpriseExtension
-import io.github.flaxoos.ktor.ossrhPassword
-import io.github.flaxoos.ktor.ossrhUsername
+import io.github.flaxoos.ktor.extensions.ossrhPassword
+import io.github.flaxoos.ktor.extensions.ossrhUsername
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
 import org.gradle.api.tasks.testing.logging.TestLogEvent
@@ -12,9 +12,6 @@ plugins {
     alias(libs.plugins.nexusPublish)
 }
 
-group = "io.github.flaxoos"
-version = project.property("version") as String
-
 nexusPublishing {
     repositories {
         sonatype {
@@ -24,6 +21,11 @@ nexusPublishing {
             password = ossrhPassword
         }
     }
+}
+
+allprojects{
+    group = "io.github.flaxoos"
+    version = project.property("version") as String
 }
 
 subprojects {

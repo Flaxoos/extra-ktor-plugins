@@ -35,7 +35,7 @@ These plugins offer a wide range of functionalities designed to provide addition
 Please refer to the readme of the relevant plugin subproject
 
 ## Installation
-The libraries are published to the packages in this repository ➜
+The libraries are published to maven central, see above for the latest version
 ```kotlin
 dependencies {
     implementation("io.github.flaxoos:ktor-server-kafka:$ktor_plugins_version")

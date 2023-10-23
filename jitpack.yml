@@ -1,0 +1,11 @@
+jdk:
+  - openjdk11
+before_install:
+  - echo "Running a custom before_install command"
+  - echo "Stub command to verify that before_install works"
+install:
+  - echo "Running a custom install command"
+  - gradle wrapper
+env:
+  MYVAR: "custom environment variable"
+  - ./gradlew clean publishToMavenLocal -xtest

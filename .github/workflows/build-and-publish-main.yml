@@ -1,13 +1,22 @@
-name: Build and Publish Main
+name: Build Main and Release
 on:
   push:
     branches:
       - main
-
 jobs:
-  build-and-publish-main:
-    name: Build and Publish Main
-    runs-on: ubuntu-latest
+  build-main:
+    strategy:
+      matrix:
+        include:
+          - project_prefix: ktor-server
+            image_name: ubuntu-latest
+          - project_prefix: ktor-client
+            image_name: macos-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    name: Build Main - ${{ matrix.project_prefix }}
+    runs-on: ${{ matrix.image_name }}
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
       - name: Checkout Repository
@@ -22,7 +31,8 @@ jobs:
         uses: ./.github/actions/detect-modified-projects
         id: detect-modified-subprojects
         with:
-          project_prefixes: ktor-client,ktor-server
+          project_prefixes: ${{ matrix.project_prefix }}
+          required_projects: ${{ matrix.project_prefix == 'ktor-server' && 'ktor-server-kafka,ktor-server-rate-limiting' || 'ktor-client-circuit-breaker' }}
 
       - name: Cache Gradle packages
         uses: actions/cache@v2
@@ -32,15 +42,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
+      - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects == '' && 'root' || steps.detect-modified-subprojects.outputs.modified_projects }}
         id: execute-gradle-tasks-on-projects
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean,build,publishWithShadowedJvm,createReleaseTag
-          parent_project_task: koverLog
-          execute_on_root_anyway: true
+          tasks: clean publish --scan --stacktrace
         env:
           GPR_USER: ${{ vars.GPR_USER }}
-          GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
-          GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
+          GPR_READ_KEY: ${{ secrets.GPR_READ_KEY }}
+          GPR_WRITE_KEY: ${{ secrets.GPR_WRITE_KEY }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}

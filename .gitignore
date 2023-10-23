@@ -40,3 +40,5 @@ out/
 
 ### act ###
 .actrc
+/.run/publish all to local.run.xml
+/.run/publish kafka and run example.run.xml

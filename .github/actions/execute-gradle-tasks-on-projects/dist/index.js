@@ -44,7 +44,7 @@ async function run() {
         let executeOnRootAnyway = (_b = ((_a = core.getInput('execute_on_root_anyway', {
             trimWhitespace: true,
         })) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true') !== null && _b !== void 0 ? _b : false;
-        let rootProjectTask = core.getInput('root_project_task', {
+        let rootProjectTask = core.getInput('parent_project_task', {
             required: false
         });
         core.debug(`Projects: '${projects}'`);
@@ -54,8 +54,8 @@ async function run() {
         core.debug("Task array: " + taskArr);
         let gradleProjectsTasks;
         if (projects === 'buildSrc') {
-            core.debug(`only buildSrc has changed, setting gradleProjectsTasks to ${tasks}`);
-            gradleProjectsTasks = `${tasks} `;
+            core.debug(`only buildSrc has changed, setting gradleProjectsTasks to ${tasks.replace(",", " ")}`);
+            gradleProjectsTasks = `${tasks.replace(",", " ")} `;
         }
         else {
             const projArr = projects.split(',').filter((p) => p.trim() !== '');

@@ -1,4 +1,4 @@
-rootProject.name = "flax-ktor-plugins"
+rootProject.name = "extra-ktor-plugins"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
@@ -7,6 +7,11 @@ pluginManagement {
         mavenCentral()
     }
 }
+
+plugins {
+    id("com.gradle.enterprise") version("3.15.1")
+}
+
 dependencyResolutionManagement {
     repositories {
         mavenCentral()

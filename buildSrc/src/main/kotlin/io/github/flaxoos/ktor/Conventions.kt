@@ -3,18 +3,16 @@ package io.github.flaxoos.ktor
 import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
-import io.github.flaxoos.ktor.extensions.jvmShadow
+import io.github.flaxoos.ktor.extensions.configurePublishing
+import io.github.flaxoos.ktor.extensions.gprReadCredentials
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
-import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.tasks.Jar
@@ -43,6 +41,7 @@ open class Conventions : Plugin<Project> {
                 apply("java-library-distribution")
                 apply("org.jetbrains.kotlin.multiplatform")
                 apply("maven-publish")
+                apply("signing")
                 apply("idea")
                 apply("io.kotest.multiplatform")
                 apply(project.plugin("loggingCapabilities"))
@@ -52,10 +51,7 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("dokka"))
                 apply(project.plugin("detekt"))
                 apply(project.plugin("ktlint"))
-                apply(project.plugin("gradle-release"))
             }
-            group = "io.github.flaxoos"
-            version = project.property("VERSION") as String
             repositories {
                 mavenCentral()
                 maven {
@@ -85,24 +81,6 @@ open class Conventions : Plugin<Project> {
                         )
                     }
                 }
-//                val hostOs = System.getProperty("os.name")
-//                val arch = System.getProperty("os.arch")
-//                val nativeTarget = when {
-//                    hostOs == "Mac OS X" && arch == "x86_64" -> macosX64("native")
-//                    hostOs == "Mac OS X" && arch == "aarch64" -> macosArm64("native")
-//                    hostOs == "Linux" -> linuxX64("native")
-//                    // Other supported targets are listed here: https://ktor.io/docs/native-server.html#targets
-//                    else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-//                }
-                linuxX64("native").apply {
-//                nativeTarget.apply {
-                    binaries {
-                        sharedLib {
-                            baseName = "ktor"
-                        }
-                    }
-                }
-
 
                 this.sourceSets.apply {
                     commonMain {
@@ -185,19 +163,6 @@ open class Conventions : Plugin<Project> {
                 )
             }
 
-            jvmShadow()
-
-            with(the<PublishingExtension>()) {
-                repositories {
-                    maven {
-                        name = "GitHubPackages"
-                        setUrl("https://maven.pkg.github.com/flaxoos/${project.findProperty("github.repository.name") ?: project.name}")
-                        gprWriteCredentials()
-                    }
-
-                }
-            }
-
             extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
                 enforceLogback()
             }
@@ -218,6 +183,10 @@ open class Conventions : Plugin<Project> {
                     setProperty("termsOfServiceAgree", "yes")
                 }
             }
+
+            afterEvaluate {
+                configurePublishing()
+            }
         }
     }
 }
@@ -225,6 +194,16 @@ open class Conventions : Plugin<Project> {
 class KtorServerPluginConventions : Conventions() {
 
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
+        // Support mac OS?
+        // macosArm64()
+        // macosX64()
+        linuxX64("native") {
+            binaries {
+                sharedLib {
+                    baseName = "ktor"
+                }
+            }
+        }
         sourceSets.apply {
             commonMain {
                 with(this.project) {
@@ -251,10 +230,8 @@ class KtorClientPluginConventions : Conventions() {
     @OptIn(ExternalVariantApi::class)
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
         with(this.project) {
-            extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
-                js()
-                ios()
-            }
+//            js()
+            ios()
             sourceSets.apply {
                 commonMain {
                     dependencies {
@@ -290,46 +267,6 @@ private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTest(configure: Kotl
     get("jvmTest").apply { configure() }
 
 private fun Project.ktorVersion() = versionOf("ktor")
-
-/**
- * Run a command
- */
-private fun runCommands(vararg commands: String): String {
-    val process = ProcessBuilder(*commands).redirectErrorStream(true).start()
-    process.waitFor()
-    var result = ""
-    process.inputStream.bufferedReader().use { it.lines().forEach { line -> result += line + "\n" } }
-    val errorResult = process.exitValue() == 0
-    if (!errorResult) {
-        throw IllegalStateException(result)
-    }
-    return result
-}
-
-context(Project)
-private fun MavenArtifactRepository.gprWriteCredentials() {
-    credentials {
-        username = gprUser
-        password = gprWriteToken
-    }
-}
-
-context(Project)
-private fun MavenArtifactRepository.gprReadCredentials() {
-    credentials {
-        username = gprUser
-        password = gprReadToken
-    }
-}
-
-private val Project.gprWriteToken
-    get() = findProperty("gpr.write.key") as String? ?: System.getenv("GPR_WRITE_TOKEN")
-
-private val Project.gprReadToken
-    get() = findProperty("gpr.read.key") as String? ?: System.getenv("GPR_READ_TOKEN")
-
-private val Project.gprUser
-    get() = findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
 
 fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")
 

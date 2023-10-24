@@ -72,7 +72,7 @@ jobs:
 
       - name: Generate documentation
         run: |
-          ./gradlew dokkaHtmlJekyllModule
+          ./gradlew dokkaJekyllMultiModule
         env:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_KEY: ${{ secrets.GPR_READ_KEY }}

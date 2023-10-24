@@ -34,6 +34,14 @@ jobs:
       - name: Generate documentation
         run: |
           ./gradlew dokkaHtmlMultiModule
+        env:
+          GPR_USER: ${{ vars.GPR_USER }}
+          GPR_READ_KEY: ${{ secrets.GPR_READ_KEY }}
+          GPR_WRITE_KEY: ${{ secrets.GPR_WRITE_KEY }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
           
       - name: Setup Pages
         uses: actions/configure-pages@v3

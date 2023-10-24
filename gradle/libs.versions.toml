@@ -30,6 +30,7 @@ mockk = "1.11.0"
 mockative = "2.0.1"
 kmock = "0.3.0-rc08"
 testcontainers = "1.19.0"
+redis-testcontainers = "1.6.4"
 
 # Code Quality and Coverage
 ktlint = "11.5.1"
@@ -108,6 +109,7 @@ kotest-extensions-testcontainers-kafka = { module = "io.kotest.extensions:kotest
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
+testcontainers-redis = { module = "com.redis.testcontainers:testcontainers-redis", version.ref = "redis-testcontainers" }
 
 # Messaging Libraries
 kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }

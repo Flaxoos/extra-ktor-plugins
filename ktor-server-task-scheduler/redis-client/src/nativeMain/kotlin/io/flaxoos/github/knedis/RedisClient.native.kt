@@ -16,7 +16,7 @@ import kotlinx.cinterop.toKString
 class RedisClient(private val context: CPointer<redisContext>) :
     RedisConnection {
 
-    override suspend fun set(key: String, value: String, expiresMs: Int): String? =
+    override suspend fun set(key: String, value: String, expiresMs: Long): String? =
         command("SET $key $value NX PX ${expiresMs.toULong()}")
 
 

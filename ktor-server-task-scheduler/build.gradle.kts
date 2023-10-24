@@ -18,5 +18,12 @@ kotlin {
                 implementation("org.quartz-scheduler:quartz:2.3.2")
             }
         }
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.kotest.extensions.testcontainers)
+                implementation(libs.testcontainers)
+                implementation(libs.testcontainers.redis)
+            }
+        }
     }
 }

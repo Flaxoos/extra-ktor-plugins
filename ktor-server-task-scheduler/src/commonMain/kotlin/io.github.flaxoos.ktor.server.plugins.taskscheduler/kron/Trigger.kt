@@ -1,4 +1,4 @@
-package io.github.flaxoos.ktor.server.plugins.taskscheduler.kuartz
+package io.github.flaxoos.ktor.server.plugins.taskscheduler.kron
 
 // Define a Trigger, when the job should run
 public interface Trigger {

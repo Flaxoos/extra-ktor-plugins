@@ -11,7 +11,7 @@ class RedisClient(host: String, port: Int) : RedisConnection {
     override suspend fun set(
         key: String,
         value: String,
-        expiresMs: Int
+        expiresMs: Long
     ): String? =
         kredsClient.set(key, value, SetOption.Builder().apply {
             pxMilliseconds = expiresMs.toULong()

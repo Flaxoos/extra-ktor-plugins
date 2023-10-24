@@ -40,7 +40,7 @@ class RedisConnectionPool(private val size: Int, private val host: String, priva
 
 interface RedisConnection {
     fun close()
-    suspend fun set(key: String, value: String, expiresMs: Int): String?
+    suspend fun set(key: String, value: String, expiresMs: Long): String?
     suspend fun get(key: String): String?
     suspend fun del(key: String): Long
 }

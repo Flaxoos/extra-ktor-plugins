@@ -1,4 +1,5 @@
-name: Build Main and Release
+name: Build and Publish Main
+
 on:
   push:
     branches:
@@ -56,3 +57,21 @@ jobs:
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Generate documentation
+        run: |
+          ./gradlew dokkaHtmlMultiModule
+        env:
+          GPR_USER: ${{ vars.GPR_USER }}
+          GPR_READ_KEY: ${{ secrets.GPR_READ_KEY }}
+          GPR_WRITE_KEY: ${{ secrets.GPR_WRITE_KEY }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Publish documentation
+        uses: JamesIves/github-pages-deploy-action@releases/v3
+        with:
+          FOLDER: build/dokka/jekyllMultiModule
+

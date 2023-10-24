@@ -85,4 +85,5 @@ jobs:
       - name: Publish documentation
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
-          FOLDER: build/dokka/jekyllMultiModule
+          folder: build/dokka/jekyllMultiModule
+          branch: gh-pages

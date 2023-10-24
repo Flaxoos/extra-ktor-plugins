@@ -10,7 +10,9 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 
 plugins {
     alias(libs.plugins.nexusPublish)
+    id(libs.plugins.dokka.get().pluginId)
 }
+
 
 nexusPublishing {
     repositories {
@@ -52,4 +54,3 @@ subprojects {
         }
     }
 }
-

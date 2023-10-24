@@ -56,12 +56,3 @@ jobs:
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-
-      - name: Generate documentation
-        run: |
-          ./gradlew dokkaHtmlMultiModule
-
-      - name: Publish documentation
-        uses: JamesIves/github-pages-deploy-action@releases/v3
-        with:
-          FOLDER: build/dokka/jekyllMultiModule

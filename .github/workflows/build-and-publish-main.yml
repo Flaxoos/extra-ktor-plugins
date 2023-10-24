@@ -82,8 +82,8 @@ jobs:
           SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
           
-      - name: List generated documentation
-        run: ls -la build/dokka/jekyllMultiModule
+      - name: Tree
+        run: tree -L 3
 
       - name: Publish documentation
         uses: JamesIves/github-pages-deploy-action@releases/v3

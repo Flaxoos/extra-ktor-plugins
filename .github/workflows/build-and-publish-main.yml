@@ -85,6 +85,6 @@ jobs:
       - name: Publish documentation
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
-          token: ${{ secrets.GH_PAGES_PAT }}
-          folder: build/dokka/jekyllMultiModule
-          branch: gh-pages
+          ACCESS_TOKEN: ${{ secrets.GH_PAGES_PAT }}
+          FOLDER: build/dokka/jekyllMultiModule
+          BRANCH: gh-pages

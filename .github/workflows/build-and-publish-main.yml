@@ -81,22 +81,9 @@ jobs:
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-
-      - name: Upload documentation as artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: documentation
-          path: build/dokka/jekyllMultiModule
-
-  publish-docs:
-    needs: generate-docs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download documentation artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: documentation
-          path: build/dokka/jekyllMultiModule
+          
+      - name: List generated documentation
+        run: ls -la build/dokka/jekyllMultiModule
 
       - name: Publish documentation
         uses: JamesIves/github-pages-deploy-action@releases/v3

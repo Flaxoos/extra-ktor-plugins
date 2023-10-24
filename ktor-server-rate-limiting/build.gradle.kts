@@ -1,3 +1,5 @@
+import io.github.flaxoos.ktor.extensions.enableContextReceivers
+
 plugins {
     id("ktor-server-plugin-conventions")
 }
@@ -13,6 +15,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation(projects.common)
                 implementation(libs.ktor.server.double.receive)
             }
         }
@@ -39,7 +42,6 @@ koverReport {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     kotlinOptions {
-        freeCompilerArgs += "-Xcontext-receivers"
         freeCompilerArgs += "-Xuse-ir"
     }
 }

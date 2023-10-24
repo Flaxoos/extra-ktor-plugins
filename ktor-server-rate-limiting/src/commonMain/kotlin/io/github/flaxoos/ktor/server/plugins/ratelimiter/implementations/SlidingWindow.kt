@@ -1,5 +1,6 @@
 package io.github.flaxoos.ktor.server.plugins.ratelimiter.implementations
 
+import io.github.flaxoos.common.queueList
 import io.github.flaxoos.ktor.server.plugins.ratelimiter.CallVolumeUnit
 import io.github.flaxoos.ktor.server.plugins.ratelimiter.RateLimiter
 import io.github.flaxoos.ktor.server.plugins.ratelimiter.RateLimiterResponse
@@ -65,7 +66,6 @@ data class SlidingWindow(
     }
 }
 
-internal expect fun <T> provideListForQueue(): MutableList<T>
 
 /**
  * A fixed size queue of weighted entries with safe access
@@ -76,7 +76,7 @@ class ConcurrentFixedSizeWeightedQueue<T>(
      */
     private val maxWeight: Int
 ) {
-    private val list = provideListForQueue<Pair<T, Double>>()
+    private val list = queueList<Pair<T, Double>>()
     private val size: Int
         get() = list.size
     private var weight = 0.0

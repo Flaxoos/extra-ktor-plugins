@@ -1,0 +1,59 @@
+package io.flaxoos.github.knedis
+
+import hiredis.redisCommand
+import hiredis.redisConnect
+import hiredis.redisContext
+import hiredis.redisFree
+import hiredis.redisReply
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.toKString
+
+
+@OptIn(ExperimentalForeignApi::class)
+class RedisClient(private val context: CPointer<redisContext>) :
+    RedisConnection {
+
+    override suspend fun set(key: String, value: String, expiresMs: Int): String? =
+        command("SET $key $value NX PX ${expiresMs.toULong()}")
+
+
+    override suspend fun get(key: String): String? =
+        command("GET $key")
+
+
+    override suspend fun del(key: String): Long =
+        context.let {
+            command("DEL $key")?.toLong()
+        } ?: 0
+
+
+    override fun close() {
+        redisFree(context)
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    private fun command(command: String): String? {
+        context.let {
+            val reply = redisCommand(it, command)?.reinterpret<redisReply>()
+            return reply?.pointed?.str?.toKString()
+        }
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    private fun checkForErrors(): String? {
+        return context.pointed.errstr.toKString().takeIf { context.pointed.err != 0 }
+    }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+actual fun createRedisConnection(host: String, port: Int): RedisConnection? {
+    val context = redisConnect(host, port)
+    return if (context?.pointed?.err == 0) {
+        RedisClient(context)
+    } else {
+        null
+    }
+}

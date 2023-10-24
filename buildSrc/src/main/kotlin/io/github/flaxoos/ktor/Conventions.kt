@@ -4,14 +4,19 @@ import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
 import io.github.flaxoos.ktor.extensions.configurePublishing
+import io.github.flaxoos.ktor.extensions.enableContextReceivers
 import io.github.flaxoos.ktor.extensions.gprReadCredentials
+import io.github.flaxoos.ktor.extensions.library
+import io.github.flaxoos.ktor.extensions.nativeTarget
+import io.github.flaxoos.ktor.extensions.plugin
+import io.github.flaxoos.ktor.extensions.versionOf
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
 import org.gradle.api.NamedDomainObjectCollection
+import io.github.flaxoos.ktor.extensions.setLanguageAndApiVersions
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
@@ -26,7 +31,7 @@ import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -59,13 +64,7 @@ open class Conventions : Plugin<Project> {
                     gprReadCredentials()
                 }
             }
-            tasks.withType(KotlinCompilationTask::class) {
-                compilerOptions {
-                    freeCompilerArgs.add("-Xcontext-receivers")
-                    languageVersion.set(KOTLIN_1_9)
-                    apiVersion.set(KOTLIN_1_9)
-                }
-            }
+            enableContextReceivers()
 
             extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
                 explicitApi()
@@ -113,6 +112,8 @@ open class Conventions : Plugin<Project> {
                 }
                 this.conventionSpecifics()
             }
+
+            setLanguageAndApiVersions()
 
             the<IdeaModel>().apply {
                 module {
@@ -193,17 +194,12 @@ open class Conventions : Plugin<Project> {
 
 class KtorServerPluginConventions : Conventions() {
 
+    @OptIn(ExternalVariantApi::class)
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
         // Support mac OS?
         // macosArm64()
         // macosX64()
-        linuxX64("native") {
-            binaries {
-                sharedLib {
-                    baseName = "ktor"
-                }
-            }
-        }
+        nativeTarget("ktor")
         sourceSets.apply {
             commonMain {
                 with(this.project) {
@@ -268,16 +264,6 @@ private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTest(configure: Kotl
 
 private fun Project.ktorVersion() = versionOf("ktor")
 
-fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")
-
-fun Project.versionOf(version: String): String =
-    this.libs().get().findVersion(version).get().toString()
-
-fun Project.library(name: String): String =
-    this.libs().get().findLibrary(name).get().get().toString()
-
-fun Project.plugin(name: String): String =
-    this.libs().get().findPlugin(name).get().get().pluginId
 
 fun Project.projectDependencies(configuration: DependencyHandlerScope.() -> Unit) =
     DependencyHandlerScope.of(dependencies).configuration()

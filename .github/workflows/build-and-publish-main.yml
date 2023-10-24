@@ -48,7 +48,6 @@ jobs:
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
           tasks: clean publish --scan --stacktrace
-          parent_project_task: dokkaJekyllMultiModule
         env:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_KEY: ${{ secrets.GPR_READ_KEY }}
@@ -57,6 +56,10 @@ jobs:
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Generate documentation
+        run: |
+          ./gradlew dokkaHtmlMultiModule
 
       - name: Publish documentation
         uses: JamesIves/github-pages-deploy-action@releases/v3

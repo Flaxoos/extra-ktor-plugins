@@ -1,6 +1,12 @@
 # Sample workflow for building and deploying a Jekyll site to GitHub Pages
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
+#on:
+#  workflow_run:
+#    workflows: ["Build and Publish Main"]
+#    types:
+#      - completed
+
 on:
   # Runs on pushes targeting the default branch
   push:
@@ -23,6 +29,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+#      - name: Check Build Main Success
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: success
+#
+#      - name: Confirm Build Main success
+#        run: |
+#          if [[ ! -f "success.txt" ]]; then
+#          echo "No success notification sent from Build Main, Exiting"
+#          exit 1
+#          fi
+
       - name: Checkout
         uses: actions/checkout@v3
         
@@ -49,7 +67,7 @@ jobs:
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
-          source: ./build/dokka/jekyllMultiModule
+          source: build/dokka/jekyllMultiModule
           destination: ./_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2

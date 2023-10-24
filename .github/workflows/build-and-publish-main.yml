@@ -83,8 +83,8 @@ jobs:
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
 
       - name: Publish documentation
-        uses: JamesIves/github-pages-deploy-action@releases/v3
+        uses: JamesIves/github-pages-deploy-action@releases/v4.4.3
         with:
-          ACCESS_TOKEN: ${{ secrets.GH_PAGES_PAT }}
-          FOLDER: build/dokka/jekyllMultiModule
-          BRANCH: gh-pages
+          token: ${{ secrets.GH_PAGES_PAT }}
+          folder: build/dokka/jekyllMultiModule
+          branch: gh-pages

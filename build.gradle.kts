@@ -25,7 +25,7 @@ nexusPublishing {
     }
 }
 
-allprojects{
+allprojects {
     group = "io.github.flaxoos"
     version = project.property("version") as String
 }

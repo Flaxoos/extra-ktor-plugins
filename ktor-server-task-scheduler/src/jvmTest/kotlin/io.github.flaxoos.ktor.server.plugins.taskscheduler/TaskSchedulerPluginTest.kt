@@ -1,97 +1,105 @@
 package io.github.flaxoos.ktor.server.plugins.taskscheduler
 
-import com.benasher44.uuid.uuid4
-import com.redis.testcontainers.RedisContainer
+import arrow.core.flatten
 import dev.inmo.krontab.builder.SchedulerBuilder
-import io.kotest.core.extensions.install
+import io.github.oshai.kotlinlogging.KotlinLogging
+import io.kotest.assertions.asClue
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.core.test.testCoroutineScheduler
-import io.kotest.extensions.testcontainers.ContainerExtension
-import io.kotest.matchers.shouldBe
+import io.kotest.matchers.collections.shouldBeUnique
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+import io.kotest.property.Exhaustive
+import io.kotest.property.checkAll
+import io.kotest.property.exhaustive.exhaustive
 import io.ktor.server.application.install
+import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.config.mergeWith
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.createTestEnvironment
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.toList
+import korlibs.time.DateTime
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.utility.DockerImageName
+import kotlin.math.pow
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalStdlibApi::class, ExperimentalCoroutinesApi::class)
-class TaskSchedulerPluginTest : FunSpec() {
+val logger = KotlinLogging.logger { }
 
+abstract class TaskSchedulerPluginTest : FunSpec() {
 
-    init {
-//        coroutineTestScope = true
-
-        val redis = RedisContainer(DockerImageName.parse("redis:6.2.6"))
-        val redisContainer = install(ContainerExtension(redis)) {
-            waitingFor(Wait.forListeningPort());
+    suspend fun testTaskScheduling(
+        strategy: CoordinationStrategy,
+        engineCount: Int = 5,
+        executions: Int = 10,
+        frequenciesExponentialSeriesInitialMs: Short = 100,
+        frequenciesExponentialSeriesN: Short = 3
+    ) {
+        fun kronTaskSchedule(taskFrequency: Int): SchedulerBuilder.() -> Unit = {
+            milliseconds {
+                from(0) every taskFrequency
+            }
         }
 
-        test("Test RedisLockManager") {
-            val replication = 1
-            val taskChannel = Channel<String> {}
-            val freqMs = 100
-            val intervalTaskSchedule = freqMs.milliseconds
-            val kronTaskSchedule: SchedulerBuilder.() -> Unit = {
-                milliseconds {
-                    from(0) every freqMs
+        val frequencies = exponentialScheduleGenerator(
+            initial = frequenciesExponentialSeriesInitialMs,
+            n = frequenciesExponentialSeriesN
+        )
+        checkAll(frequencies) { freqMs ->
+            coroutineScope {
+                val engines = engines(strategy, engineCount, kronTaskSchedule(freqMs))
+                    .map { it to launch { it.second.start() } }
+                    .also { it.map { engineAndJob -> engineAndJob.second }.joinAll() }
+                    .map { it.first }
+                delay((freqMs + 50).milliseconds * executions)
+                engines.forEach { launch { it.second.stop(0) } }
+
+                engines.map { it.first }.flatten().apply {
+                    val list = this.toMutableList()
+                    toSet().forEach {
+                        list.remove(it)
+                    }
+                    "Repeated elements:\n${
+                        list.toList().distinct().joinToString("\n") { it.format2() }
+                    }".asClue {
+                        size shouldBeGreaterThanOrEqual executions
+                        shouldBeUnique()
+                    }
                 }
             }
-            val intervalTaskId = uuid4()
-            val kronTaskId = uuid4()
-            val engines = (1..replication).map { replica ->
-                TestApplicationEngine(
-                    createTestEnvironment {
-                        module {
-                            install(TaskSchedulerPlugin) {
-                                coordinationStrategy = CoordinationStrategy.Lock.Redis {
-                                    connectionPoolSize = 5
-                                    host = redisContainer.host
-                                    port = redisContainer.firstMappedPort
-                                    expiresMs = 1000
-                                    timeoutMs = 1000
-                                    lockAcquisitionRetryFreqMs = 10
-                                }
-
-                                intervalTask {
-                                    id = intervalTaskId
-                                    name = "Test Interval Task"
-                                    task = {
-                                        log.info("$replica executing task")
-                                        taskChannel.send("interval-$replica")
-                                    }
-                                    schedule = intervalTaskSchedule
-                                }
-
-//                                kronTask {
-//                                    id = kronTaskId
-//                                    name = "Test Kron Task"
-//                                    task = {
-//                                        taskChannel.send("kron-$it")
-//                                    }
-//                                    kronSchedule = kronTaskSchedule
-//                                }
-                            }
-                        }
-                    })
-            }
-
-            engines.map { launch { it.start() } }.joinAll()
-            this.testCoroutineScheduler.advanceTimeBy((freqMs * 5L) + (freqMs / 2))
-            engines.forEach { launch { it.stop(0) } }
-
-            val taskMessages = taskChannel.toList()
-            taskMessages.size shouldBe replication
         }
     }
+
+    private fun engines(strategy: CoordinationStrategy, count: Int, kronTaskSchedule: SchedulerBuilder.() -> Unit) =
+        (1..count).map { ktorHost ->
+            val executions = mutableListOf<DateTime>()
+            executions to TestApplicationEngine(
+                createTestEnvironment {
+                    config = config.mergeWith(MapApplicationConfig("ktor.deployment.host" to ktorHost.toString()))
+                    module {
+                        install(TaskSchedulerPlugin) {
+                            coordinationStrategy = strategy
+
+                            task {
+                                name = "Test Kron Task"
+                                task = { taskExecutionTime ->
+                                    executions.add(taskExecutionTime)
+                                    log.info("Host: $ktorHost executing task at ${taskExecutionTime.format2()}")
+                                }
+                                kronSchedule = kronTaskSchedule
+                            }
+                        }
+                    }
+                })
+        }
+
+    private fun exponentialScheduleGenerator(initial: Short, n: Short): Exhaustive<Int> {
+        val frequencies = (0..<n).map {
+            (initial.toDouble().times(if (it == 0) 1.0 else 2.0.pow(it.toDouble()))).toInt()
+        }.exhaustive()
+        return frequencies
+    }
 }
+
+
+
+

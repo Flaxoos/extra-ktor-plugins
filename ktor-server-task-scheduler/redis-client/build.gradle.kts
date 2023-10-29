@@ -23,6 +23,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(projects.common)
+                implementation(libs.kotlin.logging)
                 implementation(libs.kotlinx.io.core)
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)

@@ -7,9 +7,16 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
+import org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_ERROR
+import org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_OUT
+import org.gradle.api.tasks.testing.logging.TestLogging
+import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
+import ru.vyarus.gradle.plugin.python.PythonExtension
+import ru.vyarus.gradle.plugin.python.cmd.Pip.USER
 
 plugins {
     alias(libs.plugins.nexusPublish)
+    id("ru.vyarus.mkdocs-build") version "3.0.0"
 }
 
 nexusPublishing {
@@ -23,7 +30,7 @@ nexusPublishing {
     }
 }
 
-allprojects{
+allprojects {
     group = "io.github.flaxoos"
     version = project.property("version") as String
 }
@@ -33,16 +40,11 @@ subprojects {
 
     tasks.withType(Test::class) {
         testLogging {
-            events(FAILED)
-            exceptionFormat = SHORT
-
-            debug {
-                events(*TestLogEvent.values())
-                exceptionFormat = FULL
+            info {
+                testDetails()
             }
-
-            info.events(FAILED, PASSED, SKIPPED)
         }
+        useJUnitPlatform()
     }
 
     extensions.findByType(GradleEnterpriseExtension::class)?.apply {
@@ -53,3 +55,13 @@ subprojects {
     }
 }
 
+mkdocs {
+    python.scope = PythonExtension.Scope.USER
+}
+
+fun TestLogging.testDetails() {
+    events = setOf(PASSED, SKIPPED, FAILED)
+    showStandardStreams = true
+    exceptionFormat = SHORT
+    stackTraceFilters = setOf(TestStackTraceFilter.TRUNCATE)
+}

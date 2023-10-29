@@ -7,8 +7,12 @@
     <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>
-    <logger name="io.ktor" level="debug"/>
-    <logger name="ktor.test" level="debug"/>
-    <logger name="io.github.flaxoos.ktor.server.plugins" level="debug"/>
     <logger name="com.github.dockerjava" level="info"/>
+    <logger name="io.ktor" level="debug"/>
+    <logger name="ktor.test" level="info"/>
+    <logger name="io.github.flaxoos.ktor.server.plugins" level="info"/>
+    <logger name="io.github.flaxoos.ktor.server.plugins.taskscheduler.managers" level="debug"/>
+    <logger name="io.github.flaxoos.ktor.server.plugins.taskscheduler.coordinators" level="info"/>
+    <logger name="org.mongodb.driver.protocol.command" level="debug"/>
+    <logger name="Exposed" level="debug"/>
 </configuration>

@@ -63,5 +63,5 @@ fun TestLogging.testDetails() {
     events = setOf(PASSED, SKIPPED, FAILED)
     showStandardStreams = true
     exceptionFormat = SHORT
-    stackTraceFilters = setOf(TestStackTraceFilter.TRUNCATE)
+    stackTraceFilters = setOf(TestStackTraceFilter.GROOVY)
 }

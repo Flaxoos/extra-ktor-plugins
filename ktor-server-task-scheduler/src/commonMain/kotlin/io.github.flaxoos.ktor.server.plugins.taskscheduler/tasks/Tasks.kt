@@ -16,7 +16,10 @@ public data class Task(
     public val concurrency: Int,
     public val kronSchedule: KronScheduler,
     public val task: suspend Application.(DateTime) -> Unit,
-)
+) {
+    internal fun concurrencyRange() = 1..concurrency
+}
+
 /**
  * value must be unique to a task execution, i.e name + executionTime
  */

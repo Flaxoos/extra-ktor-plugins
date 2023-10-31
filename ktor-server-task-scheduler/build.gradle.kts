@@ -1,8 +1,5 @@
-
-
 plugins {
     id("ktor-server-plugin-conventions")
-    id("io.realm.kotlin") version "1.11.0"
     kotlin("plugin.serialization") version libs.versions.kotlin.asProvider().get()
 }
 kotlin {

@@ -1,12 +1,18 @@
-import io.github.flaxoos.ktor.extensions.nativeTarget
+import io.github.flaxoos.ktor.extensions.targetJvm
+import io.github.flaxoos.ktor.extensions.targetNative
 
 plugins {
     kotlin("multiplatform")
 }
 
 kotlin {
-    jvmToolchain(libs.versions.java.get().toInt())
-    jvm()
-    nativeTarget("common")
-    macosArm64("native-macos")
+    targetJvm()
+    targetNative("common")
+    macosArm64("native-macos") {
+        binaries {
+            sharedLib {
+                this.baseName = "common"
+            }
+        }
+    }
 }

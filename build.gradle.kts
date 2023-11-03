@@ -1,18 +1,13 @@
 import com.gradle.enterprise.gradleplugin.GradleEnterpriseExtension
 import io.github.flaxoos.ktor.extensions.ossrhPassword
 import io.github.flaxoos.ktor.extensions.ossrhUsername
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
-import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
-import org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_ERROR
-import org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_OUT
 import org.gradle.api.tasks.testing.logging.TestLogging
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import ru.vyarus.gradle.plugin.python.PythonExtension
-import ru.vyarus.gradle.plugin.python.cmd.Pip.USER
 
 plugins {
     alias(libs.plugins.nexusPublish)
@@ -44,7 +39,6 @@ subprojects {
                 testDetails()
             }
         }
-        useJUnitPlatform()
     }
 
     extensions.findByType(GradleEnterpriseExtension::class)?.apply {

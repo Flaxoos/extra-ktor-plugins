@@ -12,5 +12,8 @@ fun Project.versionOf(version: String): String =
 fun Project.library(name: String): String =
     this.libs().get().findLibrary(name).get().get().toString()
 
+fun Project.bundle(name: String): String =
+    this.libs().get().findBundle(name).get().get().toString()
+
 fun Project.plugin(name: String): String =
     this.libs().get().findPlugin(name).get().get().pluginId

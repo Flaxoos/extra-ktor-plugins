@@ -66,7 +66,6 @@ data class SlidingWindow(
     }
 }
 
-
 /**
  * A fixed size queue of weighted entries with safe access
  */

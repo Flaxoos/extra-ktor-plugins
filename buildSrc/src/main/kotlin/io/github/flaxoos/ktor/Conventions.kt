@@ -7,43 +7,39 @@ import io.github.flaxoos.ktor.extensions.configurePublishing
 import io.github.flaxoos.ktor.extensions.enableContextReceivers
 import io.github.flaxoos.ktor.extensions.gprReadCredentials
 import io.github.flaxoos.ktor.extensions.library
-import io.github.flaxoos.ktor.extensions.nativeTarget
 import io.github.flaxoos.ktor.extensions.plugin
+import io.github.flaxoos.ktor.extensions.setLanguageAndApiVersions
+import io.github.flaxoos.ktor.extensions.targetJvm
 import io.github.flaxoos.ktor.extensions.versionOf
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
 import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
 import org.gradle.api.NamedDomainObjectCollection
-import io.github.flaxoos.ktor.extensions.setLanguageAndApiVersions
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
-import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
+import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics() {}
     override fun apply(project: Project) {
         with(project) {
             with(plugins) {
-                apply("org.gradle.java-library")
-                apply("java-library-distribution")
+//                apply("org.gradle.java-library")
+//                apply("java-library-distribution")
                 apply("org.jetbrains.kotlin.multiplatform")
                 apply("maven-publish")
                 apply("signing")
@@ -67,47 +63,33 @@ open class Conventions : Plugin<Project> {
             enableContextReceivers()
 
             extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
-                explicitApi()
-                jvm {
-                    jvmToolchain(versionOf("java").toInt())
-                    tasks.named("jvmJar", Jar::class).configure {
-                        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-                        from(
-                            listOf(
-                                configurations["jvmCompileClasspath"],
-                                configurations["jvmRuntimeClasspath"],
-                            ).map { it.map { if (it.isDirectory) it else zipTree(it) } },
-                        )
-                    }
-                }
-
+                targetJvm()
                 this.sourceSets.apply {
-                    commonMain {
-                        dependencies {
-                            implementation("org.jetbrains.kotlinx:kotlinx-datetime:${versionOf("kotlinx-datetime")}")
-                            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${versionOf("kotlinx_coroutines")}")
-                            implementation("io.arrow-kt:arrow-core:${versionOf("arrow")}")
-                            implementation("io.arrow-kt:arrow-fx-coroutines:${versionOf("arrow")}")
-                            implementation(library("kotlin-logging"))
-                        }
+                    commonMainDependencies {
+                        implementation(library("kotlinx-datetime"))
+                        implementation(library("kotlinx-coroutines-core"))
+                        implementation(library("arrow-core"))
+                        implementation(library("arrow-fx-coroutines"))
+                        implementation(library("kotlin-logging"))
+
                     }
 
-                    commonTest {
-                        dependencies {
-                            implementation(kotlin("test"))
-                            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${versionOf("kotlinx_coroutines")}")
-                            implementation("io.kotest:kotest-framework-engine:${versionOf("kotest")}")
-                            implementation("io.kotest:kotest-framework-datatest:${versionOf("kotest")}")
-                            implementation("io.kotest:kotest-assertions-core:${versionOf("kotest")}")
-                        }
+                    commonTestDependencies {
+                        implementation(kotlin("test"))
+                        implementation(library("kotlinx-coroutines-test"))
+                        implementation(library("kotest-framework-engine"))
+                        implementation(library("kotest-framework-datatest"))
+                        implementation(library("kotest-assertions-core"))
                     }
 
-                    jvmTest {
-                        dependencies {
-                            implementation("io.kotest:kotest-runner-junit5:${versionOf("kotest")}")
-                            implementation("ch.qos.logback:logback-classic:${project.versionOf("logback")}")
-                            implementation(library("mockk"))
-                        }
+                    jvmMainDependencies {
+                        implementation(library("logback-classic"))
+                    }
+
+                    jvmTestDependencies {
+                        implementation(library("kotest-runner-junit5"))
+                        implementation(library("mockk"))
+                        implementation(library("mockk-agent-jvm"))
                     }
                 }
                 this.conventionSpecifics()
@@ -164,11 +146,7 @@ open class Conventions : Plugin<Project> {
                 )
             }
 
-            extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
-                enforceLogback()
-            }
-
-            extensions.findByType(LoggingCapabilitiesExtension::class)?.apply {
+            the<LoggingCapabilitiesExtension>().apply {
                 enforceLogback()
             }
 
@@ -190,77 +168,72 @@ open class Conventions : Plugin<Project> {
             }
         }
     }
+
+
 }
 
 class KtorServerPluginConventions : Conventions() {
 
     @OptIn(ExternalVariantApi::class)
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
-        // Support mac OS?
-        // macosArm64()
-        // macosX64()
-        nativeTarget("ktor")
         sourceSets.apply {
-            commonMain {
-                with(this.project) {
-                    dependencies {
-                        implementation(library("ktor-server-core"))
-                        implementation(library("ktor-server-config-yaml"))
-                        implementation(library("ktor-server-auth"))
-                    }
-                }
+            commonMainDependencies {
+                implementation(project.library("ktor-server-core"))
+                implementation(project.library("ktor-server-config-yaml"))
+                implementation(project.library("ktor-server-auth"))
             }
-            commonTest {
-                with(this.project) {
-                    dependencies {
-                        implementation(library("ktor-server-test-host"))
-                        implementation(library("ktor-server-status-pages"))
-                    }
-                }
+            commonTestDependencies {
+                implementation(project.library("ktor-server-test-host"))
+                implementation(project.library("ktor-server-status-pages"))
             }
         }
     }
 }
 
 class KtorClientPluginConventions : Conventions() {
+
     @OptIn(ExternalVariantApi::class)
     override fun KotlinMultiplatformExtension.conventionSpecifics() {
         with(this.project) {
-//            js()
-            ios()
             sourceSets.apply {
-                commonMain {
-                    dependencies {
-                        implementation(library("ktor-client-core"))
-                    }
+                commonMainDependencies {
+                    implementation(library("ktor-client-core"))
                 }
-                commonTest {
-                    dependencies {
-                        implementation(library("ktor-client-mock"))
-                    }
-                }
-
-                jvmTest {
-                    dependencies {
-                        implementation(library("logback-classic"))
-                    }
+                commonTestDependencies {
+                    implementation(library("ktor-client-mock"))
                 }
             }
         }
     }
 }
 
-private fun NamedDomainObjectCollection<KotlinSourceSet>.commonMain(configure: KotlinSourceSet.() -> Unit) =
-    get("commonMain").apply { configure() }
+fun NamedDomainObjectCollection<KotlinSourceSet>.commonMainDependencies(configure: KotlinDependencyHandler.() -> Unit) =
+    get("commonMain").apply {
+        dependencies {
+            configure()
+        }
+    }
 
-private fun NamedDomainObjectCollection<KotlinSourceSet>.commonTest(configure: KotlinSourceSet.() -> Unit) =
-    get("commonTest").apply { configure() }
+fun NamedDomainObjectCollection<KotlinSourceSet>.commonTestDependencies(configure: KotlinDependencyHandler.() -> Unit) =
+    get("commonTest").apply {
+        dependencies {
+            configure()
+        }
+    }
 
-private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmMain(configure: KotlinSourceSet.() -> Unit) =
-    get("jvmMain").apply { configure() }
+fun NamedDomainObjectCollection<KotlinSourceSet>.jvmMainDependencies(configure: KotlinDependencyHandler.() -> Unit) =
+    findByName("jvmMain")?.apply {
+        dependencies {
+            configure()
+        }
+    }
 
-private fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTest(configure: KotlinSourceSet.() -> Unit) =
-    get("jvmTest").apply { configure() }
+fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTestDependencies(configure: KotlinDependencyHandler.() -> Unit) =
+    findByName("jvmTest")?.apply {
+        dependencies {
+            configure()
+        }
+    }
 
 private fun Project.ktorVersion() = versionOf("ktor")
 

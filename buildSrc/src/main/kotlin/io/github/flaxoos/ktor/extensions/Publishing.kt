@@ -30,15 +30,16 @@ private const val JVM = "jvm"
 
 
 internal fun Project.configurePublishing() {
-    val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
-    val dokkaJar = tasks.register<Jar>("dokkaJar") {
-        archiveClassifier.set("javadoc")
-        from(dokkaHtml.get().outputDirectory)
-    }
-     fun Project.jvmShadow() {
+//    val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
+//    val dokkaJar = tasks.register<Jar>("dokkaJar") {
+//        archiveClassifier.set("javadoc")
+//        from(dokkaHtml.get().outputDirectory)
+//    }
+
+    fun Project.jvmShadow() {
         val mainCompilation = with(the<KotlinMultiplatformExtension>()) {
-            targets.named(JVM).map { it.compilations.getByName("main") }
-        }
+            targets.findByName(JVM)  ?.compilations?.getByName("main")
+        }?.let { provider { it } } ?: return
         val sourceJar = tasks.register("sourceJar", org.gradle.api.tasks.bundling.Jar::class) {
             from(mainCompilation.map { it.allKotlinSourceSets.map { kotlinSourceSet -> kotlinSourceSet.kotlin } })
             archiveClassifier.set("sources")
@@ -64,7 +65,7 @@ internal fun Project.configurePublishing() {
                 create("shadow${JVM.capitalized()}", MavenPublication::class) {
                     artifact(shadowJvmJar.map { it.archiveFile })
                     artifact(sourceJar)
-                    artifact(dokkaJar)
+//                    artifact(dokkaJar)
                     artifactId = "${project.name}-$JVM"
                     pom.withXml {
                         (asNode().get("dependencies") as NodeList).clear()
@@ -80,60 +81,62 @@ internal fun Project.configurePublishing() {
             }
         }
     }
-    jvmShadow()
-    the<PublishingExtension>().apply {
-        publications.withType<MavenPublication>().configureEach {
-            pom {
-                name.set("${rootProject.name}: ${project.name}")
-                groupId = project.group.toString()
-                version = project.version.toString()
-                description.set(
-                    "This project provides a suite of feature-rich, efficient, and highly customizable " +
-                            "plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
-                )
-                url.set("https://github.com/Flaxoos/extra-ktor-plugins")
-                inceptionYear.set("2023")
+    afterEvaluate {
+        jvmShadow()
 
-                scm {
-                    connection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
-                    developerConnection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
+        the<PublishingExtension>().apply {
+            publications.withType<MavenPublication>().configureEach {
+                pom {
+                    name.set("${rootProject.name}: ${project.name}")
+                    groupId = project.group.toString()
+                    version = project.version.toString()
+                    description.set(
+                        "This project provides a suite of feature-rich, efficient, and highly customizable " +
+                                "plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
+                    )
                     url.set("https://github.com/Flaxoos/extra-ktor-plugins")
-                }
+                    inceptionYear.set("2023")
 
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("https://opensource.org/license/mit/")
+                    scm {
+                        connection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
+                        developerConnection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
+                        url.set("https://github.com/Flaxoos/extra-ktor-plugins")
                     }
-                }
 
-                developers {
-                    developer {
-                        id.set("flaxoos")
-                        name.set("Ido Flax")
-                        email.set("idoflax@gmail.com")
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("https://opensource.org/license/mit/")
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id.set("flaxoos")
+                            name.set("Ido Flax")
+                            email.set("idoflax@gmail.com")
+                        }
                     }
                 }
             }
         }
-    }
-    tasks.withType<AbstractPublishToMaven>().configureEach {
-        dependsOn(dokkaJar)
-        artifacts {
-            add("archives", tasks.named("sourcesJar"))
-            add("archives", dokkaJar)
+        tasks.withType<AbstractPublishToMaven>().configureEach {
+//            dependsOn(dokkaJar)
+            artifacts {
+                add("archives", tasks.named("sourcesJar"))
+//                add("archives", dokkaJar)
+            }
+        }
+        tasks.withType<AbstractPublishToMaven>().configureEach {
+            val signingTasks = tasks.withType<Sign>()
+            mustRunAfter(signingTasks)
+        }
+        the<SigningExtension>().apply {
+            useInMemoryPgpKeys(Base64.getDecoder().decode(signingKeyArmorBase64).decodeToString(), signingPassword)
+            sign(the<PublishingExtension>().publications)
         }
     }
-    tasks.withType<AbstractPublishToMaven>().configureEach {
-        val signingTasks = tasks.withType<Sign>()
-        mustRunAfter(signingTasks)
-    }
-    the<SigningExtension>().apply {
-        useInMemoryPgpKeys(Base64.getDecoder().decode(signingKeyArmorBase64).decodeToString(), signingPassword)
-        sign(the<PublishingExtension>().publications)
-    }
 }
-
 
 
 val TaskContainer.publishShadowJvmPublicationToMavenLocal: TaskProvider<PublishToMavenLocal>

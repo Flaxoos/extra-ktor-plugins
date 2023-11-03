@@ -19,9 +19,15 @@ dependencyResolutionManagement {
     }
 }
 
+include("common")
 include("ktor-server-rate-limiting")
 include("ktor-server-kafka")
 include("ktor-client-circuit-breaker")
 include("ktor-server-task-scheduler")
-include("ktor-server-task-scheduler:redis-client")
-include("common")
+include("ktor-server-task-scheduler:ktor-server-task-scheduler-core")
+include("ktor-server-task-scheduler:ktor-server-task-scheduler-core:test")
+include("ktor-server-task-scheduler:ktor-server-task-scheduler-jdbc")
+include("ktor-server-task-scheduler:ktor-server-task-scheduler-mongodb")
+include("ktor-server-task-scheduler:ktor-server-task-scheduler-redis")
+include("ktor-server-task-scheduler:ktor-server-task-scheduler-redis:redis-client")
+include("ktor-server-task-scheduler:common-test")

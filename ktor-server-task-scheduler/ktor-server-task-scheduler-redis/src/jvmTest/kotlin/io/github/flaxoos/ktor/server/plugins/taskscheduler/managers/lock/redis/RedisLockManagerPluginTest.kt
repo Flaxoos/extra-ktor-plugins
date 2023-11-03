@@ -1,18 +1,12 @@
 package io.github.flaxoos.ktor.server.plugins.taskscheduler.managers.lock.redis
 
 import com.redis.testcontainers.RedisContainer
-import io.github.crackthecodeabhi.kreds.connection.AbstractKredsSubscriber
-import io.github.crackthecodeabhi.kreds.connection.Endpoint
-import io.github.crackthecodeabhi.kreds.connection.newSubscriberClient
 import io.github.flaxoos.ktor.server.plugins.taskscheduler.TaskSchedulerPluginTest
 import io.kotest.core.extensions.install
 import io.kotest.extensions.testcontainers.ContainerExtension
-import kotlinx.coroutines.delay
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
-import org.testcontainers.utility.MountableFile
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 class RedisLockManagerPluginTest : TaskSchedulerPluginTest() {

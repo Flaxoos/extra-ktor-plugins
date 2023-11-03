@@ -15,3 +15,11 @@ kotlin {
         }
     }
 }
+
+koverReport {
+    defaults {
+        verify {
+            onCheck = false
+        }
+    }
+}

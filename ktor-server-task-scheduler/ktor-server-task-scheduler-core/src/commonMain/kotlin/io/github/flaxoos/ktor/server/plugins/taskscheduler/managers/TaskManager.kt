@@ -14,7 +14,7 @@ import kotlin.jvm.JvmInline
 
 private val logger = KotlinLogging.logger { }
 
-public abstract class TaskManager<TASK_EXECUTION_TOKEN> :Closeable{
+public abstract class TaskManager<TASK_EXECUTION_TOKEN> : Closeable {
     public abstract val name: TaskManagerConfiguration.TaskManagerName
     public abstract val application: Application
     public suspend fun execute(task: Task, executionTime: DateTime) {

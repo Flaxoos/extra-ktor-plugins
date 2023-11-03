@@ -128,7 +128,7 @@ internal class JdbcLockManager(
         taskExecutionInstant: Instant
     ) =
         (TaskLockTable.name eq task.name and TaskLockTable.concurrencyIndex.eq(concurrencyIndex)) and
-                lockedAt.neq(LiteralOp(KotlinInstantColumnType(), taskExecutionInstant))
+            lockedAt.neq(LiteralOp(KotlinInstantColumnType(), taskExecutionInstant))
 
     override suspend fun releaseLock(key: JdbcTaskLockKey) {}
 }

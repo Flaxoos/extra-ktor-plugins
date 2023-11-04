@@ -30,11 +30,11 @@ private const val JVM = "jvm"
 
 
 internal fun Project.configurePublishing() {
-//    val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
-//    val dokkaJar = tasks.register<Jar>("dokkaJar") {
-//        archiveClassifier.set("javadoc")
-//        from(dokkaHtml.get().outputDirectory)
-//    }
+    val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
+    val dokkaJar = tasks.register<Jar>("dokkaJar") {
+        archiveClassifier.set("javadoc")
+        from(dokkaHtml.get().outputDirectory)
+    }
 
     fun Project.jvmShadow() {
         val mainCompilation = with(the<KotlinMultiplatformExtension>()) {
@@ -65,7 +65,7 @@ internal fun Project.configurePublishing() {
                 create("shadow${JVM.capitalized()}", MavenPublication::class) {
                     artifact(shadowJvmJar.map { it.archiveFile })
                     artifact(sourceJar)
-//                    artifact(dokkaJar)
+                    artifact(dokkaJar)
                     artifactId = "${project.name}-$JVM"
                     pom.withXml {
                         (asNode().get("dependencies") as NodeList).clear()
@@ -121,10 +121,10 @@ internal fun Project.configurePublishing() {
             }
         }
         tasks.withType<AbstractPublishToMaven>().configureEach {
-//            dependsOn(dokkaJar)
+            dependsOn(dokkaJar)
             artifacts {
                 add("archives", tasks.named("sourcesJar"))
-//                add("archives", dokkaJar)
+                add("archives", dokkaJar)
             }
         }
         tasks.withType<AbstractPublishToMaven>().configureEach {

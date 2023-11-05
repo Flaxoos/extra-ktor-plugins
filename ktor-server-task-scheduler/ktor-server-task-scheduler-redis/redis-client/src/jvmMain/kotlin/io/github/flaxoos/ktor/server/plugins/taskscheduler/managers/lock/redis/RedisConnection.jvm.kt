@@ -40,6 +40,6 @@ class RedisClient(host: String, port: Int) : RedisConnection {
 
 }
 
-actual fun createRedisConnection(host: String, port: Int): RedisConnection? {
+actual fun createRedisConnection(host: String, port: Int): RedisConnection {
     return RedisClient(host, port)
 }

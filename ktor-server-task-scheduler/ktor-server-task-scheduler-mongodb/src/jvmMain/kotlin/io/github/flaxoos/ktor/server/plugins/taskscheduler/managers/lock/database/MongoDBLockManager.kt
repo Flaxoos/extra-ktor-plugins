@@ -16,7 +16,6 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduler.TaskSchedulerConfigur
 import io.github.flaxoos.ktor.server.plugins.taskscheduler.TaskSchedulerDsl
 import io.github.flaxoos.ktor.server.plugins.taskscheduler.format2
 import io.github.flaxoos.ktor.server.plugins.taskscheduler.format2ToDateTime
-import io.github.flaxoos.ktor.server.plugins.taskscheduler.host
 import io.github.flaxoos.ktor.server.plugins.taskscheduler.managers.TaskManager
 import io.github.flaxoos.ktor.server.plugins.taskscheduler.managers.TaskManagerConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduler.managers.TaskManagerConfiguration.TaskManagerName.Companion.toTaskManagerName
@@ -41,54 +40,16 @@ internal class MongoDBLockManager(
     val client: MongoClient,
     databaseName: String
 ) : DatabaseTaskLockManager<MongoDbTaskLockKey>() {
+
     private val collection = client.getDatabase(databaseName)
         .getCollection<MongoDbTaskLockKey>("TASK_LOCKS")
         .withCodecRegistry(codecRegistry)
 
-    override suspend fun init(tasks: List<Task>) {
-        runCatching {
-            collection.createIndex(
-                Indexes.compoundIndex(
-                    Indexes.text(MongoDbTaskLockKey::name.name),
-                    Indexes.ascending(MongoDbTaskLockKey::concurrencyIndex.name)
-                ),
-                IndexOptions().unique(true)
-            )
-        }
-        tasks.forEach { task ->
-            task.concurrencyRange().forEach { taskConcurrencyIndex ->
-                client.startSession().use { session ->
-                    session.startTransaction(transactionOptions = majorityJTransaction())
-
-                    collection.find(
-                        Filters.and(
-                            Filters.eq(MongoDbTaskLockKey::name.name, task.name),
-                            Filters.eq(MongoDbTaskLockKey::concurrencyIndex.name, taskConcurrencyIndex)
-                        )
-                    ).firstOrNull()
-                        ?: runCatching {
-                            collection.insertOne(
-                                MongoDbTaskLockKey(
-                                    task.name,
-                                    taskConcurrencyIndex,
-                                    DateTime.EPOCH
-                                ),
-                                options = InsertOneOptions().apply {
-                                    comment("Initial task insertion")
-                                }
-                            )
-                        }.onFailure {
-                            session.abortTransaction()
-                            if (it !is MongoWriteException) throw it
-                        }.onSuccess {
-                            session.commitTransaction()
-                        }
-                }
-            }
-        }
-    }
-
-    override suspend fun acquireLock(task: Task, executionTime: DateTime, concurrencyIndex: Int): MongoDbTaskLockKey? {
+    override suspend fun updateTaskLockKey(
+        task: Task,
+        concurrencyIndex: Int,
+        executionTime: DateTime
+    ): MongoDbTaskLockKey? {
         val query = Filters.and(
             Filters.and(
                 Filters.eq(MongoDbTaskLockKey::name.name, task.name),
@@ -101,21 +62,61 @@ internal class MongoDBLockManager(
         )
         val options = FindOneAndUpdateOptions().upsert(false)
         client.startSession().use { session ->
+            session.startTransaction(transactionOptions = majorityJTransaction())
             return runCatching {
-                session.startTransaction(transactionOptions = majorityJTransaction())
-                val updateResult = collection.findOneAndUpdate(query, updates, options)
-                session.commitTransaction()
-                return if (updateResult != null) {
-                    logger.debug { "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name}" }
-                    updateResult
-                } else {
-                    logger.debug { "${application.host()}: ${executionTime.format2()}: Failed to acquire lock for ${task.name} as no document was updated" }
-                    null
+                collection.findOneAndUpdate(query, updates, options).also {
+                    session.commitTransaction()
                 }
-            }.onFailure { logger.debug { "${application.host()}: ${executionTime.format2()}: Failed to acquire lock for ${task.name}: ${it.message}" } }
-                .getOrNull()
+            }.onFailure {
+                session.abortTransaction()
+            }.getOrNull()
         }
     }
+
+    override suspend fun initTaskLockKeyTable() {
+        collection.createIndex(
+            Indexes.compoundIndex(
+                Indexes.text(MongoDbTaskLockKey::name.name),
+                Indexes.ascending(MongoDbTaskLockKey::concurrencyIndex.name)
+            ),
+            IndexOptions().unique(true)
+        )
+    }
+
+    override suspend fun insertTaskLockKey(
+        task: Task,
+        taskConcurrencyIndex: Int
+    ): Boolean {
+        client.startSession().use { session ->
+            session.startTransaction(transactionOptions = majorityJTransaction())
+
+            return collection.find(
+                Filters.and(
+                    Filters.eq(MongoDbTaskLockKey::name.name, task.name),
+                    Filters.eq(MongoDbTaskLockKey::concurrencyIndex.name, taskConcurrencyIndex)
+                )
+            ).firstOrNull()?.let { false } ?: runCatching {
+                collection.insertOne(
+                    MongoDbTaskLockKey(
+                        task.name,
+                        taskConcurrencyIndex,
+                        DateTime.EPOCH
+                    ),
+                    options = InsertOneOptions().apply {
+                        comment("Initial task insertion")
+                    }
+                )
+                true
+            }.onFailure {
+                session.abortTransaction()
+                if (it !is MongoWriteException) throw it
+            }.onSuccess {
+                session.commitTransaction()
+            }.getOrElse { false }
+        }
+    }
+
+    override suspend fun releaseLock(key: MongoDbTaskLockKey) {}
 
     override fun close() {
         client.close()
@@ -128,7 +129,6 @@ internal class MongoDBLockManager(
         .writeConcern(WriteConcern.JOURNALED)
         .build()
 
-    override suspend fun releaseLock(key: MongoDbTaskLockKey) {}
 }
 
 public data class MongoDbTaskLockKey(

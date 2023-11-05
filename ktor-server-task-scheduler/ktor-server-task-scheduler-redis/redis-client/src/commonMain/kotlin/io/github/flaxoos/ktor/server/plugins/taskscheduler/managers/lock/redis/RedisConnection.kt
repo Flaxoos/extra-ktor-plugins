@@ -9,6 +9,7 @@ interface RedisConnection {
     suspend fun setNx(key: String, value: String, expiresMs: Long): String?
     suspend fun get(key: String): String?
     suspend fun del(key: String): Long
+    //TODO: implement keepAlive, native supports it out of the box, kreds needs to implement
 }
 
-expect fun createRedisConnection(host: String, port: Int): RedisConnection?
+expect fun createRedisConnection(host: String, port: Int): RedisConnection

@@ -49,11 +49,9 @@ class RedisClient(private val context: CPointer<redisContext>) : RedisConnection
 }
 
 @OptIn(ExperimentalForeignApi::class)
-actual fun createRedisConnection(host: String, port: Int): RedisConnection? {
+actual fun createRedisConnection(host: String, port: Int): RedisConnection {
     val context = redisConnect(host, port)
     return if (context?.pointed?.err == 0) {
         RedisClient(context)
-    } else {
-        null
-    }
+    } else throw IllegalStateException("Could not create redis connection, null pointer returned.")
 }

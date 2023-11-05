@@ -78,7 +78,7 @@ public class RedisTaskLockManagerConfiguration(
             name = name.toTaskManagerName(),
             application = application,
             connectionPool = RedisConnectionPool(
-                size = connectionPoolSize,
+                initialConnectionCount = connectionPoolSize,
                 host = host,
                 port = port
             ),

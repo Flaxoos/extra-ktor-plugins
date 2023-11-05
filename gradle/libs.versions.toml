@@ -60,7 +60,7 @@ avro = "1.11.2"
 kreds = "0.9.0"
 
 # Documentation
-dokka = "1.8.20"
+dokka = "1.9.10"
 
 # Github
 gradle-release = "3.0.2"

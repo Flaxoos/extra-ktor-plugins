@@ -1,9 +1,12 @@
 # Kafka Plugin for Ktor Server
 
-![Language](https://img.shields.io/github/languages/top/flaxoos/flax-ktor-plugins?color=blue&logo=kotlin)
 <a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/ktor-server-kafka/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/71.05-yellow?logo=kotlin&label=koverage&style=flat)</a>
 
+---
+
 Integrate Kafka effortlessly into your Ktor application with this powerful Kafka Plugin. This plugin provides an easy setup for Kafka clients, allowing you to configure and manage Kafka Admin, Producer, and Consumer instances directly in your Ktor server.
+
+--- 
 
 ## Features:
 

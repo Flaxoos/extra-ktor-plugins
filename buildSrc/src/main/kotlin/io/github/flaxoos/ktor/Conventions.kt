@@ -38,8 +38,6 @@ open class Conventions : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
             with(plugins) {
-//                apply("org.gradle.java-library")
-//                apply("java-library-distribution")
                 apply("org.jetbrains.kotlin.multiplatform")
                 apply("maven-publish")
                 apply("signing")
@@ -230,6 +228,20 @@ fun NamedDomainObjectCollection<KotlinSourceSet>.jvmMainDependencies(configure: 
 
 fun NamedDomainObjectCollection<KotlinSourceSet>.jvmTestDependencies(configure: KotlinDependencyHandler.() -> Unit) =
     findByName("jvmTest")?.apply {
+        dependencies {
+            configure()
+        }
+    }
+
+fun NamedDomainObjectCollection<KotlinSourceSet>.nativeMainDependencies(configure: KotlinDependencyHandler.() -> Unit) =
+    findByName("nativeMain")?.apply {
+        dependencies {
+            configure()
+        }
+    }
+
+fun NamedDomainObjectCollection<KotlinSourceSet>.nativeTestDependencies(configure: KotlinDependencyHandler.() -> Unit) =
+    findByName("nativeTest")?.apply {
         dependencies {
             configure()
         }

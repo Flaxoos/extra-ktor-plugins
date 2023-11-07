@@ -7,12 +7,10 @@ plugins {
 
 kotlin {
     targetJvm()
-    targetNative("common")
+    targetNative()
     macosArm64("native-macos") {
         binaries {
-            sharedLib {
-                this.baseName = "common"
-            }
+            staticLib()
         }
     }
 }

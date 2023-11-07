@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import java.util.Base64
 
 private const val JVM = "jvm"
-
+fun shadowJvmJarTaskName() = "shadow${JVM.capitalized()}Jar"
 
 internal fun Project.configurePublishing() {
     val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
@@ -36,15 +36,16 @@ internal fun Project.configurePublishing() {
         from(dokkaHtml.get().outputDirectory)
     }
 
+
     fun Project.jvmShadow() {
         val mainCompilation = with(the<KotlinMultiplatformExtension>()) {
-            targets.findByName(JVM)  ?.compilations?.getByName("main")
+            targets.findByName(JVM)?.compilations?.getByName("main")
         }?.let { provider { it } } ?: return
         val sourceJar = tasks.register("sourceJar", org.gradle.api.tasks.bundling.Jar::class) {
             from(mainCompilation.map { it.allKotlinSourceSets.map { kotlinSourceSet -> kotlinSourceSet.kotlin } })
             archiveClassifier.set("sources")
         }
-        val shadowJvmJar = tasks.register("shadow${JVM.capitalized()}Jar", ShadowJar::class) {
+        val shadowJvmJar = tasks.register(shadowJvmJarTaskName(), ShadowJar::class) {
             archiveBaseName = "${project.name}-$JVM"
             from(mainCompilation.map { it.output })
             archiveClassifier.set("")
@@ -56,7 +57,6 @@ internal fun Project.configurePublishing() {
             dependencies {
                 exclude(dependency("org.slf4j:slf4j-api"))
             }
-            this.configurations
             mustRunAfter(tasks.named("generateMetadataFileForJvmPublication"))
             mustRunAfter(tasks.named("signJvmPublication"))
         }
@@ -138,6 +138,8 @@ internal fun Project.configurePublishing() {
     }
 }
 
+val TaskContainer.shadowJvmJar: TaskProvider<Jar>
+    get() = named(shadowJvmJarTaskName(), Jar::class)
 
 val TaskContainer.publishShadowJvmPublicationToMavenLocal: TaskProvider<PublishToMavenLocal>
     get() = named("publishShadowJvmPublicationToMavenLocal", PublishToMavenLocal::class)

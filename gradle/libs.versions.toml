@@ -187,6 +187,7 @@ krontab = { module = "dev.inmo:krontab", version.ref = "krontab" }
 uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
 kreds = { module = "io.github.crackthecodeabhi:kreds", version.ref = "kreds" }
 redis-mp-client = { module = "io.github.flaxoos:redis-client-multiplatform", version.ref = "redis-mp-client" }
+
 [plugins]
 # Build
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }

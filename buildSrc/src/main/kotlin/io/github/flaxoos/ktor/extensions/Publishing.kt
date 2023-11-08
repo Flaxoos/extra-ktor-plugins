@@ -23,6 +23,7 @@ import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.Sign
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import java.util.Base64
 
@@ -59,6 +60,9 @@ internal fun Project.configurePublishing() {
             }
             mustRunAfter(tasks.named("generateMetadataFileForJvmPublication"))
             mustRunAfter(tasks.named("signJvmPublication"))
+        }
+        tasks.withType<DokkaTaskPartial>().configureEach {
+            dependsOn(shadowJvmJar)
         }
         with(the<PublishingExtension>()) {
             publications {

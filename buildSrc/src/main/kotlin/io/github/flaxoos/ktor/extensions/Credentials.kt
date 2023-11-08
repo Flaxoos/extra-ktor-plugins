@@ -8,7 +8,7 @@ context(Project)
 fun MavenArtifactRepository.gprWriteCredentials() {
     credentials {
         username = gprUser
-        password = gprWriteKey
+        password = gprWriteToken
     }
 }
 
@@ -16,7 +16,7 @@ context(Project)
 fun MavenArtifactRepository.gprReadCredentials() {
     credentials {
         username = gprUser
-        password = gprReadKey
+        password = gprReadToken
     }
 }
 
@@ -28,8 +28,8 @@ fun MavenArtifactRepository.ossrhCredentials() {
     }
 }
 
-val Project.gprWriteKey: String by ProjectPropertyDelegate.projectOrSystemEnv()
-val Project.gprReadKey: String by ProjectPropertyDelegate.projectOrSystemEnv()
+val Project.gprWriteToken: String by ProjectPropertyDelegate.projectOrSystemEnv()
+val Project.gprReadToken: String by ProjectPropertyDelegate.projectOrSystemEnv()
 val Project.gprUser: String by ProjectPropertyDelegate.projectOrSystemEnv()
 val Project.ossrhUsername: String by ProjectPropertyDelegate.projectOrSystemEnv()
 val Project.ossrhPassword: String by ProjectPropertyDelegate.projectOrSystemEnv()

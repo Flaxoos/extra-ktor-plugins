@@ -51,6 +51,7 @@ subprojects {
 }
 
 mkdocs {
+    sourcesDir = layout.projectDirectory.dir("documentation/mkdocs").toString()
     python.scope = PythonExtension.Scope.USER
 }
 

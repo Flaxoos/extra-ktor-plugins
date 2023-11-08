@@ -58,6 +58,7 @@ avro = "1.11.2"
 
 # Redis
 kreds = "0.9.0"
+redis-mp-client = "0.0.1-SNAPSHOT"
 
 # Documentation
 dokka = "1.9.10"
@@ -185,39 +186,7 @@ gradle-release-gradlePlugin = { module = "net.researchgate:gradle-release", vers
 krontab = { module = "dev.inmo:krontab", version.ref = "krontab" }
 uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
 kreds = { module = "io.github.crackthecodeabhi:kreds", version.ref = "kreds" }
-#
-#[bundles]
-#common-core = ["kotlinx-coroutines-core","kotlinx-coroutines-core" ]
-#common-testing-core = [
-#    "kotlinx-coroutines-test",
-#    "kotest-framework-engine",
-#    "kotest-framework-datatest",
-#    "kotest-assertions-core"
-#]
-#jvm-testing-core = [
-#    "kotest-runner-junit5", "logback-classic"
-#]
-#common-server-core = [
-#    "ktor-server-core",
-#    "ktor-server-config-yaml",
-#    "ktor-server-auth",
-#]
-#common-server-testing-core = [
-#    "ktor-server-test-host",
-#    "ktor-server-status-pages",
-#]
-#common-client-core = [
-#    "ktor-client-core"
-#]
-#common-client-testing-core = [
-#    "ktor-client-mock"
-#]
-#jvm-client-core = [
-#    "ktor-client-cio"
-#]
-#jvm-client-testing-core = [
-#    "logback-classic"
-#]
+redis-mp-client = { module = "io.github.flaxoos:redis-client-multiplatform", version.ref = "redis-mp-client" }
 
 [plugins]
 # Build

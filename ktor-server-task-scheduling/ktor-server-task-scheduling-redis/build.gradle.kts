@@ -1,4 +1,6 @@
 import io.github.flaxoos.ktor.commonMainDependencies
+import io.github.flaxoos.ktor.extensions.gprReadToken
+import io.github.flaxoos.ktor.extensions.gprUser
 import io.github.flaxoos.ktor.extensions.shadowJvmJar
 import io.github.flaxoos.ktor.extensions.targetJvm
 import io.github.flaxoos.ktor.extensions.targetNative
@@ -11,6 +13,16 @@ plugins {
     id("ktor-server-plugin-conventions")
 }
 
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/flaxoos/redis-client-multiplatform")
+        credentials {
+            username = gprUser
+            password = gprReadToken
+        }
+    }
+}
+
 kotlin {
     explicitApi()
     targetJvm()
@@ -19,7 +31,7 @@ kotlin {
         commonMainDependencies {
             api(projects.common)
             api(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore)
-            implementation(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingRedis.redisClient)
+            implementation(libs.redis.mp.client)
         }
         jvmTestDependencies {
             implementation(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore.test)

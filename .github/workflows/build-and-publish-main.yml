@@ -51,8 +51,8 @@ jobs:
           tasks: clean publish --scan --stacktrace
         env:
           GPR_USER: ${{ vars.GPR_USER }}
-          GPR_READ_KEY: ${{ secrets.GPR_READ_KEY }}
-          GPR_WRITE_KEY: ${{ secrets.GPR_WRITE_KEY }}
+          GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
+          GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
@@ -88,8 +88,8 @@ jobs:
 ##          ./gradlew :dokkaJekyllMultiModule
 ##        env:
 ##          GPR_USER: ${{ vars.GPR_USER }}
-##          GPR_READ_KEY: ${{ secrets.GPR_READ_KEY }}
-##          GPR_WRITE_KEY: ${{ secrets.GPR_WRITE_KEY }}
+##          GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
+##          GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
 ##          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
 ##          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
 ##          SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}

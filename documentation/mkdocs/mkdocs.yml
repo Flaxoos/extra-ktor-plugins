@@ -1,0 +1,53 @@
+site_name: Extra Ktor Plugins Documentation
+
+site_description: 'A suite of feature-rich, efficient, and customizable plugins for Ktor Server or Client.'
+site_url: https://github.com/Flaxoos/extra-ktor-plugins
+
+# Repository (add link to repository on each page)
+repo_name: Extra Ktor Plugins
+repo_url: https://github.com/Flaxoos/extra-ktor-plugins
+
+copyright: 'Copyright &copy; 2023 Ido Flax'
+
+# Meterial theme
+theme:
+  name: 'material'
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+
+plugins:
+  - search
+  - markdownextradata
+
+extra_css:
+  - 'stylesheets/extra.css'
+
+extra_javascript:
+  - 'javascripts/extra.js'
+
+nav:
+  - Home: index.md
+#  - About: about/history.md
+  - Guide: guide/installation.md
+  - Server Plugins:
+      - Kafka: ktor-server-kafka/index.md
+      - Rate Limiting: ktor-server-rate-limiting/index.md
+      - Task Scheduling: ktor-server-task-scheduling/index.md
+      - Rate Limiting: ktor-server-rate-limiting/index.md
+  - Client Plugins:
+      - Circuit Breaker: ktor-client-circuit-breaker/index.md

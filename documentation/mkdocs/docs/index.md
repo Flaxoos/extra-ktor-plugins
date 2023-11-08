@@ -1,14 +1,12 @@
 # [![Ktor](https://avatars.githubusercontent.com/u/28214161?s=40&v=4.svg)](https://github.com/ktorio/ktor) Extra Ktor Plugins
 
-![Build Status](https://github.com/flaxoos/flax-ktor-plugins/actions/workflows/build-and-publish-main.yml/badge.svg?event=push) ![](https://img.shields.io/maven-central/v/io.github.flaxoos/ktor-server-kafka
-) ![Language: Kotlin](https://img.shields.io/github/languages/top/flaxoos/flax-ktor-plugins?color=blue&logo=kotlin) [![Koverage: 94.42%](https://img.shields.io/badge/94.42-green?logo=kotlin&label=koverage&style=flat)](file:/Users/ido/IdeaProjects/flax-ktor-plugins/build/reports/kover/html/index.html) [![Awesome Kotlin Badge](https://kotlin.link/awesome-kotlin.svg)](https://github.com/KotlinBy/awesome-kotlin)
-
-**This project provides a suite of feature-rich, efficient, and highly customizable plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform.**
-
+![Build Status](https://img.shields.io/github/actions/workflow/status/flaxoos/extra-ktor-plugins/build-and-publish-main.yml?event=push&logo=githubactions&style=for-the-badge)
+[![Maven-central](https://img.shields.io/maven-central/v/io.github.flaxoos/ktor-server-kafka?style=for-the-badge&logo=apachemaven)](https://search.maven.org/search?q=io.github.flaxoos%20AND%20ktor)
+![Language: Kotlin](https://img.shields.io/github/languages/top/flaxoos/flax-ktor-plugins?color=blue&logo=kotlin&style=for-the-badge)
+[![Koverage: 94.42%](https://img.shields.io/badge/94.42-green?logo=kotlin&label=koverage&style=for-the-badge)](file:/Users/ido/IdeaProjects/flax-ktor-plugins/build/reports/kover/html/index.html)
+[![Docs](https://custom-icon-badges.demolab.com/badge/Pages-blue.svg?label=Docs&logo=github&logoColor=white?icon=githubpages&style=for-the-badge)](https://github.com/Flaxoos/extra-ktor-plugins/actions/workflows/pages/pages-build-deployment) [![Awesome Kotlin Badge](https://custom-icon-badges.demolab.com/badge/awesome-kotlin-orange.svg?labelColor=blue&style=for-the-badge)](https://github.com/KotlinBy/awesome-kotlin)
 ---
-
-## Features
-These plugins offer a wide range of functionalities designed to provide additional layers of control, security, and utility to your server or client.
+### Feature-rich, efficient, and highly customizable plugins for your Multiplatform Ktor Server or Client
 
 ---
 
@@ -34,7 +32,7 @@ Note that `^` means issues with native binary dependencies, feel free to pull th
 
 ## Usage
 
-Please refer to the readme of the relevant plugin subproject
+Pleas see the [documentation](https://flaxoos.github.io/extra-ktor-plugins/)
 
 ## Installation
 The libraries are published to maven central, see above for the latest version

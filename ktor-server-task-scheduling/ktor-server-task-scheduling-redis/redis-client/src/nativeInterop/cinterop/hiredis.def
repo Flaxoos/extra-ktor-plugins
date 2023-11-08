@@ -1,3 +1,0 @@
-headers = hiredis.h
-headerFilter = hiredis.h
-package = hiredis

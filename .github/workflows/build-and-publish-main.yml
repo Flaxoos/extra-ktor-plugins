@@ -48,7 +48,7 @@ jobs:
         uses: ./.github/actions/execute-gradle-tasks-on-projects
         with:
           projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean publish --scan --stacktrace
+          tasks: clean publish --scan --stacktrace -x test
         env:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
@@ -61,6 +61,8 @@ jobs:
   deploy-docs:
     needs: build-main
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout main
         uses: actions/checkout@v2

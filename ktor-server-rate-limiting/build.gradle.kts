@@ -1,26 +1,27 @@
+import io.github.flaxoos.ktor.commonMainDependencies
+import io.github.flaxoos.ktor.commonTestDependencies
+import io.github.flaxoos.ktor.extensions.targetNative
+import io.github.flaxoos.ktor.jvmMainDependencies
+
 plugins {
     id("ktor-server-plugin-conventions")
 }
 
-dependencies {
-    implementation("io.ktor:ktor-server-call-logging-jvm:2.3.2")
-    implementation("io.ktor:ktor-server-call-id-jvm:2.3.2")
-    implementation("io.ktor:ktor-server-core-jvm:2.3.2")
-    implementation("io.ktor:ktor-server-double-receive-jvm:2.3.2")
-}
-
 kotlin {
+    targetNative()
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(libs.ktor.server.double.receive)
-            }
+        commonMainDependencies {
+            implementation(projects.common)
+            implementation(libs.ktor.server.core)
+            implementation(libs.ktor.server.call.id)
+            implementation(libs.ktor.server.double.receive)
         }
-        val commonTest by getting {
-            dependencies {
-                implementation(libs.ktor.server.host.common)
-                implementation(libs.ktor.server.call.id)
-            }
+        commonTestDependencies {
+            implementation(libs.ktor.server.host.common)
+            implementation(libs.ktor.server.call.id)
+        }
+        jvmMainDependencies {
+            implementation(libs.ktor.server.call.logging.jvm)
         }
     }
 }
@@ -39,7 +40,6 @@ koverReport {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     kotlinOptions {
-        freeCompilerArgs += "-Xcontext-receivers"
         freeCompilerArgs += "-Xuse-ir"
     }
 }

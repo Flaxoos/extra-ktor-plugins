@@ -1,8 +1,11 @@
 # Rate Limiting Plugin for Ktor Server
-![Language](https://img.shields.io/github/languages/top/flaxoos/flax-ktor-plugins?color=blue&logo=kotlin)
 <a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/ktor-server-rate-limiting/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/94.24-green?logo=kotlin&label=koverage&style=flat)</a>
 
+---
+
 Manage request rate limiting as you see fit with `RateLimiting` in your Ktor server, ensuring you protect your application from potential abuse or resource overload.
+
+---
 
 ## Features:
 ### Three Strategies Available:

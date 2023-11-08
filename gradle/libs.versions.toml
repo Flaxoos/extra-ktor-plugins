@@ -5,6 +5,7 @@ java = "11"
 gradle = "8.2.1"
 shadow = "8.1.1"
 kotlinx-serialization = "1.6.0"
+kotlinx-io = "0.3.0"
 ksp = "1.9.10-1.0.13"
 
 # Web Framework
@@ -12,6 +13,12 @@ ktor = "2.3.2"
 
 # Android
 android = "8.1.0"
+
+# Database
+h2 = "2.2.224"
+postgres = "42.6.0"
+exposed = "0.44.0"
+mongodb = "4.11.0"
 
 # Logging
 logback = "1.4.11"
@@ -29,9 +36,10 @@ mockk = "1.11.0"
 mockative = "2.0.1"
 kmock = "0.3.0-rc08"
 testcontainers = "1.19.0"
+redis-testcontainers = "1.6.4"
 
 # Code Quality and Coverage
-ktlint = "11.5.1"
+ktlint = "11.6.1"
 kover = "0.7.2"
 koverBadge = "0.0.6"
 detekt = "1.23.1"
@@ -48,14 +56,21 @@ confluent = "5.3.0"
 avro4k = "0.41.0"
 avro = "1.11.2"
 
+# Redis
+kreds = "0.9.0"
+
 # Documentation
-dokka = "1.8.20"
+dokka = "1.9.10"
 
 # Github
 gradle-release = "3.0.2"
 
 # Nexus
 nexusPublish = "2.0.0-rc-1"
+
+# Miscellaneous
+krontab = "2.2.1"
+uuid = "0.8.1"
 
 [libraries]
 # Core libraries
@@ -66,7 +81,10 @@ shadow-gradlePlugin = { module = "com.github.johnrengelman:shadow", version.ref 
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 
 # Web Framework
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
@@ -77,6 +95,7 @@ ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.
 ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-server-call-id = { module = "io.ktor:ktor-server-call-id", version.ref = "ktor" }
+ktor-server-call-logging-jvm = { module = "io.ktor:ktor-server-call-logging-jvm", version.ref = "ktor" }
 ktor-server-double-receive = { module = "io.ktor:ktor-server-double-receive", version.ref = "ktor" }
 ktor-server-host-common = { module = "io.ktor:ktor-server-host-common", version.ref = "ktor" }
 ktor-server-contentNegotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
@@ -89,9 +108,25 @@ ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotia
 
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 
+# Database
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres" }
+exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
+exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
+exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
+exposed-json = { module = "org.jetbrains.exposed:exposed-json", version.ref = "exposed" }
+exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
+mongodb-driver-kotlin-coroutine = { module = "org.mongodb:mongodb-driver-kotlin-coroutine", version.ref = "mongodb" }
+mongodb-bson-kotlinx = { module = "org.mongodb:bson-kotlinx", version.ref = "mongodb" }
+
 # Testing libraries
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockk-agent-jvm = { module = "io.mockk:mockk-agent-jvm", version.ref = "mockk" }
 mockative = { module = "io.mockative:mockative", version.ref = "mockative" }
 mockative-processor = { module = "io.mockative:mockative-processor", version.ref = "mockative" }
 kotest-extensions-testcontainers = { module = "io.kotest.extensions:kotest-extensions-testcontainers", version.ref = "kotest-test-containers" }
@@ -99,6 +134,9 @@ kotest-extensions-testcontainers-kafka = { module = "io.kotest.extensions:kotest
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
+testcontainers-redis = { module = "com.redis.testcontainers:testcontainers-redis", version.ref = "redis-testcontainers" }
+testcontainers-mongodb = { module = "org.testcontainers:mongodb", version.ref = "testcontainers" }
+testcontainers-postgres = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 
 # Messaging Libraries
 kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
@@ -143,6 +181,44 @@ android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref 
 # Github
 gradle-release-gradlePlugin = { module = "net.researchgate:gradle-release", version.ref = "gradle-release" }
 
+# Miscellaneous
+krontab = { module = "dev.inmo:krontab", version.ref = "krontab" }
+uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
+kreds = { module = "io.github.crackthecodeabhi:kreds", version.ref = "kreds" }
+#
+#[bundles]
+#common-core = ["kotlinx-coroutines-core","kotlinx-coroutines-core" ]
+#common-testing-core = [
+#    "kotlinx-coroutines-test",
+#    "kotest-framework-engine",
+#    "kotest-framework-datatest",
+#    "kotest-assertions-core"
+#]
+#jvm-testing-core = [
+#    "kotest-runner-junit5", "logback-classic"
+#]
+#common-server-core = [
+#    "ktor-server-core",
+#    "ktor-server-config-yaml",
+#    "ktor-server-auth",
+#]
+#common-server-testing-core = [
+#    "ktor-server-test-host",
+#    "ktor-server-status-pages",
+#]
+#common-client-core = [
+#    "ktor-client-core"
+#]
+#common-client-testing-core = [
+#    "ktor-client-mock"
+#]
+#jvm-client-core = [
+#    "ktor-client-cio"
+#]
+#jvm-client-testing-core = [
+#    "logback-classic"
+#]
+
 [plugins]
 # Build
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
@@ -164,6 +240,9 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
 # Asynchronous and Concurrency plugins
 atomicfu = { id = "kotlinx-atomicfu", version.ref = "atomicFu" }
+
+# Testing
+kotest = { id = "io.kotest.multiplatform", version.ref = "kotest" }
 
 # Ksp
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

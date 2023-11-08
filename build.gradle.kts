@@ -1,18 +1,19 @@
 import com.gradle.enterprise.gradleplugin.GradleEnterpriseExtension
 import io.github.flaxoos.ktor.extensions.ossrhPassword
 import io.github.flaxoos.ktor.extensions.ossrhUsername
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
-import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
+import org.gradle.api.tasks.testing.logging.TestLogging
+import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
+import ru.vyarus.gradle.plugin.python.PythonExtension
 
 plugins {
     alias(libs.plugins.nexusPublish)
     id(libs.plugins.dokka.get().pluginId)
+    id("ru.vyarus.mkdocs-build") version "3.0.0"
 }
-
 
 nexusPublishing {
     repositories {
@@ -35,15 +36,9 @@ subprojects {
 
     tasks.withType(Test::class) {
         testLogging {
-            events(FAILED)
-            exceptionFormat = SHORT
-
-            debug {
-                events(*TestLogEvent.values())
-                exceptionFormat = FULL
+            info {
+                testDetails()
             }
-
-            info.events(FAILED, PASSED, SKIPPED)
         }
     }
 
@@ -53,4 +48,15 @@ subprojects {
             termsOfServiceAgree = "yes"
         }
     }
+}
+
+mkdocs {
+    python.scope = PythonExtension.Scope.USER
+}
+
+fun TestLogging.testDetails() {
+    events = setOf(PASSED, SKIPPED, FAILED)
+    showStandardStreams = true
+    exceptionFormat = SHORT
+    stackTraceFilters = setOf(TestStackTraceFilter.GROOVY)
 }

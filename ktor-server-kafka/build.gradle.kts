@@ -1,3 +1,5 @@
+import io.github.flaxoos.ktor.extensions.targetJvm
+
 plugins {
     id("ktor-server-plugin-conventions")
     alias(libs.plugins.kotlin.serialization)
@@ -19,8 +21,9 @@ tasks.matching { it.name.contains("native", ignoreCase = true) }.configureEach {
 }
 
 kotlin {
+    targetJvm()
     sourceSets {
-        jvmMain {
+        val jvmMain by getting {
             dependencies {
                 api(libs.kafka.clients)
                 api(libs.avro4k.core)
@@ -31,7 +34,7 @@ kotlin {
                 implementation(libs.ktor.client.contentNegotiation)
             }
         }
-        jvmTest {
+        val jvmTest by getting {
             dependencies {
                 implementation(platform(libs.testcontainers.bom.get()))
                 implementation(libs.kotest.extensions.testcontainers)

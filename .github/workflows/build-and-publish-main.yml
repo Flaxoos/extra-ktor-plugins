@@ -43,20 +43,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects == '' && 'root' || steps.detect-modified-subprojects.outputs.modified_projects }}
-        id: execute-gradle-tasks-on-projects
-        uses: ./.github/actions/execute-gradle-tasks-on-projects
-        with:
-          projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
-          tasks: clean publish --scan --stacktrace -x test
-        env:
-          GPR_USER: ${{ vars.GPR_USER }}
-          GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
-          GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+#      - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects == '' && 'root' || steps.detect-modified-subprojects.outputs.modified_projects }}
+#        id: execute-gradle-tasks-on-projects
+#        uses: ./.github/actions/execute-gradle-tasks-on-projects
+#        with:
+#          projects: ${{ steps.detect-modified-subprojects.outputs.modified_projects }}
+#          tasks: clean publish --scan --stacktrace
+#        env:
+#          GPR_USER: ${{ vars.GPR_USER }}
+#          GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
+#          GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
+#          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+#          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+#          SIGNING_KEY_ARMOR_BASE64: ${{ secrets.SIGNING_KEY_ARMOR_BASE64 }}
+#          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
 
   deploy-docs:
     needs: build-main

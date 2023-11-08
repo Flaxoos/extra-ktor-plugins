@@ -13,8 +13,8 @@ fun KotlinMultiplatformExtension.targetNative(
     configure: KotlinNativeTargetWithHostTests.() -> Unit = {},
 //    hardTarget: (KotlinMultiplatformExtension.() -> KotlinNativeTargetWithHostTests)? = null
 ) {
-    val hostOs = System.getProperty("os.name")
-    val arch = System.getProperty("os.arch")
+//    val hostOs = System.getProperty("os.name")
+//    val arch = System.getProperty("os.arch")
 //    val nativeTarget = hardTarget?.let { this.hardTarget() } ?: when {
 //        hostOs == "Mac OS X" && arch == "x86_64" -> macosX64("native")
 //        hostOs == "Mac OS X" && arch == "aarch64" -> macosArm64("native")

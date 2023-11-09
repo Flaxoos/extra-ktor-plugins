@@ -35,7 +35,7 @@ plugins:
 
 nav:
   - Home: index.md
-#  - About: about/history.md
+  - About: about/Motivation.md
   - Guide: guide/installation.md
   - Server Plugins:
       - Kafka: ktor-server-kafka/index.md

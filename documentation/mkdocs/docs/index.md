@@ -29,22 +29,6 @@ Note that `^` means issues with native binary dependencies, feel free to pull th
 
 ---
 
-
-## Usage
-
-Pleas see the [documentation](https://flaxoos.github.io/extra-ktor-plugins/)
-
-## Installation
-The libraries are published to maven central, see above for the latest version
-```kotlin
-dependencies {
-    implementation("io.github.flaxoos:ktor-server-kafka:$ktor_plugins_version")
-    implementation("io.github.flaxoos:ktor-server-task-scheduling-$module:$ktor_plugins_version")
-    implementation("io.github.flaxoos:ktor-server-rate-limiting:$ktor_plugins_version")
-    implementation("io.github.flaxoos:ktor-client-circuit-breaker:$ktor_plugins_version")
-}
-```
-
 ## Examples:
 See [examples repository](https://github.com/Flaxoos/flax-ktor-plugins-examples)
 

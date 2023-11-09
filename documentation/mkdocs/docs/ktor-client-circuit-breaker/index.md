@@ -1,11 +1,7 @@
 # Circuit Breaker Plugin for Ktor Client
 <a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/ktor-client-circuit-breaker/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/93.58-green?logo=kotlin&label=koverage&style=flat)</a>
 
----
-
 The Circuit Breaker pattern is a crucial part of modern software architecture, allowing you to gracefully handle potential failures when communicating with external services. The Ktor Circuit Breaker plugin is an implementation of this pattern, providing you with an easy way to incorporate this mechanism into your Ktor clients.
-
----
 
 ## Features:
 

@@ -55,6 +55,10 @@ mkdocs {
     python.scope = PythonExtension.Scope.USER
 }
 
+tasks.withType<org.jetbrains.dokka.gradle.DokkaCollectorTask>().configureEach {
+    outputDirectory.set(file("$rootDir/documentation/mkdocs/docs/dokka"))
+}
+
 fun TestLogging.testDetails() {
     events = setOf(PASSED, SKIPPED, FAILED)
     showStandardStreams = true

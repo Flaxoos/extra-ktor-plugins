@@ -7,7 +7,7 @@ Manage scheduled tasks across instances of your distributed ktor server, using v
 
 ---
 
-## Features:
+## Features
 
 - **Various Implementations**: Can use [Redis](ktor-server-task-scheduling-redis)(JVM/Native), [JDBC](ktor-server-task-scheduling-jdbc) (JVM) or [MongoDB](ktor-server-task-scheduling-mongodb) (JVM) for lock management, or add your own implementation
 by extending [Core](ktor-server-task-scheduling-core)
@@ -15,11 +15,12 @@ by extending [Core](ktor-server-task-scheduling-core)
 
 - **Kron Schedule builder**: Utilizes [krontab](https://github.com/InsanusMokrassar/krontab) for building schedules using a convenient kotlin DSL 
 
-## How to Use:
-- Add a dependency for your chosen task managers or just add core and implement yourself:
+## How to Use
+- Add a dependency for your chosen task managers or for core and implement yourself:
 ```kotlin
     implementation("io.github.flaxoos:ktor-server-task-scheduling-${redis/jdbc/mongodb/core}:$ktor_plugins_version")
 ```
+- Or add
 - Install the plugin and define one or more task managers:
 ```kotlin
 install(TaskScheduling){
@@ -60,7 +61,7 @@ install(TaskScheduling) {
 }
 ```
 
-## Important Notes:
+## Important Notes
 
 - Ensure you have distinct names for task and task manager.
 

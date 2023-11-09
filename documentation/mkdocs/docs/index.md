@@ -29,8 +29,8 @@ Note that `^` means issues with native binary dependencies, feel free to pull th
 
 ---
 
-## Examples:
-See [examples repository](https://github.com/Flaxoos/flax-ktor-plugins-examples)
+## Examples
+See [Examples Projects](https://github.com/Flaxoos/flax-ktor-plugins-examples)
 
 ## Contributing
 

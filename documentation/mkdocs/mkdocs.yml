@@ -24,19 +24,15 @@ theme:
         icon: material/toggle-switch
         name: Switch to light mode
   features:
-    - navigation.tabs
-    - navigation.tabs.sticky
-    - navigation.instant
-    - navigation.tracking
-    - navigation.top
+    - navigation.sections
 
 plugins:
   - search
 
 nav:
   - Home: index.md
-  - About: about/Motivation.md
-  - Guide: guide/installation.md
+  - Motivation: about/Motivation.md
+  - Installation: guide/installation.md
   - Server Plugins:
       - Kafka: ktor-server-kafka/index.md
       - Rate Limiting: ktor-server-rate-limiting/index.md
@@ -44,3 +40,4 @@ nav:
       - Rate Limiting: ktor-server-rate-limiting/index.md
   - Client Plugins:
       - Circuit Breaker: ktor-client-circuit-breaker/index.md
+  - API Docs: dokka/index.html

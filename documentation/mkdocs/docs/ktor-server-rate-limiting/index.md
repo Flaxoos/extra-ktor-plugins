@@ -7,28 +7,21 @@ Manage request rate limiting as you see fit with `RateLimiting` in your Ktor ser
 
 ---
 
-## Features:
-### Three Strategies Available:
+## Features
+### Strategies
+- **Token Bucket:** Supports variable request rate and is suitable for handling bursts of requests.
+- **Leaky Bucket:** Guarantees a constant request rate, providing fair distribution between clients
+- **Sliding Window:** Allows a specific weight of calls to be made over a designated duration, considering the rate and call weight configured.
 
-1) **Token Bucket:** Supports variable request rate and is suitable for handling bursts of requests.
-
-2) **Leaky Bucket:** Guarantees a constant request rate, providing fair distribution between clients
-
-3) **Sliding Window:** Allows a specific weight of calls to be made over a designated duration, considering the rate and call weight configured.
-
-### Robust Configurability
+### Configurability
 
 - **Configurable capacity unit of measure**: Measure call count or call weight in bytes 
 - **Configurable call weighting**: Calls can be made to take up more capacity based on a given function
-
-- **Whitelist & Blacklist**:
-    - Whitelist or blacklist based on the client's host, user-agent, or principal.
-
+- **Whitelist & Blacklist**: Whitelist or blacklist based on the client's host, user-agent, or principal.
 - **Customizable Response**: Set your custom response when the rate limit is exceeded. The default response status is `429 Too Many Requests`.
-
 - **Logging**: Log rate limit hits for better monitoring and debugging.
 
-## How to Use:
+## How to Use
 
 To apply the `RateLimitingPlugin`, you need to `install` it in your Ktor route and configure as per your requirements:
 
@@ -57,7 +50,7 @@ routing {
 
 ```
 
-## Configuration Options:
+## Configuration Options
 
 ```kotlin
   install(RateLimiting) {

@@ -8,7 +8,7 @@ Integrate Kafka effortlessly into your Ktor application with this powerful Kafka
 
 --- 
 
-## Features:
+## Features
 
 - **Streamlined Configuration**: Install Kafka client configurations either through application configuration files or directly in code.
 - **Admin Client**: Easy setup and topic creation for your Kafka admin client.
@@ -16,9 +16,9 @@ Integrate Kafka effortlessly into your Ktor application with this powerful Kafka
 - **Consumer Client**: Configure and manage Kafka consumer instances, including polling logic and record handling.
 - **Built in Avro4k support**: Avro schemas are supported by default. There's no need to define key/value serializers. Schemas can be registered automatically. Avro records to and from conversion methods
 
-## How to Use:
+## How to Use
 
-### From Code:
+### From Code
 
 The plugin provides a DSL that enables comprehensive Kafka configuration, adhering to the classes and properties defined in [org.apache.kafka.common.config](https://kafka.apache.org/21/javadoc/index.html?org/apache/kafka/common/config/package-summary.html), the DSL offers a fluent, programmatic way to set up your Kafka settings right within your Ktor application.
 
@@ -59,7 +59,7 @@ install(Kafka) {
 }
 ```
 
-### From Configuration File:
+### From Configuration File
 
 Alternatively, You can easily install the Kafka plugin using an application configuration file:
 
@@ -120,7 +120,7 @@ ktor {
 }
 ```
 
-### Access Kafka Clients:
+### Access Kafka Clients
 
 After installation, you can easily access the initialized Kafka clients throughout your Ktor application:
 
@@ -130,7 +130,7 @@ val producer = application.kafkaProducer
 val consumer = application.kafkaConsumer
 ```
 
-## Important Notes:
+## Important Notes
 
 - Make sure you define a consumer configuration when you initialize a consumer client, or the consumer job will not start automatically.
 

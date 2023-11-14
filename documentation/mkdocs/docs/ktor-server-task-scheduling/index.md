@@ -9,8 +9,8 @@ Manage scheduled tasks across instances of your distributed ktor server, using v
 
 ## Features
 
-- **Various Implementations**: Can use [Redis](ktor-server-task-scheduling-redis)(JVM/Native), [JDBC](ktor-server-task-scheduling-jdbc) (JVM) or [MongoDB](ktor-server-task-scheduling-mongodb) (JVM) for lock management, or add your own implementation
-by extending [Core](ktor-server-task-scheduling-core)
+- **Various Implementations**: Can use [Redis](https://github.com/Flaxoos/extra-ktor-plugins/tree/main/ktor-server-task-scheduling/ktor-server-task-scheduling-redis)(JVM/Native), [JDBC](https://github.com/Flaxoos/extra-ktor-plugins/tree/main/ktor-server-task-scheduling/ktor-server-task-scheduling-jdbc) (JVM) or [MongoDB](https://github.com/Flaxoos/extra-ktor-plugins/tree/main/ktor-server-task-scheduling/ktor-server-task-scheduling-mongodb) (JVM) for lock management, or add your own implementation
+by extending [Core](https://github.com/Flaxoos/extra-ktor-plugins/tree/main/ktor-server-task-scheduling/ktor-server-task-scheduling-core)
 - **Multiple managers**: Define multiple tasks and assign each to a manager of your choice
 
 - **Kron Schedule builder**: Utilizes [krontab](https://github.com/InsanusMokrassar/krontab) for building schedules using a convenient kotlin DSL 

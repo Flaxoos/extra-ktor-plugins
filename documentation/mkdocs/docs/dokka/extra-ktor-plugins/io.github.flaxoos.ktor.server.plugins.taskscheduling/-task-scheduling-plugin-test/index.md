@@ -1,0 +1,99 @@
+---
+title: TaskSchedulingPluginTest
+---
+//[extra-ktor-plugins](../../../index.md)/[io.github.flaxoos.ktor.server.plugins.taskscheduling](../index.md)/[TaskSchedulingPluginTest](index.md)
+
+
+
+# TaskSchedulingPluginTest
+
+
+
+[jvm]\
+abstract class [TaskSchedulingPluginTest](index.md) : FunSpec
+
+
+
+## Constructors
+
+
+| | |
+|---|---|
+| [TaskSchedulingPluginTest](-task-scheduling-plugin-test.md) | [jvm]<br>constructor() |
+
+
+## Properties
+
+
+| Name | Summary |
+|---|---|
+| [assertions](index.md#-903273535%2FProperties%2F1975120172) | [jvm]<br>var [assertions](index.md#-903273535%2FProperties%2F1975120172): AssertionMode? |
+| [assertSoftly](index.md#-469419115%2FProperties%2F1975120172) | [jvm]<br>var [assertSoftly](index.md#-469419115%2FProperties%2F1975120172): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md)? |
+| [blockingTest](index.md#1109722295%2FProperties%2F1975120172) | [jvm]<br>var [blockingTest](index.md#1109722295%2FProperties%2F1975120172): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md)? |
+| [concurrency](index.md#1608059369%2FFunctions%2F1975120172) | [jvm]<br>var [concurrency](index.md#1608059369%2FFunctions%2F1975120172): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md)? |
+| [coroutineDebugProbes](index.md#337488128%2FProperties%2F1975120172) | [jvm]<br>var [coroutineDebugProbes](index.md#337488128%2FProperties%2F1975120172): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md)? |
+| [coroutineDispatcherFactory](index.md#-335339149%2FFunctions%2F1975120172) | [jvm]<br>var [coroutineDispatcherFactory](index.md#-335339149%2FFunctions%2F1975120172): CoroutineDispatcherFactory? |
+| [coroutineTestScope](index.md#-575355180%2FProperties%2F1975120172) | [jvm]<br>var [coroutineTestScope](index.md#-575355180%2FProperties%2F1975120172): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md)? |
+| [defaultTestConfig](index.md#732610451%2FProperties%2F1975120172) | [jvm]<br>var [~~defaultTestConfig~~](index.md#732610451%2FProperties%2F1975120172): TestCaseConfig? |
+| [dispatcherAffinity](index.md#967441007%2FFunctions%2F1975120172) | [jvm]<br>var [dispatcherAffinity](index.md#967441007%2FFunctions%2F1975120172): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md)? |
+| [duplicateTestNameMode](index.md#-254083183%2FProperties%2F1975120172) | [jvm]<br>var [duplicateTestNameMode](index.md#-254083183%2FProperties%2F1975120172): DuplicateTestNameMode? |
+| [failfast](index.md#1052371588%2FProperties%2F1975120172) | [jvm]<br>var [failfast](index.md#1052371588%2FProperties%2F1975120172): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md)? |
+| [invocationTimeout](index.md#-1543059125%2FFunctions%2F1975120172) | [jvm]<br>var [invocationTimeout](index.md#-1543059125%2FFunctions%2F1975120172): [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.md)? |
+| [isolationMode](index.md#-209763861%2FFunctions%2F1975120172) | [jvm]<br>var [isolationMode](index.md#-209763861%2FFunctions%2F1975120172): IsolationMode? |
+| [severity](index.md#-2023779999%2FProperties%2F1975120172) | [jvm]<br>var [severity](index.md#-2023779999%2FProperties%2F1975120172): TestCaseSeverityLevel? |
+| [testCoroutineDispatcher](index.md#1742905999%2FProperties%2F1975120172) | [jvm]<br>var [~~testCoroutineDispatcher~~](index.md#1742905999%2FProperties%2F1975120172): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md)? |
+| [testOrder](index.md#1930754944%2FProperties%2F1975120172) | [jvm]<br>var [testOrder](index.md#1930754944%2FProperties%2F1975120172): TestCaseOrder? |
+| [threads](index.md#2107429395%2FFunctions%2F1975120172) | [jvm]<br>var [threads](index.md#2107429395%2FFunctions%2F1975120172): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md)? |
+| [timeout](index.md#-1966074021%2FFunctions%2F1975120172) | [jvm]<br>var [timeout](index.md#-1966074021%2FFunctions%2F1975120172): [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.md)? |
+
+
+## Functions
+
+
+| Name | Summary |
+|---|---|
+| [add](index.md#-1999980164%2FFunctions%2F1975120172) | [jvm]<br>open override fun [add](index.md#-1999980164%2FFunctions%2F1975120172)(test: RootTest) |
+| [afterAny](index.md#1547740728%2FFunctions%2F1975120172) | [jvm]<br>fun [afterAny](index.md#1547740728%2FFunctions%2F1975120172)(f: suspend (Tuple2&lt;TestCase, TestResult&gt;) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>open suspend fun [afterAny](index.md#136674436%2FFunctions%2F1975120172)(testCase: TestCase, result: TestResult) |
+| [afterContainer](index.md#-1960575549%2FFunctions%2F1975120172) | [jvm]<br>fun [afterContainer](index.md#-1960575549%2FFunctions%2F1975120172)(f: suspend (Tuple2&lt;TestCase, TestResult&gt;) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>open suspend fun [afterContainer](index.md#758535257%2FFunctions%2F1975120172)(testCase: TestCase, result: TestResult) |
+| [afterEach](index.md#1014745089%2FFunctions%2F1975120172) | [jvm]<br>fun [afterEach](index.md#1014745089%2FFunctions%2F1975120172)(f: suspend (Tuple2&lt;TestCase, TestResult&gt;) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>open suspend fun [afterEach](index.md#-742374221%2FFunctions%2F1975120172)(testCase: TestCase, result: TestResult) |
+| [afterProject](index.md#32903022%2FFunctions%2F1975120172) | [jvm]<br>fun [afterProject](index.md#32903022%2FFunctions%2F1975120172)(f: AfterProject) |
+| [afterSpec](index.md#-468334506%2FFunctions%2F1975120172) | [jvm]<br>open suspend fun [afterSpec](index.md#-468334506%2FFunctions%2F1975120172)(spec: Spec)<br>open override fun [afterSpec](index.md#1229631156%2FFunctions%2F1975120172)(f: suspend (Spec) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
+| [afterTest](index.md#-1115432156%2FFunctions%2F1975120172) | [jvm]<br>open override fun [afterTest](index.md#-1115432156%2FFunctions%2F1975120172)(f: suspend (Tuple2&lt;TestCase, TestResult&gt;) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>open suspend fun [afterTest](index.md#1247554756%2FFunctions%2F1975120172)(testCase: TestCase, result: TestResult) |
+| [appliedTags](index.md#281443410%2FFunctions%2F1975120172) | [jvm]<br>fun [appliedTags](index.md#281443410%2FFunctions%2F1975120172)(): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;Tag&gt; |
+| [aroundSpec](index.md#785363173%2FFunctions%2F1975120172) | [jvm]<br>fun [~~aroundSpec~~](index.md#785363173%2FFunctions%2F1975120172)(aroundSpecFn: suspend (Tuple2&lt;[KClass](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.md)&lt;out Spec&gt;, suspend () -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)&gt;) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
+| [aroundTest](index.md#-1698503286%2FFunctions%2F1975120172) | [jvm]<br>fun [aroundTest](index.md#-1698503286%2FFunctions%2F1975120172)(aroundTestFn: suspend (Tuple2&lt;TestCase, suspend (TestCase) -&gt; TestResult&gt;) -&gt; TestResult) |
+| [assertionMode](index.md#-115997129%2FFunctions%2F1975120172) | [jvm]<br>open fun [assertionMode](index.md#-115997129%2FFunctions%2F1975120172)(): AssertionMode? |
+| [autoClose](index.md#-766347760%2FFunctions%2F1975120172) | [jvm]<br>fun &lt;[T](index.md#-766347760%2FFunctions%2F1975120172) : AutoCloseable&gt; [autoClose](index.md#-766347760%2FFunctions%2F1975120172)(closeable: [T](index.md#-766347760%2FFunctions%2F1975120172)): [T](index.md#-766347760%2FFunctions%2F1975120172)<br>fun &lt;[T](index.md#1118384539%2FFunctions%2F1975120172) : AutoCloseable&gt; [autoClose](index.md#1118384539%2FFunctions%2F1975120172)(closeable: [Lazy](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-lazy/index.md)&lt;[T](index.md#1118384539%2FFunctions%2F1975120172)&gt;): [Lazy](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-lazy/index.md)&lt;[T](index.md#1118384539%2FFunctions%2F1975120172)&gt; |
+| [beforeAny](index.md#-1851449574%2FFunctions%2F1975120172) | [jvm]<br>fun [beforeAny](index.md#-1851449574%2FFunctions%2F1975120172)(f: suspend (TestCase) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>open suspend fun [beforeAny](index.md#940017072%2FFunctions%2F1975120172)(testCase: TestCase) |
+| [beforeContainer](index.md#1596196389%2FFunctions%2F1975120172) | [jvm]<br>fun [beforeContainer](index.md#1596196389%2FFunctions%2F1975120172)(f: suspend (TestCase) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>open suspend fun [beforeContainer](index.md#-1269235781%2FFunctions%2F1975120172)(testCase: TestCase) |
+| [beforeEach](index.md#1986061201%2FFunctions%2F1975120172) | [jvm]<br>fun [beforeEach](index.md#1986061201%2FFunctions%2F1975120172)(f: suspend (TestCase) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>open suspend fun [beforeEach](index.md#-174575617%2FFunctions%2F1975120172)(testCase: TestCase) |
+| [beforeSpec](index.md#-516232345%2FFunctions%2F1975120172) | [jvm]<br>fun [beforeSpec](index.md#-516232345%2FFunctions%2F1975120172)(f: suspend (Spec) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>open suspend fun [beforeSpec](index.md#-1683292107%2FFunctions%2F1975120172)(spec: Spec) |
+| [beforeTest](index.md#-55753202%2FFunctions%2F1975120172) | [jvm]<br>open suspend fun [beforeTest](index.md#-55753202%2FFunctions%2F1975120172)(testCase: TestCase)<br>open override fun [beforeTest](index.md#-1647465780%2FFunctions%2F1975120172)(f: suspend (TestCase) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
+| [concurrency](index.md#1608059369%2FFunctions%2F1975120172) | [jvm]<br>open fun [concurrency](index.md#1608059369%2FFunctions%2F1975120172)(): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md)? |
+| [context](index.md#-931840898%2FFunctions%2F1975120172) | [jvm]<br>open fun [context](index.md#-931840898%2FFunctions%2F1975120172)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)): RootContainerWithConfigBuilder&lt;FunSpecContainerScope&gt;<br>open fun [context](index.md#1854742352%2FFunctions%2F1975120172)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md), test: suspend FunSpecContainerScope.() -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
+| [coroutineDispatcherFactory](index.md#-335339149%2FFunctions%2F1975120172) | [jvm]<br>open fun [coroutineDispatcherFactory](index.md#-335339149%2FFunctions%2F1975120172)(): CoroutineDispatcherFactory? |
+| [defaultTestCaseConfig](index.md#-1208186473%2FFunctions%2F1975120172) | [jvm]<br>open fun [~~defaultTestCaseConfig~~](index.md#-1208186473%2FFunctions%2F1975120172)(): TestCaseConfig? |
+| [dispatcherAffinity](index.md#967441007%2FFunctions%2F1975120172) | [jvm]<br>open fun [dispatcherAffinity](index.md#967441007%2FFunctions%2F1975120172)(): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md)? |
+| [extension](index.md#-1270485135%2FFunctions%2F1975120172) | [jvm]<br>fun &lt;[T](index.md#-1270485135%2FFunctions%2F1975120172) : Extension&gt; [extension](index.md#-1270485135%2FFunctions%2F1975120172)(extension: [T](index.md#-1270485135%2FFunctions%2F1975120172)): [T](index.md#-1270485135%2FFunctions%2F1975120172)<br>fun [extension](index.md#-625111808%2FFunctions%2F1975120172)(f: suspend (Tuple2&lt;TestCase, suspend (TestCase) -&gt; TestResult&gt;) -&gt; TestResult) |
+| [extensions](index.md#-1125030564%2FFunctions%2F1975120172) | [jvm]<br>fun [extensions](index.md#-1125030564%2FFunctions%2F1975120172)(vararg extensions: Extension)<br>fun [extensions](index.md#-1743402674%2FFunctions%2F1975120172)(extensions: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md)&lt;Extension&gt;)<br>open fun [extensions](index.md#753161194%2FFunctions%2F1975120172)(): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md)&lt;Extension&gt; |
+| [finalizeSpec](index.md#483870928%2FFunctions%2F1975120172) | [jvm]<br>fun [finalizeSpec](index.md#483870928%2FFunctions%2F1975120172)(f: suspend (Tuple2&lt;[KClass](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.md)&lt;out Spec&gt;, [Map](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.md)&lt;TestCase, TestResult&gt;&gt;) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
+| [globalExtensions](index.md#1081396766%2FFunctions%2F1975120172) | [jvm]<br>open override fun [globalExtensions](index.md#1081396766%2FFunctions%2F1975120172)(): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md)&lt;Extension&gt; |
+| [include](index.md#340185448%2FFunctions%2F1975120172) | [jvm]<br>fun [include](index.md#340185448%2FFunctions%2F1975120172)(factory: TestFactory)<br>fun [include](index.md#-1076090397%2FFunctions%2F1975120172)(prefix: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md), factory: TestFactory) |
+| [invocationTimeout](index.md#-1543059125%2FFunctions%2F1975120172) | [jvm]<br>open fun [invocationTimeout](index.md#-1543059125%2FFunctions%2F1975120172)(): [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.md)? |
+| [isolationMode](index.md#-209763861%2FFunctions%2F1975120172) | [jvm]<br>open fun [isolationMode](index.md#-209763861%2FFunctions%2F1975120172)(): IsolationMode? |
+| [listener](index.md#-718864244%2FFunctions%2F1975120172) | [jvm]<br>fun &lt;[T](index.md#-718864244%2FFunctions%2F1975120172) : TestListener&gt; [listener](index.md#-718864244%2FFunctions%2F1975120172)(listener: [T](index.md#-718864244%2FFunctions%2F1975120172)): [T](index.md#-718864244%2FFunctions%2F1975120172) |
+| [listeners](index.md#420835937%2FFunctions%2F1975120172) | [jvm]<br>fun [listeners](index.md#420835937%2FFunctions%2F1975120172)(vararg listeners: TestListener)<br>fun [listeners](index.md#1561031497%2FFunctions%2F1975120172)(listeners: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md)&lt;TestListener&gt;)<br>open fun [listeners](index.md#-959107971%2FFunctions%2F1975120172)(): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md)&lt;TestListener&gt; |
+| [register](index.md#1123447995%2FFunctions%2F1975120172) | [jvm]<br>fun &lt;[T](index.md#1123447995%2FFunctions%2F1975120172) : TestListener&gt; [register](index.md#1123447995%2FFunctions%2F1975120172)(extension: [T](index.md#1123447995%2FFunctions%2F1975120172)): [T](index.md#1123447995%2FFunctions%2F1975120172)<br>fun [register](index.md#1528631275%2FFunctions%2F1975120172)(vararg extensions: Extension)<br>fun [register](index.md#1159151455%2FFunctions%2F1975120172)(extensions: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md)&lt;Extension&gt;) |
+| [registeredAutoCloseables](index.md#1761867328%2FFunctions%2F1975120172) | [jvm]<br>fun [registeredAutoCloseables](index.md#1761867328%2FFunctions%2F1975120172)(): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md)&lt;[Lazy](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-lazy/index.md)&lt;AutoCloseable&gt;&gt; |
+| [registeredExtensions](index.md#1202043548%2FFunctions%2F1975120172) | [jvm]<br>fun [registeredExtensions](index.md#1202043548%2FFunctions%2F1975120172)(): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md)&lt;Extension&gt; |
+| [rootTests](index.md#580898470%2FFunctions%2F1975120172) | [jvm]<br>open override fun [rootTests](index.md#580898470%2FFunctions%2F1975120172)(): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md)&lt;RootTest&gt; |
+| [seal](index.md#-2055778568%2FFunctions%2F1975120172) | [jvm]<br>fun [seal](index.md#-2055778568%2FFunctions%2F1975120172)() |
+| [tags](index.md#-1949138170%2FFunctions%2F1975120172) | [jvm]<br>fun [tags](index.md#-1949138170%2FFunctions%2F1975120172)(vararg tags: Tag)<br>open fun [tags](index.md#502911045%2FFunctions%2F1975120172)(): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;Tag&gt; |
+| [test](index.md#310933201%2FFunctions%2F1975120172) | [jvm]<br>open fun [test](index.md#310933201%2FFunctions%2F1975120172)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)): RootTestWithConfigBuilder<br>open fun [test](index.md#-1089832823%2FFunctions%2F1975120172)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md), test: suspend TestScope.() -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
+| [testCaseOrder](index.md#-223199664%2FFunctions%2F1975120172) | [jvm]<br>open fun [testCaseOrder](index.md#-223199664%2FFunctions%2F1975120172)(): TestCaseOrder? |
+| [testTaskScheduling](test-task-scheduling.md) | [jvm]<br>suspend fun ContainerScope.[testTaskScheduling](test-task-scheduling.md)(engineCount: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md) = ENGINE_COUNT, executions: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md) = EXECUTIONS, executionBufferMs: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md) = DEFAULT_EXECUTION_BUFFER_MS, frequenciesExponentialSeriesInitialMs: [Short](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.md) = FREQUENCIES_EXPONENTIAL_SERIES_INITIAL_MS, frequenciesExponentialSeriesN: [Short](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.md) = FREQUENCIES_EXPONENTIAL_SERIES_N, taskSchedulingConfiguration: [TaskSchedulingConfiguration](../-task-scheduling-configuration/index.md).([TaskFreqMs](../-task-freq-ms/index.md)) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
+| [threads](index.md#2107429395%2FFunctions%2F1975120172) | [jvm]<br>open fun [threads](index.md#2107429395%2FFunctions%2F1975120172)(): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md)? |
+| [timeout](index.md#-1966074021%2FFunctions%2F1975120172) | [jvm]<br>open fun [timeout](index.md#-1966074021%2FFunctions%2F1975120172)(): [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.md)? |
+| [xcontext](index.md#-34627402%2FFunctions%2F1975120172) | [jvm]<br>open fun [xcontext](index.md#-34627402%2FFunctions%2F1975120172)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)): RootContainerWithConfigBuilder&lt;FunSpecContainerScope&gt;<br>open fun [xcontext](index.md#-1381192680%2FFunctions%2F1975120172)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md), test: suspend FunSpecContainerScope.() -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
+| [xtest](index.md#1009466777%2FFunctions%2F1975120172) | [jvm]<br>open fun [xtest](index.md#1009466777%2FFunctions%2F1975120172)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)): RootTestWithConfigBuilder<br>open fun [xtest](index.md#-1944354479%2FFunctions%2F1975120172)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md), test: suspend TestScope.() -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
+

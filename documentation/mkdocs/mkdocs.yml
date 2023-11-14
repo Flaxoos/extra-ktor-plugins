@@ -40,4 +40,4 @@ nav:
       - Rate Limiting: ktor-server-rate-limiting/index.md
   - Client Plugins:
       - Circuit Breaker: ktor-client-circuit-breaker/index.md
-  - API Docs: dokka/index.html
+  - API Docs: dokka/index.md

@@ -1,0 +1,36 @@
+---
+title: io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database
+---
+//[extra-ktor-plugins](../../index.md)/[io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database](index.md)
+
+
+
+# Package-level declarations
+
+
+
+## Types
+
+
+| Name | Summary |
+|---|---|
+| [DatabaseTaskLock](-database-task-lock/index.md) | [common]<br>interface [DatabaseTaskLock](-database-task-lock/index.md) : [TaskLock](../io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks/-task-lock/index.md) |
+| [DatabaseTaskLockManager](-database-task-lock-manager/index.md) | [common]<br>abstract class [DatabaseTaskLockManager](-database-task-lock-manager/index.md)&lt;[DB_TASK_LOCK_KEY](-database-task-lock-manager/index.md) : [DatabaseTaskLock](-database-task-lock/index.md)&gt; : [TaskLockManager](../io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock/-task-lock-manager/index.md)&lt;[DB_TASK_LOCK_KEY](-database-task-lock-manager/index.md)&gt; <br>An abstract implementation of [TaskLockManager](../io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock/-task-lock-manager/index.md) using a database as the lock store |
+| [DatabaseTaskLockManagerConfiguration](-database-task-lock-manager-configuration/index.md) | [common]<br>abstract class [DatabaseTaskLockManagerConfiguration](-database-task-lock-manager-configuration/index.md)&lt;[DB_TASK_LOCK_KEY](-database-task-lock-manager-configuration/index.md) : [DatabaseTaskLock](-database-task-lock/index.md)&gt; : [TaskLockManagerConfiguration](../io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock/-task-lock-manager-configuration/index.md)&lt;[DB_TASK_LOCK_KEY](-database-task-lock-manager-configuration/index.md)&gt; |
+| [ExposedTaskLockTable](-exposed-task-lock-table/index.md) | [jvm]<br>abstract class [ExposedTaskLockTable](-exposed-task-lock-table/index.md)(tableName: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)) : Table |
+| [JdbcJobLockManagerConfiguration](-jdbc-job-lock-manager-configuration/index.md) | [jvm]<br>class [JdbcJobLockManagerConfiguration](-jdbc-job-lock-manager-configuration/index.md) : [DatabaseTaskLockManagerConfiguration](-database-task-lock-manager-configuration/index.md)&lt;[JdbcTaskLock](-jdbc-task-lock/index.md)&gt; |
+| [JdbcLockManager](-jdbc-lock-manager/index.md) | [jvm]<br>class [JdbcLockManager](-jdbc-lock-manager/index.md)(val name: [TaskManagerConfiguration.TaskManagerName](../io.github.flaxoos.ktor.server.plugins.taskscheduling.managers/-task-manager-configuration/-task-manager-name/index.md), val application: Application, database: Database, taskLockTable: [ExposedTaskLockTable](-exposed-task-lock-table/index.md) = DefaultTaskLockTable) : [DatabaseTaskLockManager](-database-task-lock-manager/index.md)&lt;[JdbcTaskLock](-jdbc-task-lock/index.md)&gt; <br>An implementation of [DatabaseTaskLockManager](-database-task-lock-manager/index.md) using JDBC and Exposed as the lock store The manager will take care of generating the lock table using the SchemaUtils and the DefaultTaskLockTable. the schema utils should handle the case where the table already exists. TODO: test this Alternatively, you can use implement the [ExposedTaskLockTable](-exposed-task-lock-table/index.md) yourself and provide it instead |
+| [JdbcTaskLock](-jdbc-task-lock/index.md) | [jvm]<br>class [JdbcTaskLock](-jdbc-task-lock/index.md)(val name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md), val concurrencyIndex: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md), val lockedAt: DateTime) : [DatabaseTaskLock](-database-task-lock/index.md) |
+| [MongoDBJobLockManagerConfiguration](-mongo-d-b-job-lock-manager-configuration/index.md) | [jvm]<br>class [MongoDBJobLockManagerConfiguration](-mongo-d-b-job-lock-manager-configuration/index.md) : [DatabaseTaskLockManagerConfiguration](-database-task-lock-manager-configuration/index.md)&lt;[MongoDbTaskLock](-mongo-db-task-lock/index.md)&gt; |
+| [MongoDBLockManager](-mongo-d-b-lock-manager/index.md) | [jvm]<br>class [MongoDBLockManager](-mongo-d-b-lock-manager/index.md)(val name: [TaskManagerConfiguration.TaskManagerName](../io.github.flaxoos.ktor.server.plugins.taskscheduling.managers/-task-manager-configuration/-task-manager-name/index.md), val application: Application, client: MongoClient, databaseName: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)) : [DatabaseTaskLockManager](-database-task-lock-manager/index.md)&lt;[MongoDbTaskLock](-mongo-db-task-lock/index.md)&gt; <br>An implementation of [DatabaseTaskLockManager](-database-task-lock-manager/index.md) using MongoDB as the lock store |
+| [MongoDbTaskLock](-mongo-db-task-lock/index.md) | [jvm]<br>data class [MongoDbTaskLock](-mongo-db-task-lock/index.md)(val name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md), val concurrencyIndex: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md), var lockedAt: DateTime) : [DatabaseTaskLock](-database-task-lock/index.md) |
+
+
+## Functions
+
+
+| Name | Summary |
+|---|---|
+| [jdbc](jdbc.md) | [jvm]<br>fun [TaskSchedulingConfiguration](../io.github.flaxoos.ktor.server.plugins.taskscheduling/-task-scheduling-configuration/index.md).[jdbc](jdbc.md)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)? = null, config: [JdbcJobLockManagerConfiguration](-jdbc-job-lock-manager-configuration/index.md).() -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>Add a [JdbcLockManager](-jdbc-lock-manager/index.md) |
+| [mongoDb](mongo-db.md) | [jvm]<br>fun [TaskSchedulingConfiguration](../io.github.flaxoos.ktor.server.plugins.taskscheduling/-task-scheduling-configuration/index.md).[mongoDb](mongo-db.md)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)? = null, config: [MongoDBJobLockManagerConfiguration](-mongo-d-b-job-lock-manager-configuration/index.md).() -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md))<br>Add a [MongoDBLockManager](-mongo-d-b-lock-manager/index.md) |
+

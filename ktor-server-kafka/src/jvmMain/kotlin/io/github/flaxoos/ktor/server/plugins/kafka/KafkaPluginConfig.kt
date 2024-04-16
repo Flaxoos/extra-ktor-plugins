@@ -64,8 +64,8 @@ sealed class AbstractKafkaConfig {
 
 @KafkaDsl
 class KafkaConsumerConfig {
-    val consumerRecordHandlers: MutableMap<TopicName, ConsumerRecordHandler> = mutableMapOf()
-    val consumerPollFrequency: Duration = DEFAULT_CONSUMER_POLL_FREQUENCY_MS.milliseconds
+    var consumerRecordHandlers: MutableMap<TopicName, ConsumerRecordHandler> = mutableMapOf()
+    var consumerPollFrequency: Duration = DEFAULT_CONSUMER_POLL_FREQUENCY_MS.milliseconds
 }
 
 class KafkaConfig : AbstractKafkaConfig() {

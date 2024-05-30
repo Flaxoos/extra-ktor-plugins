@@ -3,7 +3,7 @@
 
 ---
 
-Manage scheduled tasks across instances of your distributed ktor server, using various strategies and a kotlin favoured cron tab
+Manage scheduled tasks across instances of your distributed ktor server, using various strategies and a kotlin flavoured cron tab
 
 ---
 

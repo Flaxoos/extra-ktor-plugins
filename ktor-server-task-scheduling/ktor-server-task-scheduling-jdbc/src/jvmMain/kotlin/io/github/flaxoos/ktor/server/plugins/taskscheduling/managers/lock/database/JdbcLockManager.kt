@@ -131,10 +131,10 @@ public abstract class ExposedTaskLockTable(tableName: String) : Table(tableName)
     public abstract val lockedAt: Column<Instant>
 }
 
-internal object DefaultTaskLockTable : ExposedTaskLockTable("task_locks") {
-    override val name = text("_name")
-    override val concurrencyIndex = integer("concurrency_index")
-    override val lockedAt = timestamp("locked_at").index()
+public object DefaultTaskLockTable : ExposedTaskLockTable("task_locks") {
+    override val name: Column<String> = text("_name")
+    override val concurrencyIndex: Column<Int> = integer("concurrency_index")
+    override val lockedAt: Column<Instant> = timestamp("locked_at").index()
 
     override val primaryKey: PrimaryKey = PrimaryKey(firstColumn = name, concurrencyIndex, name = "pk_task_locks")
 }

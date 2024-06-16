@@ -24,7 +24,7 @@ The plugin provides a DSL that enables comprehensive Kafka configuration, adheri
 
 ```kotlin
 install(Kafka) {
-    schemaRegistryUrl = listOf("my.schemaRegistryUrl")
+    schemaRegistryUrl = "my.schemaRegistryUrl"
      topic(named("my-topic")) {
          partitions = 1
          replicas = 1

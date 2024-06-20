@@ -1,76 +1,76 @@
 [versions]
 # Core technologies
-kotlin = "1.9.10"
+kotlin = "1.9.+"
 java = "11"
-shadow = "8.1.1"
-kotlinx-serialization = "1.6.0"
-kotlinx-io = "0.3.0"
-ksp = "1.9.10-1.0.13"
+shadow = "8.1.+"
+kotlinx-serialization = "1.7.+"
+kotlinx-io = "0.4.+"
+ksp = "1.9.10-1.0.+"
 
 # Web Framework
-ktor = "2.3.2"
+ktor = "2.3.+"
 
 # Android
-android = "8.1.0"
+android = "8.5.+"
 
 # Database
-h2 = "2.2.224"
-postgres = "42.6.0"
-exposed = "0.44.0"
-mongodb = "4.11.0"
+h2 = "2.2.+"
+postgres = "42.6.+"
+exposed = "0.51.+"
+mongodb = "4.11.+"
 
 # Logging
-logback = "1.4.11"
-kotlin-logging = "5.1.0"
-logging_capabilities = "0.11.1"
+logback = "1.5.+"
+kotlin-logging = "5.1.+"
+logging_capabilities = "0.11.+"
 
 # Asynchronous and Concurrency
-atomicFu = "0.21.0"
-kotlinx-coroutines = "1.7.1"
+atomicFu = "0.21.+"
+kotlinx-coroutines = "1.8.+"
 
 # Testing
-kotest = "5.6.2"
-kotest-test-containers = "2.0.2"
-mockk = "1.11.0"
-mockative = "2.0.1"
+kotest = "5.6.+"
+kotest-test-containers = "2.0.+"
+mockk = "1.11.+"
+mockative = "2.0.+"
 kmock = "0.3.0-rc08"
-testcontainers = "1.19.8"
-redis-testcontainers = "1.6.4"
+testcontainers = "1.19.+"
+redis-testcontainers = "1.6.+"
 
 # Code Quality and Coverage
-ktlint = "11.6.1"
-kover = "0.7.2"
-koverBadge = "0.0.6"
-detekt = "1.23.1"
+ktlint = "11.6.+"
+kover = "0.7.+"
+koverBadge = "0.0.+"
+detekt = "1.23.+"
 
 # Date and Time
-kotlinx-datetime = "0.4.0"
+kotlinx-datetime = "0.4.+"
 
 # Functional Programming
-arrow = "1.2.0"
+arrow = "1.2.+"
 
 # Messaging
-kafka = "3.5.1"
-confluent = "5.3.0"
-avro4k = "0.41.0"
-avro = "1.11.3"
+kafka = "3.5.+"
+confluent = "5.3.+"
+avro4k = "0.41.+"
+avro = "1.11.+"
 
 # Redis
-kreds = "0.9.0"
+kreds = "0.9.+"
 redis-mp-client = "0.0.1"
 
 # Documentation
-dokka = "1.9.10"
+dokka = "1.9.+"
 
 # Github
-gradle-release = "3.0.2"
+gradle-release = "3.0.+"
 
 # Nexus
 nexusPublish = "2.0.0-rc-1"
 
 # Miscellaneous
-krontab = "2.2.1"
-uuid = "0.8.1"
+krontab = "2.2.+"
+uuid = "0.8.+"
 
 [libraries]
 # Core libraries

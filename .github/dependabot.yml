@@ -1,0 +1,23 @@
+version: 2
+updates:
+
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "type: dependencies"
+      - "relates-to: build"
+
+  # Maintain dependencies for Gradle
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "type: dependencies"
+      - "relates-to: build"
+
+# See https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/keeping-your-dependencies-updated-automatically
+# for more information about configuring Dependabot.

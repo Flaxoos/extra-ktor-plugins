@@ -1,9 +1,6 @@
-import io.github.flaxoos.ktor.extensions.shadowJvmJar
 import io.github.flaxoos.ktor.extensions.targetJvm
 import io.github.flaxoos.ktor.jvmMainDependencies
 import io.github.flaxoos.ktor.jvmTestDependencies
-import kotlinx.atomicfu.plugin.gradle.AtomicFUTransformTask
-import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
     id("ktor-server-plugin-conventions")
@@ -23,12 +20,4 @@ kotlin {
             implementation(libs.testcontainers.mongodb)
         }
     }
-}
-
-tasks.withType(DokkaTask::class).configureEach {
-    dependsOn(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore.dependencyProject.tasks.shadowJvmJar)
-}
-
-tasks.withType(AtomicFUTransformTask::class).configureEach {
-    dependsOn(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore.dependencyProject.tasks.shadowJvmJar)
 }

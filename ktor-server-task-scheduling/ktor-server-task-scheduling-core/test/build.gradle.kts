@@ -1,8 +1,5 @@
-import io.github.flaxoos.ktor.extensions.shadowJvmJar
 import io.github.flaxoos.ktor.extensions.targetJvm
 import io.github.flaxoos.ktor.jvmMainDependencies
-import kotlinx.atomicfu.plugin.gradle.AtomicFUTransformTask
-import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
     id("ktor-server-plugin-conventions")
@@ -28,12 +25,4 @@ tasks.matching { it.name.contains("kover", ignoreCase = true) }.configureEach {
 }
 tasks.withType<AbstractPublishToMaven>().configureEach {
     enabled = false
-}
-
-tasks.withType(DokkaTask::class).configureEach {
-    dependsOn(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore.dependencyProject.tasks.shadowJvmJar)
-}
-
-tasks.withType(AtomicFUTransformTask::class).configureEach {
-    dependsOn(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore.dependencyProject.tasks.shadowJvmJar)
 }

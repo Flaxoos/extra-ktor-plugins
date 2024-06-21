@@ -51,7 +51,10 @@ fun Project.configureMavenPublications() {
                 version = project.version.toString()
                 url.set("https://github.com/Flaxoos/extra-ktor-plugins")
                 inceptionYear.set("2023")
-
+                description.set(
+                    "This project provides a suite of feature-rich, efficient, and highly customizable " +
+                            "plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
+                )
                 scm {
                     connection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
                     developerConnection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")

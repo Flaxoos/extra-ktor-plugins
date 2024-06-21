@@ -58,7 +58,7 @@ avro = "1.11.2"
 
 # Redis
 kreds = "0.9.0"
-redis-mp-client = "0.0.1-SNAPSHOT"
+redis-mp-client = "0.0.1"
 
 # Documentation
 dokka = "1.9.10"

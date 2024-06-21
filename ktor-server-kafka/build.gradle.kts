@@ -3,7 +3,6 @@ import io.github.flaxoos.ktor.extensions.targetJvm
 plugins {
     id("ktor-server-plugin-conventions")
     alias(libs.plugins.kotlin.serialization)
-    id(libs.plugins.shadow.get().pluginId)
 }
 
 repositories {

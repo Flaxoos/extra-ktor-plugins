@@ -4,7 +4,6 @@ import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
-import org.gradle.configurationcache.extensions.capitalized
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register

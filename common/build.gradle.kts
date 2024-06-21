@@ -1,5 +1,4 @@
 import io.github.flaxoos.ktor.extensions.configureMavenPublications
-import io.github.flaxoos.ktor.extensions.configurePublishing
 import io.github.flaxoos.ktor.extensions.configureSigning
 import io.github.flaxoos.ktor.extensions.targetJvm
 import io.github.flaxoos.ktor.extensions.targetNative

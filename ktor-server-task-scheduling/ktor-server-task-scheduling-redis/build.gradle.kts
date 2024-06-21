@@ -1,6 +1,4 @@
 import io.github.flaxoos.ktor.commonMainDependencies
-import io.github.flaxoos.ktor.extensions.gprReadToken
-import io.github.flaxoos.ktor.extensions.gprUser
 import io.github.flaxoos.ktor.extensions.targetJvm
 import io.github.flaxoos.ktor.extensions.targetNative
 import io.github.flaxoos.ktor.jvmTestDependencies

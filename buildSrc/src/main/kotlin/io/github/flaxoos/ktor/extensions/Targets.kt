@@ -4,10 +4,8 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.named
-import org.gradle.kotlin.dsl.project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 
 fun KotlinMultiplatformExtension.targetNative(
     configure: KotlinNativeTargetWithHostTests.() -> Unit = {},

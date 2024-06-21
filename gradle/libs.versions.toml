@@ -35,7 +35,7 @@ kotest-test-containers = "2.0.2"
 mockk = "1.11.0"
 mockative = "2.0.1"
 kmock = "0.3.0-rc08"
-testcontainers = "1.19.0"
+testcontainers = "1.19.8"
 redis-testcontainers = "1.6.4"
 
 # Code Quality and Coverage

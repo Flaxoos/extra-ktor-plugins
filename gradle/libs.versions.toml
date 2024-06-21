@@ -2,7 +2,6 @@
 # Core technologies
 kotlin = "1.9.10"
 java = "11"
-gradle = "8.2.1"
 shadow = "8.1.1"
 kotlinx-serialization = "1.6.0"
 kotlinx-io = "0.3.0"

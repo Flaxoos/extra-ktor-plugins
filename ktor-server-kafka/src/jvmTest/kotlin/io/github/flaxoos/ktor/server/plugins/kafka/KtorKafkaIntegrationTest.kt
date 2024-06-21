@@ -9,10 +9,12 @@ import io.github.flaxoos.ktor.server.plugins.kafka.components.toRecord
 import io.kotest.common.ExperimentalKotest
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -39,6 +41,7 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
     private val logger: Logger = KtorSimpleLogger(javaClass.simpleName)
     private val testTopics = listOf(named("topic1"), named("topic2"))
     private val invocations = 2
+    private val httpClient = HttpClient()
 
     private lateinit var recordChannel: Channel<TestRecord>
 
@@ -105,7 +108,7 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
         topics.forEach {
             registerSchemas {
                 using {
-                    HttpClient()
+                    httpClient
                 }
                 TestRecord::class at named(it.name())
             }
@@ -137,8 +140,11 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
 
             val producedRecords = client.produceRecords()
             val expectedRecords = collectProducedRecords()
+            val expectedSubject = "${testTopics.last().value}.${TestRecord::class.java.simpleName}"
+            val response = collectSchemaVersionsBySubject(expectedSubject)
 
             producedRecords shouldContainExactly expectedRecords
+            response.status.value shouldBe 200
 
             client.clearTopics()
         }
@@ -163,6 +169,10 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
             expectedRecords.add(recordChannel.receive())
         }
         return expectedRecords
+    }
+
+    private suspend fun collectSchemaVersionsBySubject(subject: String): HttpResponse {
+        return httpClient.get("${super.schemaRegistryUrl}/subjects/$subject/versions")
     }
 
     private fun ApplicationTestBuilder.setupApplication(

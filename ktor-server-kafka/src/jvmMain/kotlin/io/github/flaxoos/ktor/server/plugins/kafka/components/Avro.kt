@@ -64,10 +64,10 @@ class SchemaRegistryClient(providedClient: HttpClient, schemaRegistryUrl: String
         topicName: TopicName,
         noinline onConflict: () -> Unit = {}
     ) {
-        val schema = Avro.default.schema(klass.serializer()).toString()
-        val payload = mapOf("schema" to schema) // Creating a map to form the payload
+        val schema = Avro.default.schema(klass.serializer())
+        val payload = mapOf("schema" to schema.toString()) // Creating a map to form the payload
         launch(Dispatchers.IO) {
-            client.post("subjects/$topicName-value/versions") {
+            client.post("subjects/${topicName.value}.${schema.name}/versions") {
                 contentType(ContentType.Application.Json)
                 setBody(payload)
             }.let {

@@ -37,7 +37,7 @@ jobs:
           required_projects: ${{ matrix.project_prefix == 'ktor-server' && 'ktor-server-kafka,ktor-server-rate-limiting' || 'ktor-client-circuit-breaker' }}
 
       - name: Cache Gradle packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}

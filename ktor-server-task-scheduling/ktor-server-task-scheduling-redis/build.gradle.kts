@@ -18,8 +18,7 @@ kotlin {
         commonMainDependencies {
             api(projects.common)
             api(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore)
-//            implementation(libs.redis.mp.client)
-            implementation(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingRedis.redisClient)
+            implementation(libs.redis.mp.client)
         }
         jvmTestDependencies {
             implementation(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore.test)

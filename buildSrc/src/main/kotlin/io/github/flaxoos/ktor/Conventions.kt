@@ -161,9 +161,7 @@ open class Conventions : Plugin<Project> {
                 }
             }
 
-            afterEvaluate {
-                configurePublishing()
-            }
+            configurePublishing()
         }
     }
 

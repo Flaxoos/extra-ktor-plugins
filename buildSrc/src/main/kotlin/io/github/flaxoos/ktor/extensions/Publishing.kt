@@ -4,6 +4,7 @@ import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
@@ -14,22 +15,19 @@ import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
 import java.util.Base64
 
-private const val JVM = "jvm"
-private const val DOKKA_JAR = "dokkaJar"
-private const val DOKKA_HTML = "dokkaHtml"
 
 fun Project.configurePublishing() {
-    registerDokkaJarTask()
+    val dokkaJarTask = registerDokkaJarTask()
     configureSigning()
-    configureMavenPublications()
+    configureMavenPublications(dokkaJarTask)
 
 }
 
-fun Project.registerDokkaJarTask() =
-    tasks.register<Jar>(DOKKA_JAR) {
-        archiveClassifier.set("javadoc")
-        from(tasks.named<AbstractDokkaTask>(DOKKA_HTML).get().outputDirectory)
-    }
+fun Project.registerDokkaJarTask() = tasks.register<Jar>("dokkaJar") {
+    val dokkaHtml = tasks.named<AbstractDokkaTask>("dokkaHtml")
+    archiveClassifier.set("javadoc")
+    from(dokkaHtml.get().outputDirectory)
+}
 
 fun Project.configureSigning() {
     tasks.withType<AbstractPublishToMaven>().configureEach {
@@ -42,9 +40,10 @@ fun Project.configureSigning() {
     }
 }
 
-fun Project.configureMavenPublications() {
+fun Project.configureMavenPublications(dokkaJar: TaskProvider<Jar>) {
     the<PublishingExtension>().apply {
-        publications.withType<MavenPublication>().configureEach {
+        publications.withType<MavenPublication> {
+            artifact(dokkaJar)
             pom {
                 name.set("${rootProject.name}: ${project.name}")
                 groupId = project.group.toString()
@@ -52,8 +51,7 @@ fun Project.configureMavenPublications() {
                 url.set("https://github.com/Flaxoos/extra-ktor-plugins")
                 inceptionYear.set("2023")
                 description.set(
-                    "This project provides a suite of feature-rich, efficient, and highly customizable " +
-                            "plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
+                    "This project provides a suite of feature-rich, efficient, and highly customizable " + "plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
                 )
                 scm {
                     connection.set("scm:git:https://github.com/Flaxoos/extra-ktor-plugins.git")
@@ -75,16 +73,6 @@ fun Project.configureMavenPublications() {
                         email.set("idoflax@gmail.com")
                     }
                 }
-            }
-        }
-    }
-
-    tasks.withType<AbstractPublishToMaven>().configureEach {
-        tasks.find { it.name == DOKKA_JAR }?.let { dokkaJar ->
-            dependsOn(dokkaJar)
-            artifacts {
-                add("archives", tasks.named("sourcesJar"))
-                add("archives", dokkaJar)
             }
         }
     }

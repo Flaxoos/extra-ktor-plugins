@@ -69,7 +69,7 @@ gradle-release = "3.0.2"
 nexusPublish = "2.0.0-rc-1"
 
 # Miscellaneous
-krontab = "2.2.1"
+krontab = "2.3.0"
 uuid = "0.8.1"
 
 [libraries]

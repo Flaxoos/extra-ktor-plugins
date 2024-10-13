@@ -26,7 +26,7 @@ public class RedisLockManager(
     override val application: Application,
     private val connectionPool: RedisConnectionPool,
     private val lockExpirationMs: Long,
-    private val connectionAcquisitionTimeoutMs: Long
+    private val connectionAcquisitionTimeoutMs: Long,
 ) : TaskLockManager<RedisTaskLock>() {
 
     override suspend fun init(tasks: List<Task>) {}
@@ -62,7 +62,7 @@ public value class RedisTaskLock internal constructor(
     /**
      *  must be unique to a task execution, i.e `$name_$concurrencyIndex at $executionTime`
      */
-    public val value: String
+    public val value: String,
 ) : TaskLock {
     public companion object {
         private const val DELIMITER = "-"
@@ -115,7 +115,7 @@ public class RedisTaskLockManagerConfiguration(
     /**
      * The timeout for trying to get a connection to from the pool
      */
-    public var connectionAcquisitionTimeoutMs: Long = 100
+    public var connectionAcquisitionTimeoutMs: Long = 100,
 ) : TaskLockManagerConfiguration<RedisTaskLock>() {
     override fun createTaskManager(application: Application): RedisLockManager =
         RedisLockManager(
@@ -126,10 +126,10 @@ public class RedisTaskLockManagerConfiguration(
                 host = host,
                 port = port,
                 username = username,
-                password = password
+                password = password,
             ),
             lockExpirationMs = lockExpirationMs,
-            connectionAcquisitionTimeoutMs = connectionAcquisitionTimeoutMs
+            connectionAcquisitionTimeoutMs = connectionAcquisitionTimeoutMs,
         )
 }
 
@@ -144,12 +144,12 @@ public fun TaskSchedulingConfiguration.redis(
      * if none is provided, it will be considered the default one. only one default task manager is allowed.
      */
     name: String? = null,
-    config: RedisTaskLockManagerConfiguration.() -> Unit
+    config: RedisTaskLockManagerConfiguration.() -> Unit,
 ) {
     this.addTaskManager(
         RedisTaskLockManagerConfiguration().apply {
             config()
             this.name = name
-        }
+        },
     )
 }

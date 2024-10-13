@@ -43,7 +43,7 @@ class SchemaRegistryClient(providedClient: HttpClient, schemaRegistryUrl: String
 
     context (Application)
     inline fun <reified T : Any> registerSchemas(
-        schemas: MutableMap<KClass<out T>, TopicName>
+        schemas: MutableMap<KClass<out T>, TopicName>,
     ) {
         schemas.forEach {
             registerSchema(it.key, it.value)
@@ -62,7 +62,7 @@ class SchemaRegistryClient(providedClient: HttpClient, schemaRegistryUrl: String
     inline fun <reified T : Any> registerSchema(
         klass: KClass<out T>,
         topicName: TopicName,
-        noinline onConflict: () -> Unit = {}
+        noinline onConflict: () -> Unit = {},
     ) {
         val schema = Avro.default.schema(klass.serializer())
         val payload = mapOf("schema" to schema.toString()) // Creating a map to form the payload
@@ -77,7 +77,7 @@ class SchemaRegistryClient(providedClient: HttpClient, schemaRegistryUrl: String
                 if (!it.status.isSuccess()) {
                     log.error(
                         "Failed registering schema to schema registry at ${it.call.request.url}:\n${it.status} " +
-                            "${it.bodyAsText()}:\nschema: $payload"
+                            "${it.bodyAsText()}:\nschema: $payload",
                     )
                 }
             }

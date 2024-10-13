@@ -13,7 +13,7 @@ public data class Task(
     public val dispatcher: CoroutineDispatcher?,
     public val concurrency: Int,
     public val kronSchedule: KronScheduler,
-    public val task: suspend Application.(DateTime) -> Unit
+    public val task: suspend Application.(DateTime) -> Unit,
 ) {
     public fun concurrencyRange(): IntRange = 1..concurrency
 }

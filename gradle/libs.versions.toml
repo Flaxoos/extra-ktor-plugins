@@ -1,14 +1,14 @@
 [versions]
 # Core technologies
-kotlin = "1.9.10"
+kotlin = "2.0.20"
 java = "11"
 shadow = "8.1.1"
-kotlinx-serialization = "1.6.0"
+kotlinx-serialization = "1.7.3"
 kotlinx-io = "0.3.0"
 ksp = "1.9.10-1.0.13"
 
 # Web Framework
-ktor = "2.3.2"
+ktor = "3.0.0"
 
 # Android
 android = "8.1.0"
@@ -25,13 +25,14 @@ kotlin-logging = "5.1.0"
 logging_capabilities = "0.11.1"
 
 # Asynchronous and Concurrency
-atomicFu = "0.21.0"
-kotlinx-coroutines = "1.7.1"
+atomicfu = "0.25.0"
+kotlinx-coroutines = "1.9.0"
 
 # Testing
-kotest = "5.6.2"
+kotest = "6.0.0.M1"
+kotest-stable = "5.9.1"
 kotest-test-containers = "2.0.2"
-mockk = "1.11.0"
+mockk = "1.13.4"
 mockative = "2.0.1"
 kmock = "0.3.0-rc08"
 testcontainers = "1.19.8"
@@ -122,8 +123,8 @@ mongodb-bson-kotlinx = { module = "org.mongodb:bson-kotlinx", version.ref = "mon
 # Testing libraries
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
-kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
-kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest-stable" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest-stable" }
 kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 mockk-agent-jvm = { module = "io.mockk:mockk-agent-jvm", version.ref = "mockk" }
@@ -153,7 +154,7 @@ kover-badge-gradlePlugin = { module = "io.github.flaxoos:kover-badge", version.r
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 
 # Asynchronous and Concurrency plugins
-atomicfu-gradlePlugin = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version.ref = "atomicFu" }
+atomicfu-gradlePlugin = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version.ref = "atomicfu" }
 
 # Logging
 logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
@@ -207,7 +208,7 @@ ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
 # Asynchronous and Concurrency plugins
-atomicfu = { id = "kotlinx-atomicfu", version.ref = "atomicFu" }
+atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "atomicfu" }
 
 # Testing
 kotest = { id = "io.kotest.multiplatform", version.ref = "kotest" }

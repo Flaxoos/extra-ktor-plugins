@@ -51,7 +51,7 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
     public abstract suspend fun attemptExecute(
         task: Task,
         executionTime: DateTime,
-        concurrencyIndex: Int
+        concurrencyIndex: Int,
     ): TASK_EXECUTION_TOKEN?
 
     /**

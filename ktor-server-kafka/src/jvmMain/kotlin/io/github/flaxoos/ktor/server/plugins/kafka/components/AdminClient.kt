@@ -15,7 +15,7 @@ context (CoroutineScope)
 internal suspend fun AdminClient.createKafkaTopics(
     topicBuilders: List<NewTopic>,
     existingTopicHandler: (NewTopic) -> Unit = {},
-    topicCreationHandler: Pair<String, KafkaFuture<Void>>.() -> Unit
+    topicCreationHandler: Pair<String, KafkaFuture<Void>>.() -> Unit,
 ) {
     val existingTopics = listTopics().listings().get().map { it.name() }
     val createTopicsResult =

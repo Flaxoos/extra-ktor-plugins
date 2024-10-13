@@ -12,7 +12,7 @@ public abstract class TaskLockManager<TASK_LOCK : TaskLock> : TaskManager<TASK_L
     public override suspend fun attemptExecute(
         task: Task,
         executionTime: DateTime,
-        concurrencyIndex: Int
+        concurrencyIndex: Int,
     ): TASK_LOCK? =
         acquireLockKey(task, executionTime, concurrencyIndex)
 

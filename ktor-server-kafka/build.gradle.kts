@@ -20,7 +20,7 @@ tasks.matching { it.name.contains("native", ignoreCase = true) }.configureEach {
 }
 
 kotlin {
-    targetJvm()
+    targetJvm(project)
     sourceSets {
         val jvmMain by getting {
             dependencies {

@@ -36,7 +36,7 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
     final override suspend fun acquireLockKey(
         task: Task,
         executionTime: DateTime,
-        concurrencyIndex: Int
+        concurrencyIndex: Int,
     ): DB_TASK_LOCK_KEY? {
         return runCatching {
             updateTaskLock(task, concurrencyIndex, executionTime).also {
@@ -63,7 +63,7 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
      */
     public abstract suspend fun insertTaskLock(
         task: Task,
-        taskConcurrencyIndex: Int
+        taskConcurrencyIndex: Int,
     ): Boolean
 
     /**
@@ -73,7 +73,7 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
     public abstract suspend fun updateTaskLock(
         task: Task,
         concurrencyIndex: Int,
-        executionTime: DateTime
+        executionTime: DateTime,
     ): DB_TASK_LOCK_KEY?
 }
 

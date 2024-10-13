@@ -8,7 +8,7 @@ plugins {
 
 kotlin {
     explicitApi()
-    targetJvm()
+    targetJvm(project)
     sourceSets {
         jvmMainDependencies {
             api(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore)

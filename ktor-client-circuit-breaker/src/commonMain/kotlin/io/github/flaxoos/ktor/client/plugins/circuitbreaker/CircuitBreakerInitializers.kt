@@ -12,7 +12,7 @@ import io.ktor.util.collections.ConcurrentMap
 @CircuitBreakerDsl
 fun CircuitBreakerConfig.register(
     name: CircuitBreakerName,
-    config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit
+    config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit,
 ) {
     circuitBreakers.addCircuitBreaker(name, config)
 }
@@ -24,7 +24,7 @@ fun CircuitBreakerConfig.register(
 fun CircuitBreakerConfig.global(config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit) {
     global = CircuitBreaker(
         CIRCUIT_BREAKER_NAME_GLOBAL,
-        CircuitBreakerConfig.CircuitBreakerBuilder().apply(config)
+        CircuitBreakerConfig.CircuitBreakerBuilder().apply(config),
     )
 }
 
@@ -42,7 +42,7 @@ fun HttpRequestBuilder.withCircuitBreaker(name: CircuitBreakerName = CIRCUIT_BRE
  */
 suspend fun HttpClient.requestWithCircuitBreaker(
     name: CircuitBreakerName = CIRCUIT_BREAKER_NAME_GLOBAL,
-    block: HttpRequestBuilder.() -> Unit
+    block: HttpRequestBuilder.() -> Unit,
 ): HttpResponse {
     return request {
         withCircuitBreaker(name)
@@ -55,7 +55,7 @@ suspend fun HttpClient.requestWithCircuitBreaker(
  */
 internal fun ConcurrentMap<CircuitBreakerName, CircuitBreaker>.addCircuitBreaker(
     name: CircuitBreakerName,
-    config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit
+    config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit,
 ) {
     require(!containsKey(name)) {
         "Circuit Breaker with name $name is already registered"

@@ -42,14 +42,14 @@ object Attributes {
      * Attribute key for [Producer]
      */
     val ProducerAttributeKey = AttributeKey<KafkaProducer<KafkaRecordKey, GenericRecord>>(
-        KTOR_KAFKA_PRODUCER_ATTRIBUTE_KEY
+        KTOR_KAFKA_PRODUCER_ATTRIBUTE_KEY,
     )
 
     /**
      * Attribute key for [Consumer]
      */
     val ConsumerAttributeKey = AttributeKey<KafkaConsumer<KafkaRecordKey, GenericRecord>>(
-        KTOR_KAFKA_CONSUMER_ATTRIBUTE_KEY
+        KTOR_KAFKA_CONSUMER_ATTRIBUTE_KEY,
     )
 
     /**

@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
  */
 public val TaskScheduling: ApplicationPlugin<TaskSchedulingConfiguration> = createApplicationPlugin(
     name = "TaskScheduling",
-    createConfiguration = ::TaskSchedulingConfiguration
+    createConfiguration = ::TaskSchedulingConfiguration,
 ) {
     application.log.debug("Configuring TaskScheduler")
 
@@ -48,7 +48,7 @@ public val TaskScheduling: ApplicationPlugin<TaskSchedulingConfiguration> = crea
 }
 
 private fun PluginBuilder<TaskSchedulingConfiguration>.initializeTaskManagers(
-    taskManagers: List<TaskManager<*>>
+    taskManagers: List<TaskManager<*>>,
 ) = taskManagers.mapNotNull { manager ->
     pluginConfig.tasks[manager.name]?.let { tasks ->
         manager to application.async {
@@ -59,7 +59,7 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.initializeTaskManagers(
 }.toMap()
 
 private fun PluginBuilder<TaskSchedulingConfiguration>.checkTaskMangerAssignments(
-    taskManagers: List<TaskManager<*>>
+    taskManagers: List<TaskManager<*>>,
 ) {
     with(pluginConfig.tasks.filter { it.key !in taskManagers.map { it.name } }) {
         require(isEmpty()) {
@@ -90,7 +90,7 @@ private fun TaskManager<*>.startTask(task: Task) {
     application.launch(
         context = application.coroutineContext.apply {
             task.dispatcher?.let { this + it } ?: this
-        }.apply { this + CoroutineName(task.name) }
+        }.apply { this + CoroutineName(task.name) },
     ) {
         task.kronSchedule.doInfinity { executionTime ->
             execute(task, executionTime)

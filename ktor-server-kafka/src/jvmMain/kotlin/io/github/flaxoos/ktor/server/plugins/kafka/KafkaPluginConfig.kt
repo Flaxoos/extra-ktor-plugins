@@ -194,7 +194,7 @@ internal fun KafkaConfigPropertiesContext.withDefaultConsumerConfig() =
 
 internal fun KafkaConfigPropertiesContext.withSchemaRegistryUrl() =
     apply {
-        kafkaProperties.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, this.kafkaConfig.schemaRegistryUrl)
+        kafkaProperties[AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG] = this.kafkaConfig.schemaRegistryUrl
     }
 
 @KafkaDsl

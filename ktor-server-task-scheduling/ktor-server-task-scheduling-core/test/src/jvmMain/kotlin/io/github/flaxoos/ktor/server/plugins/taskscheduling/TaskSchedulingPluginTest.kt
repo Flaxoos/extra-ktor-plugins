@@ -30,6 +30,7 @@ private const val DEFAULT_EXECUTION_BUFFER_MS = 100
 private const val FREQUENCIES_EXPONENTIAL_SERIES_INITIAL_MS = 200.toShort()
 private const val FREQUENCIES_EXPONENTIAL_SERIES_N = 3.toShort()
 private val concurrencyValues = listOf(1, 3, 6)
+private val taskCounts = listOf(2, 4)
 
 abstract class TaskSchedulingPluginTest : FunSpec() {
     protected abstract suspend fun clean()
@@ -56,44 +57,46 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                 n = frequenciesExponentialSeriesN,
             )
         withData(nameFn = { "Freq: $it ms" }, frequencies) { freqMs ->
-            withData(nameFn = { "Concurrency = $it" }, concurrencyValues) { concurrency ->
-                coroutineScope {
-                    val taskLogsAndApplications =
-                        setupApplicationEngines(
-                            taskSchedulingConfiguration,
-                            engineCount,
-                            freqMs.toLong(),
-                            concurrency.toShort(),
-                            kronTaskSchedule(freqMs),
-                        ).map { it to launch { it.second.start() } }
-                            .also { it.map { engineAndJob -> engineAndJob.second }.joinAll() }
-                            .map { it.first }
+            withData(nameFn = { "Task count = $it" }, taskCounts) { taskCount ->
+                withData(nameFn = { "Concurrency = $it" }, concurrencyValues) { concurrency ->
+                    coroutineScope {
+                        val taskLogsAndApplications =
+                            setupApplicationEngines(
+                                taskSchedulingConfiguration = taskSchedulingConfiguration,
+                                count = engineCount,
+                                freqMs = freqMs.toLong(),
+                                taskCount = taskCount.toShort(),
+                                concurrency = concurrency.toShort(),
+                                kronTaskSchedule = kronTaskSchedule(freqMs),
+                            ).map { it to launch { it.second.start() } }
+                                .also { it.map { engineAndJob -> engineAndJob.second }.joinAll() }
+                                .map { it.first }
 
-                    delay((freqMs + executionBufferMs).milliseconds * executions)
-                    taskLogsAndApplications.forEach { launch { it.second.stop() } }
+                        delay((freqMs + executionBufferMs).milliseconds * executions)
+                        taskLogsAndApplications.forEach { launch { it.second.stop() } }
 
-                    try {
-                        with(taskLogsAndApplications.map { it.first }.flatten()) {
-                            size shouldBeGreaterThan executions - 2
-                            with(groupingBy { it }.eachCount()) {
-                                val errors =
-                                    this.mapNotNull {
-                                        if (it.value >
-                                            concurrency
-                                        ) {
-                                            "${it.key.format2()} was executed ${it.value} times, expected no more than $concurrency"
-                                        } else {
-                                            null
+                        try {
+                            with(taskLogsAndApplications.map { it.first }.flatten()) {
+                                size shouldBeGreaterThan executions - 2
+                                with(groupingBy { it }.eachCount()) {
+                                    val errors =
+                                        this.mapNotNull {
+                                            val expectedExecutions = concurrency * taskCount
+                                            if (it.value > expectedExecutions) {
+                                                "${it.key.format2()} was executed ${it.value} times, expected no more than $expectedExecutions times"
+                                            } else {
+                                                null
+                                            }
                                         }
+                                    if (errors.isNotEmpty()) {
+                                        fail(errors.joinToString("\n"))
                                     }
-                                if (errors.isNotEmpty()) {
-                                    fail(errors.joinToString("\n"))
                                 }
                             }
+                        } finally {
+                            delay(1000)
+                            clean()
                         }
-                    } finally {
-                        delay(1000)
-                        clean()
                     }
                 }
             }
@@ -104,6 +107,7 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
         taskSchedulingConfiguration: TaskSchedulingConfiguration.(TaskFreqMs) -> Unit,
         count: Int,
         freqMs: Long,
+        taskCount: Short = 1,
         concurrency: Short = 1,
         kronTaskSchedule: SchedulerBuilder.() -> Unit,
     ) = (1..count).map { ktorHost ->
@@ -115,14 +119,18 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
             install(TaskScheduling) {
                 taskSchedulingConfiguration(TaskFreqMs(freqMs))
 
-                task {
-                    name = "Test Kron Task"
-                    task = { taskExecutionTime ->
-                        executionRecords.add(taskExecutionTime)
-                        log.debug("Host: $ktorHost executing task at ${taskExecutionTime.format2()}")
+                for (i in 1 until taskCount + 1) {
+                    val taskName = "Test Kron Task: $i"
+                    logger.info { "Adding task: $taskName" }
+                    task {
+                        name = taskName
+                        task = { taskExecutionTime ->
+                            executionRecords.add(taskExecutionTime)
+                            log.info("Host: $ktorHost executing task $taskName at ${taskExecutionTime.format2()}")
+                        }
+                        kronSchedule = kronTaskSchedule
+                        this.concurrency = concurrency.toInt()
                     }
-                    kronSchedule = kronTaskSchedule
-                    this.concurrency = concurrency.toInt()
                 }
             }
         }

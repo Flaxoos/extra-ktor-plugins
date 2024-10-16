@@ -8,13 +8,11 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.TaskLock
 import korlibs.time.DateTime
 
 public abstract class TaskLockManager<TASK_LOCK : TaskLock> : TaskManager<TASK_LOCK>() {
-
     public override suspend fun attemptExecute(
         task: Task,
         executionTime: DateTime,
         concurrencyIndex: Int,
-    ): TASK_LOCK? =
-        acquireLockKey(task, executionTime, concurrencyIndex)
+    ): TASK_LOCK? = acquireLockKey(task, executionTime, concurrencyIndex)
 
     override suspend fun markExecuted(key: TASK_LOCK) {
         releaseLockKey(key)
@@ -23,7 +21,11 @@ public abstract class TaskLockManager<TASK_LOCK : TaskLock> : TaskManager<TASK_L
     /**
      * Get permission to execute the task
      */
-    public abstract suspend fun acquireLockKey(task: Task, executionTime: DateTime, concurrencyIndex: Int): TASK_LOCK?
+    public abstract suspend fun acquireLockKey(
+        task: Task,
+        executionTime: DateTime,
+        concurrencyIndex: Int,
+    ): TASK_LOCK?
 
     /**
      * Release permission to execute the task

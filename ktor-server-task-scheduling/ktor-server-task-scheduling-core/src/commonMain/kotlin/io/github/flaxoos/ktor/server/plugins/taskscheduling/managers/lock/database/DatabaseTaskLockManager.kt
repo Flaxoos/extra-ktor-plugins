@@ -13,8 +13,7 @@ private val logger = KotlinLogging.logger {}
 /**
  * An abstract implementation of [TaskLockManager] using a database as the lock store
  */
-public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLock> :
-    TaskLockManager<DB_TASK_LOCK_KEY>() {
+public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLock> : TaskLockManager<DB_TASK_LOCK_KEY>() {
     final override suspend fun init(tasks: List<Task>) {
         logger.debug { "Initializing ${this::class.simpleName} for ${tasks.size} tasks" }
         initTaskLockTable()
@@ -24,11 +23,12 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
                     insertTaskLock(task, taskConcurrencyIndex)
                 }.onFailure {
                     logger.error(it) { "${this::class.simpleName} failed to insert task during initialization" }
-                }.getOrNull()?.let {
-                    if (it) {
-                        logger.debug { "${this::class.simpleName} inserted task lock key during initialization" }
+                }.getOrNull()
+                    ?.let {
+                        if (it) {
+                            logger.debug { "${this::class.simpleName} inserted task lock key during initialization" }
+                        }
                     }
-                }
             }
         }
     }
@@ -37,11 +37,13 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
         task: Task,
         executionTime: DateTime,
         concurrencyIndex: Int,
-    ): DB_TASK_LOCK_KEY? {
-        return runCatching {
+    ): DB_TASK_LOCK_KEY? =
+        runCatching {
             updateTaskLock(task, concurrencyIndex, executionTime).also {
                 if (it == null) {
-                    logger.debug { "${application.host()}: ${executionTime.format2()}: Could not acquire lock for ${task.name} - $concurrencyIndex" }
+                    logger.debug {
+                        "${application.host()}: ${executionTime.format2()}: Could not acquire lock for ${task.name} - $concurrencyIndex"
+                    }
                 } else {
                     logger.debug {
                         "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - $concurrencyIndex"
@@ -49,9 +51,10 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
                 }
             }
         }.onFailure {
-            logger.warn { "${application.host()}: ${executionTime.format2()}: Failed acquiring lock for ${task.name} - $concurrencyIndex: ${it.message}" }
+            logger.warn {
+                "${application.host()}: ${executionTime.format2()}: Failed acquiring lock for ${task.name} - $concurrencyIndex: ${it.message}"
+            }
         }.getOrNull()
-    }
 
     /**
      * Create the task lock key table in the database
@@ -82,4 +85,5 @@ public interface DatabaseTaskLock : TaskLock {
 }
 
 @TaskSchedulingDsl
-public abstract class DatabaseTaskLockManagerConfiguration<DB_TASK_LOCK_KEY : DatabaseTaskLock> : TaskLockManagerConfiguration<DB_TASK_LOCK_KEY>()
+public abstract class DatabaseTaskLockManagerConfiguration<DB_TASK_LOCK_KEY : DatabaseTaskLock> :
+    TaskLockManagerConfiguration<DB_TASK_LOCK_KEY>()

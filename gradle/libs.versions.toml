@@ -16,7 +16,7 @@ android = "8.1.0"
 h2 = "2.2.224"
 postgres = "42.6.0"
 exposed = "0.44.0"
-mongodb = "4.11.0"
+mongodb = "5.2.0"
 
 # Logging
 logback = "1.4.11"

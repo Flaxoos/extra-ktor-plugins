@@ -30,6 +30,7 @@ import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.utils.named
 
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics(project: Project) {}
@@ -51,6 +52,7 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("ktlint"))
             }
             repositories {
+                mavenLocal()
                 mavenCentral()
                 maven {
                     url = uri("https://maven.pkg.github.com/flaxoos/flax-gradle-plugins")

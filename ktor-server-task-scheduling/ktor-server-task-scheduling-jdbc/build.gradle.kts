@@ -12,11 +12,10 @@ kotlin {
     sourceSets {
         jvmMainDependencies {
             api(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore)
-            implementation(libs.exposed.core)
-            implementation(libs.exposed.jdbc)
-            implementation(libs.exposed.dao)
-            implementation(libs.exposed.kotlin.datetime)
-            implementation(libs.krontab)
+            api(libs.exposed.core)
+            api(libs.exposed.jdbc)
+            api(libs.exposed.dao)
+            api(libs.exposed.kotlin.datetime)
         }
         jvmTestDependencies {
             implementation(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore.test)

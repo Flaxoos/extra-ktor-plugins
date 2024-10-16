@@ -7,6 +7,7 @@ import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.ConsumerAttributeK
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.ProducerAttributeKey
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.SchemaRegistryClientKey
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CONFIG_PATH
+import io.github.flaxoos.ktor.server.plugins.kafka.components.CoroutineScopedAdminClient.Companion.CoroutineScopedAdminClient
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createConsumer
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createKafkaAdminClient
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createKafkaTopics
@@ -132,7 +133,7 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafka(pluginConfig: 
                     pluginConfig.schemaRegistrationTimeoutMs,
                     pluginConfig.schemaRegistryClientProvider,
                 )
-            with(application) { schemaRegistryClient.registerSchemas(pluginConfig.schemas) }.also {
+            with(application) { schemaRegistryClient.registerSchemas(this, pluginConfig.schemas) }.also {
                 application.attributes.put(SchemaRegistryClientKey, schemaRegistryClient)
             }
         }
@@ -146,7 +147,7 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafka(pluginConfig: 
         application.attributes.put(AdminClientAttributeKey, it)
         application.log.info("Kafka admin setup finished")
         runBlocking(Dispatchers.IO) {
-            it.createKafkaTopics(topicBuilders = pluginConfig.topics) {
+            CoroutineScopedAdminClient(it).createKafkaTopics(topicBuilders = pluginConfig.topics) {
                 application.log.info("Created Topics: $first")
             }
         }

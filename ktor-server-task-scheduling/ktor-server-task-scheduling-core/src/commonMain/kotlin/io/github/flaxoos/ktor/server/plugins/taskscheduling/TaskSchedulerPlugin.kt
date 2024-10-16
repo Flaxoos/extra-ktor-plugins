@@ -61,13 +61,12 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.initializeTaskManagers(ta
         }.toMap()
 
 private fun PluginBuilder<TaskSchedulingConfiguration>.checkTaskMangerAssignments(taskManagers: List<TaskManager<*>>) {
-    with(pluginConfig.tasks.filter { it.key !in taskManagers.map { it.name } }) {
+    with(pluginConfig.tasks.filter { it.key !in taskManagers.map { taskManager -> taskManager.name } }) {
         require(isEmpty()) {
-            "Bad configuration: The following tasks manager names were assigned tasks but were not created: ${
-                this.toList().joinToString {
+            "Bad configuration: The following tasks manager names were assigned tasks but were not created: " +
+                toList().joinToString {
                     "${it.first}: ${it.second.joinToString { task -> task.name }}}"
                 }
-            }"
         }
     }
 }

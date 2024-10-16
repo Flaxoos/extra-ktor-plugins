@@ -2,7 +2,6 @@
 # Core technologies
 kotlin = "2.0.20"
 java = "11"
-shadow = "8.1.1"
 kotlinx-serialization = "1.7.3"
 kotlinx-io = "0.3.0"
 ksp = "1.9.10-1.0.13"
@@ -58,7 +57,7 @@ avro = "1.11.3"
 
 # Redis
 kreds = "0.9.0"
-redis-mp-client = "0.0.1"
+redis-mp-client = "0.0.2"
 
 # Documentation
 dokka = "1.9.10"
@@ -78,7 +77,6 @@ uuid = "0.8.1"
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
-shadow-gradlePlugin = { module = "com.github.johnrengelman:shadow", version.ref = "shadow" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
@@ -108,6 +106,7 @@ ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-gradlePlugin = { module = "io.ktor.plugin:plugin", version.ref = "ktor" }
 
 # Database
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
@@ -189,8 +188,8 @@ kreds = { module = "io.github.crackthecodeabhi:kreds", version.ref = "kreds" }
 redis-mp-client = { module = "io.github.flaxoos:redis-client-multiplatform", version.ref = "redis-mp-client" }
 
 [plugins]
-# Build
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+# Ktor
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 
 # Android
 android-library = { id = "com.android.library", version.ref = "android" }

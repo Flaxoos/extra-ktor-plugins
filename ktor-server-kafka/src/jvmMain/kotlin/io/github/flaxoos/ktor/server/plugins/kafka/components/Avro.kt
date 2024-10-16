@@ -26,10 +26,17 @@ import org.apache.avro.generic.GenericRecord
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 
-fun createSchemaRegistryClient(schemaRegistryUrl: String, timeoutMs: Long, clientProvider: () -> HttpClient) =
-    SchemaRegistryClient(clientProvider(), schemaRegistryUrl, timeoutMs)
+fun createSchemaRegistryClient(
+    schemaRegistryUrl: String,
+    timeoutMs: Long,
+    clientProvider: () -> HttpClient,
+) = SchemaRegistryClient(clientProvider(), schemaRegistryUrl, timeoutMs)
 
-class SchemaRegistryClient(providedClient: HttpClient, schemaRegistryUrl: String, timeoutMs: Long) {
+class SchemaRegistryClient(
+    providedClient: HttpClient,
+    schemaRegistryUrl: String,
+    timeoutMs: Long,
+) {
     val client =
         providedClient.config {
             install(ContentNegotiation) { json() }
@@ -41,12 +48,12 @@ class SchemaRegistryClient(providedClient: HttpClient, schemaRegistryUrl: String
             }
         }
 
-    context (Application)
     inline fun <reified T : Any> registerSchemas(
+        application: Application,
         schemas: MutableMap<KClass<out T>, TopicName>,
     ) {
         schemas.forEach {
-            registerSchema(it.key, it.value)
+            registerSchema(application, it.key, it.value)
         }
     }
 
@@ -57,30 +64,31 @@ class SchemaRegistryClient(providedClient: HttpClient, schemaRegistryUrl: String
      * @param topicName the topic name to associate the schema with
      * @param onConflict the function to run if a schema with the same name already exists, defaults to do
      */
-    context (Application)
     @OptIn(InternalSerializationApi::class)
     inline fun <reified T : Any> registerSchema(
+        application: Application,
         klass: KClass<out T>,
         topicName: TopicName,
         noinline onConflict: () -> Unit = {},
     ) {
         val schema = Avro.default.schema(klass.serializer())
         val payload = mapOf("schema" to schema.toString()) // Creating a map to form the payload
-        launch(Dispatchers.IO) {
-            client.post("subjects/${topicName.value}.${schema.name}/versions") {
-                contentType(ContentType.Application.Json)
-                setBody(payload)
-            }.let {
-                if (it.status == HttpStatusCode.Conflict) {
-                    onConflict()
+        application.launch(Dispatchers.IO) {
+            client
+                .post("subjects/${topicName.value}.${schema.name}/versions") {
+                    contentType(ContentType.Application.Json)
+                    setBody(payload)
+                }.let {
+                    if (it.status == HttpStatusCode.Conflict) {
+                        onConflict()
+                    }
+                    if (!it.status.isSuccess()) {
+                        application.log.error(
+                            "Failed registering schema to schema registry at ${it.call.request.url}:\n${it.status} " +
+                                "${it.bodyAsText()}:\nschema: $payload",
+                        )
+                    }
                 }
-                if (!it.status.isSuccess()) {
-                    log.error(
-                        "Failed registering schema to schema registry at ${it.call.request.url}:\n${it.status} " +
-                            "${it.bodyAsText()}:\nschema: $payload",
-                    )
-                }
-            }
         }
     }
 }
@@ -92,8 +100,7 @@ class SchemaRegistryClient(providedClient: HttpClient, schemaRegistryUrl: String
  * @return the resulting [T] must be annotated with [Serializable]
  * @throws [SerializationException] if serialization fails
  */
-inline fun <reified T> fromRecord(record: GenericRecord): T =
-    Avro.default.fromRecord(serializer(typeOf<T>()), record) as T
+inline fun <reified T> fromRecord(record: GenericRecord): T = Avro.default.fromRecord(serializer(typeOf<T>()), record) as T
 
 /**
  * converts a [T] to a [GenericRecord]
@@ -102,5 +109,4 @@ inline fun <reified T> fromRecord(record: GenericRecord): T =
  * @return the resulting [GenericRecord]
  * @throws [SerializationException] if serialization fails
  */
-inline fun <reified T> T.toRecord(): GenericRecord =
-    Avro.default.toRecord(serializer(), this)
+inline fun <reified T> T.toRecord(): GenericRecord = Avro.default.toRecord(serializer(), this)

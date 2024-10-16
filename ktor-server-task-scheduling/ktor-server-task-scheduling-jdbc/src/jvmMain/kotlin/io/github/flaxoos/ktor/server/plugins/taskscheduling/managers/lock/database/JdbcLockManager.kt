@@ -44,7 +44,7 @@ public class JdbcLockManager(
     /**
      * The task lock table to use, if not provided, the [DefaultTaskLockTable] will be used
      */
-    private val taskLockTable: ExposedTaskLockTable = DefaultTaskLockTable
+    private val taskLockTable: ExposedTaskLockTable = DefaultTaskLockTable,
 ) : DatabaseTaskLockManager<JdbcTaskLock>() {
 
     override suspend fun initTaskLockTable() {
@@ -53,12 +53,12 @@ public class JdbcLockManager(
 
     override suspend fun insertTaskLock(
         task: Task,
-        taskConcurrencyIndex: Int
+        taskConcurrencyIndex: Int,
     ): Boolean =
         newSuspendedTransaction(
             application.coroutineContext,
             database,
-            transactionIsolation = Connection.TRANSACTION_READ_COMMITTED
+            transactionIsolation = Connection.TRANSACTION_READ_COMMITTED,
         ) {
             repetitionAttempts = 0
             debug = true
@@ -72,11 +72,11 @@ public class JdbcLockManager(
     override suspend fun updateTaskLock(
         task: Task,
         concurrencyIndex: Int,
-        executionTime: DateTime
+        executionTime: DateTime,
     ): JdbcTaskLock? = newSuspendedTransaction(
         application.coroutineContext,
         db = database,
-        transactionIsolation = Connection.TRANSACTION_READ_COMMITTED
+        transactionIsolation = Connection.TRANSACTION_READ_COMMITTED,
     ) {
         val taskExecutionInstant = Instant.fromEpochMilliseconds(executionTime.unixMillisLong)
         taskLockTable.update(
@@ -84,9 +84,9 @@ public class JdbcLockManager(
                 selectClause(
                     task,
                     concurrencyIndex,
-                    taskExecutionInstant
+                    taskExecutionInstant,
                 )
-            }
+            },
         ) {
             it[lockedAt] = taskExecutionInstant
             it[taskLockTable.concurrencyIndex] = concurrencyIndex
@@ -96,7 +96,7 @@ public class JdbcLockManager(
             JdbcTaskLock(
                 name = task.name,
                 concurrencyIndex = concurrencyIndex,
-                lockedAt = executionTime
+                lockedAt = executionTime,
             )
         } else {
             null
@@ -110,7 +110,7 @@ public class JdbcLockManager(
     private fun selectClause(
         task: Task,
         concurrencyIndex: Int,
-        taskExecutionInstant: Instant
+        taskExecutionInstant: Instant,
     ) =
         (taskLockTable.name eq task.name and taskLockTable.concurrencyIndex.eq(concurrencyIndex)) and
             lockedAt.neq(LiteralOp(KotlinInstantColumnType(), taskExecutionInstant))
@@ -119,7 +119,7 @@ public class JdbcLockManager(
 public class JdbcTaskLock(
     override val name: String,
     override val concurrencyIndex: Int,
-    override val lockedAt: DateTime
+    override val lockedAt: DateTime,
 ) : DatabaseTaskLock {
     override fun toString(): String =
         "name=$name, concurrencyIndex=$concurrencyIndex, lockedAt=${lockedAt.format2()}}"
@@ -146,7 +146,7 @@ public class JdbcJobLockManagerConfiguration : DatabaseTaskLockManagerConfigurat
         JdbcLockManager(
             name = name.toTaskManagerName(),
             application = application,
-            database = database
+            database = database,
         )
 }
 
@@ -161,12 +161,12 @@ public fun TaskSchedulingConfiguration.jdbc(
      * if none is provided, it will be considered the default one. only one default task manager is allowed.
      */
     name: String? = null,
-    config: JdbcJobLockManagerConfiguration.() -> Unit
+    config: JdbcJobLockManagerConfiguration.() -> Unit,
 ) {
     this.addTaskManager(
         JdbcJobLockManagerConfiguration().apply {
             config()
             this.name = name
-        }
+        },
     )
 }

@@ -36,7 +36,7 @@ public open class TaskSchedulingConfiguration {
         /**
          * The configuration of the task
          */
-        taskConfiguration: TaskConfiguration.() -> Unit
+        taskConfiguration: TaskConfiguration.() -> Unit,
     ) {
         tasks.getOrPut(taskManagerName.toTaskManagerName()) { mutableListOf() }.add(
             TaskConfiguration().apply(taskConfiguration).also { checkNotNull(it.kronSchedule) }.let {
@@ -45,9 +45,9 @@ public open class TaskSchedulingConfiguration {
                     dispatcher = it.dispatcher,
                     concurrency = it.concurrency,
                     kronSchedule = buildSchedule(it.kronSchedule ?: error("No kron schedule configured")),
-                    task = it.task
+                    task = it.task,
                 )
-            }
+            },
         )
     }
 

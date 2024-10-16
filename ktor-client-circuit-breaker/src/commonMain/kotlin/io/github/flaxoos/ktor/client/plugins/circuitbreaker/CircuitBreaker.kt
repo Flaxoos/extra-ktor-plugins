@@ -20,7 +20,7 @@ private val logger = KtorSimpleLogger("io.github.flaxoos.ktor.client.plugins.Cir
 
 internal class CircuitBreaker(
     private val name: CircuitBreakerName,
-    config: CircuitBreakerConfig.CircuitBreakerBuilder
+    config: CircuitBreakerConfig.CircuitBreakerBuilder,
 ) {
     private val failureThreshold: Int = config.failureThreshold
     private val halfOpenFailureThreshold: Int = config.halfOpenFailureThreshold

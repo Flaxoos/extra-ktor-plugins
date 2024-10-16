@@ -20,7 +20,7 @@ tasks.matching { it.name.contains("native", ignoreCase = true) }.configureEach {
 }
 
 kotlin {
-    targetJvm()
+    targetJvm(project)
     sourceSets {
         val jvmMain by getting {
             dependencies {
@@ -35,7 +35,7 @@ kotlin {
         }
         val jvmTest by getting {
             dependencies {
-                implementation(platform(libs.testcontainers.bom.get()))
+                implementation(dependencies.platform(libs.testcontainers.bom.get()))
                 implementation(libs.kotest.extensions.testcontainers)
                 implementation(libs.kotest.extensions.testcontainers.kafka)
                 implementation(libs.testcontainers.kafka)

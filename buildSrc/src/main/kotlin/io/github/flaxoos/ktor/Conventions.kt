@@ -28,13 +28,13 @@ import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
-import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.utils.named
 
 open class Conventions : Plugin<Project> {
-    open fun KotlinMultiplatformExtension.conventionSpecifics() {}
+    open fun KotlinMultiplatformExtension.conventionSpecifics(project: Project) {}
+
     override fun apply(project: Project) {
         with(project) {
             with(plugins) {
@@ -52,6 +52,7 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("ktlint"))
             }
             repositories {
+                mavenLocal()
                 mavenCentral()
                 maven {
                     url = uri("https://maven.pkg.github.com/flaxoos/flax-gradle-plugins")
@@ -61,7 +62,7 @@ open class Conventions : Plugin<Project> {
             enableContextReceivers()
 
             extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
-                targetJvm()
+                targetJvm(project)
                 this.sourceSets.apply {
                     commonMainDependencies {
                         implementation(library("kotlinx-datetime"))
@@ -69,7 +70,6 @@ open class Conventions : Plugin<Project> {
                         implementation(library("arrow-core"))
                         implementation(library("arrow-fx-coroutines"))
                         implementation(library("kotlin-logging"))
-
                     }
 
                     commonTestDependencies {
@@ -90,7 +90,7 @@ open class Conventions : Plugin<Project> {
                         implementation(library("mockk-agent-jvm"))
                     }
                 }
-                this.conventionSpecifics()
+                this.conventionSpecifics(project)
             }
 
             setLanguageAndApiVersions()
@@ -149,7 +149,7 @@ open class Conventions : Plugin<Project> {
             }
 
             extensions.findByType(AtomicFUPluginExtension::class)?.apply {
-                dependenciesVersion = versionOf("atomicFu")
+                dependenciesVersion = versionOf("atomicfu")
                 transformJvm = true
                 jvmVariant = "FU"
             }
@@ -164,14 +164,10 @@ open class Conventions : Plugin<Project> {
             configurePublishing()
         }
     }
-
-
 }
 
 class KtorServerPluginConventions : Conventions() {
-
-    @OptIn(ExternalVariantApi::class)
-    override fun KotlinMultiplatformExtension.conventionSpecifics() {
+    override fun KotlinMultiplatformExtension.conventionSpecifics(project: Project) {
         sourceSets.apply {
             commonMainDependencies {
                 implementation(project.library("ktor-server-core"))
@@ -187,10 +183,8 @@ class KtorServerPluginConventions : Conventions() {
 }
 
 class KtorClientPluginConventions : Conventions() {
-
-    @OptIn(ExternalVariantApi::class)
-    override fun KotlinMultiplatformExtension.conventionSpecifics() {
-        with(this.project) {
+    override fun KotlinMultiplatformExtension.conventionSpecifics(project: Project) {
+        with(project) {
             sourceSets.apply {
                 commonMainDependencies {
                     implementation(library("ktor-client-core"))
@@ -247,9 +241,7 @@ fun NamedDomainObjectCollection<KotlinSourceSet>.nativeTestDependencies(configur
 
 private fun Project.ktorVersion() = versionOf("ktor")
 
-
-fun Project.projectDependencies(configuration: DependencyHandlerScope.() -> Unit) =
-    DependencyHandlerScope.of(dependencies).configuration()
+fun Project.projectDependencies(configuration: DependencyHandlerScope.() -> Unit) = DependencyHandlerScope.of(dependencies).configuration()
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
 @Retention(AnnotationRetention.RUNTIME)

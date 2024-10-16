@@ -40,7 +40,7 @@ class TokenBucket(
     /**
      * A time provider in milliseconds
      */
-    clock: () -> Long = { Clock.System.now().toEpochMilliseconds() }
+    clock: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) : Bucket(capacity * callVolumeUnit.size, clock, capacity * callVolumeUnit.size) {
 
     init {
@@ -63,7 +63,7 @@ class TokenBucket(
                 exceededBy = callSize,
                 message = "Insufficient tokens to accept call. tokens: $currentVolume, " +
                     "measured in ${callVolumeUnit::class.simpleName?.lowercase()} of size ${callVolumeUnit.size}. " +
-                    "call size: $callSize"
+                    "call size: $callSize",
             )
         }
     }

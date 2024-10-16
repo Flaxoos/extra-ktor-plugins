@@ -29,7 +29,7 @@ class JdbcLockManagerTest : TaskSchedulingPluginTest() {
                         url = postgresContainer.getJdbcUrl(),
                         driver = "org.postgresql.Driver",
                         user = postgresContainer.username,
-                        password = postgresContainer.password
+                        password = postgresContainer.password,
                     ).also {
                         transaction { SchemaUtils.create(DefaultTaskLockTable) }
                     }

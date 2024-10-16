@@ -33,26 +33,25 @@ private const val CONCURRENCY_COUNT = 2
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class, ExperimentalKotest::class)
 class CircuitBreakerTest : FunSpec() {
-
     sealed class CircuitBreakerTestCase(
         val name: CircuitBreakerName,
         val failureThreshold: Int,
         val halfOpenFailureThreshold: Int,
-        val resetInterval: Duration
+        val resetInterval: Duration,
     )
 
     data object Global : CircuitBreakerTestCase(
         name = CIRCUIT_BREAKER_NAME_GLOBAL,
         failureThreshold = 6,
         halfOpenFailureThreshold = 4,
-        resetInterval = 2.seconds
+        resetInterval = 2.seconds,
     )
 
     data object Specific : CircuitBreakerTestCase(
         name = TestCircuitBreakerName,
         failureThreshold = 3,
         halfOpenFailureThreshold = 2,
-        resetInterval = 1.seconds
+        resetInterval = 1.seconds,
     )
 
     private var client by Delegates.notNull<HttpClient>()
@@ -157,22 +156,26 @@ class CircuitBreakerTest : FunSpec() {
                 repeat(case.failureThreshold + 1) {
                     getWithCircuitBreaker(case.name)
                 }
-                fun call(wait: Duration = 0.milliseconds) = async {
-                    try {
-                        delay(wait)
-                        getWithCircuitBreaker(case.name)
-                    } catch (e: CircuitBreakerException) {
-                        return@async e
-                    }
-                    null
-                }
 
-                val requests = List(CONCURRENCY_COUNT) {
-                    call()
-                }
-                val delayedRequests = List(CONCURRENCY_COUNT) {
-                    call(case.resetInterval)
-                }
+                fun call(wait: Duration = 0.milliseconds) =
+                    async {
+                        try {
+                            delay(wait)
+                            getWithCircuitBreaker(case.name)
+                        } catch (e: CircuitBreakerException) {
+                            return@async e
+                        }
+                        null
+                    }
+
+                val requests =
+                    List(CONCURRENCY_COUNT) {
+                        call()
+                    }
+                val delayedRequests =
+                    List(CONCURRENCY_COUNT) {
+                        call(case.resetInterval)
+                    }
 
                 requests.awaitAll().count { it != null } shouldBe CONCURRENCY_COUNT
                 delayedRequests.awaitAll().count { it == null } shouldBe CONCURRENCY_COUNT
@@ -181,34 +184,36 @@ class CircuitBreakerTest : FunSpec() {
     }
 
     private fun TestScope.initClient(useTestCoroutineScheduler: Boolean = true) {
-        val mockEngine = MockEngine.create {
-            if (useTestCoroutineScheduler) {
-                dispatcher = StandardTestDispatcher(testCoroutineScheduler)
-            }
-            requestHandlers.add { _ ->
-                mockResponse()
-            }
-        }
-        client = HttpClient(mockEngine) {
-            install(CircuitBreaking) {
-                global {
-                    failureThreshold = Global.failureThreshold
-                    halfOpenFailureThreshold = Global.halfOpenFailureThreshold
-                    resetInterval = Global.resetInterval
-                    failureTrigger = {
-                        status.value >= 400
-                    }
+        val mockEngine =
+            MockEngine.create {
+                if (useTestCoroutineScheduler) {
+                    dispatcher = StandardTestDispatcher(testCoroutineScheduler)
                 }
-                register(TestCircuitBreakerName) {
-                    failureThreshold = Specific.failureThreshold
-                    halfOpenFailureThreshold = Specific.halfOpenFailureThreshold
-                    resetInterval = Specific.resetInterval
-                    failureTrigger = {
-                        status.value >= 400
-                    }
+                requestHandlers.add { _ ->
+                    mockResponse()
                 }
             }
-        }
+        client =
+            HttpClient(mockEngine) {
+                install(CircuitBreaking) {
+                    global {
+                        failureThreshold = Global.failureThreshold
+                        halfOpenFailureThreshold = Global.halfOpenFailureThreshold
+                        resetInterval = Global.resetInterval
+                        failureTrigger = {
+                            status.value >= 400
+                        }
+                    }
+                    register(TestCircuitBreakerName) {
+                        failureThreshold = Specific.failureThreshold
+                        halfOpenFailureThreshold = Specific.halfOpenFailureThreshold
+                        resetInterval = Specific.resetInterval
+                        failureTrigger = {
+                            status.value >= 400
+                        }
+                    }
+                }
+            }
     }
 
     private fun givenErrorResponse() {
@@ -225,6 +230,5 @@ class CircuitBreakerTest : FunSpec() {
 
     private val customOk = HttpStatusCode(300, "It's ok!")
 
-    private suspend fun getWithCircuitBreaker(name: CircuitBreakerName) =
-        client.requestWithCircuitBreaker(name = name) {}.status
+    private suspend fun getWithCircuitBreaker(name: CircuitBreakerName) = client.requestWithCircuitBreaker(name = name) {}.status
 }

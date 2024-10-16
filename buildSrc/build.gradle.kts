@@ -6,7 +6,11 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(libs.versions.java.get().toInt())
+    jvmToolchain(
+        libs.versions.java
+            .get()
+            .toInt(),
+    )
 }
 
 repositories {
@@ -34,7 +38,6 @@ dependencies {
     implementation(libs.kover.badge.gradlePlugin)
     implementation(libs.dokka.gradlePlugin)
     implementation(libs.detekt.gradlePlugin)
-    implementation(libs.shadow.gradlePlugin)
     implementation(libs.gradle.release.gradlePlugin)
 
     testImplementation(libs.kotest.runner.junit5)

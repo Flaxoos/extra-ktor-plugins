@@ -10,7 +10,7 @@ plugins {
 
 kotlin {
     explicitApi()
-    targetJvm()
+    targetJvm(project)
     targetNative()
     sourceSets {
         commonMainDependencies {

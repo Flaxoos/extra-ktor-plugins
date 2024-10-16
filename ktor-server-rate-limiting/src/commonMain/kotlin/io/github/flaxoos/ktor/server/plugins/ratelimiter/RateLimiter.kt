@@ -45,14 +45,14 @@ sealed interface RateLimiterResponse {
 
     data class NotLimited(
         override val rateLimiter: RateLimiter,
-        val remaining: Number? = null
+        val remaining: Number? = null,
     ) : RateLimiterResponse
 
     data class LimitedBy(
         override val rateLimiter: RateLimiter,
         val exceededBy: Number,
         val resetIn: Duration,
-        val message: String
+        val message: String,
     ) : RateLimiterResponse
 }
 

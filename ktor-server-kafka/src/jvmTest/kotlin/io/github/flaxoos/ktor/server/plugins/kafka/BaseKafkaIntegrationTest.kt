@@ -59,7 +59,7 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
                 .replace(BOOTSTRAP_SERVERS_PLACEHOLDER, kafka.bootstrapServers)
                 .replace(SCHEMA_REGISTRY_URL_PLACEHOLDER, schemaRegistryUrl)
                 .replace(GROUP_ID_PLACEHOLDER, this.testCase.name.testName.plus("-group"))
-                .replace(CLIENT_ID_PLACEHOLDER, this.testCase.name.testName.plus("-client"))
+                .replace(CLIENT_ID_PLACEHOLDER, this.testCase.name.testName.plus("-client")),
         )
     }
 
@@ -104,7 +104,7 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
                 } catch (e: Exception) {
                     logger.info(
                         "Attempt $i to connect to Kafka broker at bootstrap.servers: " +
-                            "$kafka.bootstrapServers failed, retrying"
+                            "$kafka.bootstrapServers failed, retrying",
                     )
                     delay(delay)
                 }
@@ -115,7 +115,7 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
             if (!isConnected) {
                 throw AssertionError(
                     "Unable to connect to Kafka broker at bootstrap.servers: " +
-                        "$kafka.bootstrapServers"
+                        "$kafka.bootstrapServers",
                 )
             }
             logger.info("Connected to Kafka broker at bootstrap.servers: $kafka.bootstrapServers")

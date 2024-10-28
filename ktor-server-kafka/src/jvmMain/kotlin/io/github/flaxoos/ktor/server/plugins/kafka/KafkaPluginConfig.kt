@@ -11,6 +11,7 @@ import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_GROUP_ID
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_SCHEMA_REGISTRY_CLIENT_TIMEOUT_MS
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_TOPIC_PARTITIONS
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_TOPIC_REPLICAS
+import io.github.flaxoos.ktor.server.plugins.kafka.KafkaConfigPropertiesContext.Companion.propertiesContext
 import io.ktor.client.HttpClient
 import io.ktor.server.config.ApplicationConfig
 import org.apache.kafka.clients.CommonClientConfigs
@@ -78,18 +79,24 @@ class KafkaConfig : AbstractKafkaConfig() {
         commonPropertiesBuilder?.build()
     }
     override val adminProperties: KafkaProperties? by lazy {
-        adminPropertiesBuilder?.build()
+        adminPropertiesBuilder
+            ?.build()
+            ?.propertiesContext(this@KafkaConfig)
             ?.withDefaultAdminConfig()
             ?.delegatingToCommon()
     }
     override val producerProperties: KafkaProperties? by lazy {
-        producerPropertiesBuilder?.build()
+        producerPropertiesBuilder
+            ?.build()
+            ?.propertiesContext(this@KafkaConfig)
             ?.withSchemaRegistryUrl()
             ?.withDefaultProducerConfig()
             ?.delegatingToCommon()
     }
     override val consumerProperties: KafkaProperties? by lazy {
-        consumerPropertiesBuilder?.build()
+        consumerPropertiesBuilder
+            ?.build()
+            ?.propertiesContext(this@KafkaConfig)
             ?.withSchemaRegistryUrl()
             ?.withDefaultConsumerConfig()
             ?.delegatingToCommon()
@@ -105,23 +112,34 @@ class KafkaConfig : AbstractKafkaConfig() {
 /**
  * Configuration for the Kafka plugin
  */
-class KafkaFileConfig(config: ApplicationConfig) : AbstractKafkaConfig() {
+class KafkaFileConfig(
+    config: ApplicationConfig,
+) : AbstractKafkaConfig() {
     override var schemaRegistryUrl: String? =
         config.propertyOrNull("schema.registry.url")?.getString()
 
     override val commonProperties: KafkaProperties? =
         config.configOrNull("common")?.toMutableMap()
     override val adminProperties: KafkaProperties? =
-        config.configOrNull("admin")?.toMutableMap()
+        config
+            .configOrNull("admin")
+            ?.toMutableMap()
+            ?.propertiesContext(this@KafkaFileConfig)
             ?.withDefaultAdminConfig()
             ?.delegatingToCommon()
     override val producerProperties: KafkaProperties? =
-        config.configOrNull("producer")?.toMutableMap()
+        config
+            .configOrNull("producer")
+            ?.toMutableMap()
+            ?.propertiesContext(this@KafkaFileConfig)
             ?.withSchemaRegistryUrl()
             ?.withDefaultProducerConfig()
             ?.delegatingToCommon()
     override val consumerProperties: KafkaProperties? =
-        config.configOrNull("consumer")?.toMutableMap()
+        config
+            .configOrNull("consumer")
+            ?.toMutableMap()
+            ?.propertiesContext(this@KafkaFileConfig)
             ?.withSchemaRegistryUrl()
             ?.withDefaultConsumerConfig()
             ?.delegatingToCommon()
@@ -130,41 +148,60 @@ class KafkaFileConfig(config: ApplicationConfig) : AbstractKafkaConfig() {
 }
 
 private fun ApplicationConfig.configOrNull(name: String) =
-    this.runCatching { config(name) }.getOrNull()?.toMap()?.toMutableMap()
+    this
+        .runCatching { config(name) }
+        .getOrNull()
+        ?.toMap()
+        ?.toMutableMap()
 
-context (AbstractKafkaConfig)
-internal fun KafkaProperties.delegatingToCommon(): KafkaProperties {
-    val joined = commonProperties
-    joined?.putAll(this)
-    return joined ?: this
+class KafkaConfigPropertiesContext(
+    val kafkaConfig: AbstractKafkaConfig,
+    val kafkaProperties: KafkaProperties,
+) {
+    companion object {
+        fun KafkaProperties.propertiesContext(kafkaConfig: AbstractKafkaConfig) =
+            KafkaConfigPropertiesContext(
+                kafkaConfig = kafkaConfig,
+                kafkaProperties = this,
+            )
+    }
 }
 
-context (AbstractKafkaConfig)
-internal fun KafkaProperties.withDefaultAdminConfig() = apply {
-    getOrPut(CommonClientConfigs.CLIENT_ID_CONFIG) { DEFAULT_CLIENT_ID }
+internal fun KafkaConfigPropertiesContext.delegatingToCommon(): KafkaProperties {
+    val joined = this.kafkaConfig.commonProperties
+    joined?.putAll(this.kafkaProperties)
+    return joined ?: this.kafkaProperties
 }
 
-context (AbstractKafkaConfig)
-internal fun KafkaProperties.withDefaultProducerConfig() = apply {
-    getOrPut(ProducerConfig.CLIENT_ID_CONFIG) { DEFAULT_CLIENT_ID }
-    getOrPut(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG) { StringSerializer::class.java.name }
-    getOrPut(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG) { KafkaAvroSerializer::class.java.name }
-}
+internal fun KafkaConfigPropertiesContext.withDefaultAdminConfig() =
+    apply {
+        kafkaProperties.getOrPut(CommonClientConfigs.CLIENT_ID_CONFIG) { DEFAULT_CLIENT_ID }
+    }
 
-context (AbstractKafkaConfig)
-internal fun KafkaProperties.withDefaultConsumerConfig() = apply {
-    getOrPut(ConsumerConfig.GROUP_ID_CONFIG) { DEFAULT_GROUP_ID }
-    getOrPut(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG) { StringDeserializer::class.java.name }
-    getOrPut(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG) { KafkaAvroDeserializer::class.java.name }
-}
+internal fun KafkaConfigPropertiesContext.withDefaultProducerConfig() =
+    apply {
+        kafkaProperties.getOrPut(ProducerConfig.CLIENT_ID_CONFIG) { DEFAULT_CLIENT_ID }
+        kafkaProperties.getOrPut(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG) { StringSerializer::class.java.name }
+        kafkaProperties.getOrPut(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG) { KafkaAvroSerializer::class.java.name }
+    }
 
-context (AbstractKafkaConfig)
-internal fun KafkaProperties.withSchemaRegistryUrl() = apply {
-    put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
-}
+internal fun KafkaConfigPropertiesContext.withDefaultConsumerConfig() =
+    apply {
+        kafkaProperties.getOrPut(ConsumerConfig.GROUP_ID_CONFIG) { DEFAULT_GROUP_ID }
+        kafkaProperties.getOrPut(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG) { StringDeserializer::class.java.name }
+        kafkaProperties.getOrPut(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG) { KafkaAvroDeserializer::class.java.name }
+    }
+
+internal fun KafkaConfigPropertiesContext.withSchemaRegistryUrl() =
+    apply {
+        kafkaProperties[AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG] = this.kafkaConfig.schemaRegistryUrl
+    }
 
 @KafkaDsl
-fun KafkaConsumerConfig.consumerRecordHandler(topicName: TopicName, handler: ConsumerRecordHandler) {
+fun KafkaConsumerConfig.consumerRecordHandler(
+    topicName: TopicName,
+    handler: ConsumerRecordHandler,
+) {
     consumerRecordHandlers[topicName] = handler
 }
 
@@ -188,40 +225,37 @@ fun AbstractKafkaConfig.registerSchemas(configuration: SchemaRegistrationBuilder
 }
 
 @KafkaDsl
-fun KafkaConfig.topic(name: TopicName, block: TopicBuilder.() -> Unit) {
+fun KafkaConfig.topic(
+    name: TopicName,
+    block: TopicBuilder.() -> Unit,
+) {
     topicBuilders.add(TopicBuilder(name).apply(block))
 }
 
 @KafkaDsl
-fun KafkaConfig.producer(
-    configuration: ProducerPropertiesBuilder.() -> Unit = { ProducerPropertiesBuilder(schemaRegistryUrl) }
-) {
+fun KafkaConfig.producer(configuration: ProducerPropertiesBuilder.() -> Unit = { ProducerPropertiesBuilder(schemaRegistryUrl) }) {
     producerPropertiesBuilder =
         ProducerPropertiesBuilder(
             // assuming only avro is used, support custom serializers later
             with(checkNotNull(schemaRegistryUrl) { "Consumer schema registry url is not set" }) {
                 this
-            }
+            },
         ).apply(configuration)
 }
 
 @KafkaDsl
-fun KafkaConfig.consumer(
-    configuration: ConsumerPropertiesBuilder.() -> Unit = { ConsumerPropertiesBuilder(schemaRegistryUrl) }
-) {
+fun KafkaConfig.consumer(configuration: ConsumerPropertiesBuilder.() -> Unit = { ConsumerPropertiesBuilder(schemaRegistryUrl) }) {
     consumerPropertiesBuilder =
         ConsumerPropertiesBuilder(
             // assuming only avro is used, support custom serializers later
             with(checkNotNull(schemaRegistryUrl) { "Consumer schema registry url is not set" }) {
                 this
-            }
+            },
         ).apply(configuration)
 }
 
 @KafkaDsl
-fun AbstractKafkaConfig.consumerConfig(
-    configuration: KafkaConsumerConfig.() -> Unit = { }
-) {
+fun AbstractKafkaConfig.consumerConfig(configuration: KafkaConsumerConfig.() -> Unit = { }) {
     consumerConfig = KafkaConsumerConfig().apply(configuration)
 }
 
@@ -249,7 +283,9 @@ class SchemaRegistrationBuilder {
 
 @KafkaDsl
 @Suppress("MemberVisibilityCanBePrivate")
-class TopicBuilder(internal val name: TopicName) {
+class TopicBuilder(
+    internal val name: TopicName,
+) {
     var partitions: Int = DEFAULT_TOPIC_PARTITIONS
     var replicas: Short = DEFAULT_TOPIC_REPLICAS
     var replicasAssignments: Map<Int, List<Int?>>? = null
@@ -261,24 +297,24 @@ class TopicBuilder(internal val name: TopicName) {
     }
 
     internal fun build(): NewTopic {
-        val topic = if (replicasAssignments == null) {
-            NewTopic(name.value, partitions, replicas)
-        } else {
-            NewTopic(name.value, replicasAssignments)
-        }
+        val topic =
+            if (replicasAssignments == null) {
+                NewTopic(name.value, partitions, replicas)
+            } else {
+                NewTopic(name.value, replicasAssignments)
+            }
         return topic.configs(configs?.filterValues { it != null }?.mapValues { it.value.toString() })
     }
 
     @Suppress("UNCHECKED_CAST")
     companion object {
-        fun froMap(map: Map<String, Any?>): TopicBuilder {
-            return TopicBuilder(TopicName.named(map["name"] as String)).apply {
+        fun froMap(map: Map<String, Any?>): TopicBuilder =
+            TopicBuilder(TopicName.named(map["name"] as String)).apply {
                 partitions = map["partitions"] as Int
                 replicas = (map["replicas"] as Int).toShort()
                 replicasAssignments = map["replicasAssignments"] as Map<Int, List<Int?>>?
                 configs = map["configs"] as Map<String, Any?>?
             }
-        }
     }
 }
 
@@ -407,8 +443,7 @@ sealed class ClientPropertiesBuilder : KafkaPropertiesBuilder {
  */
 data object CommonClientPropertiesBuilder : ClientPropertiesBuilder()
 
-class AdminPropertiesBuilder :
-    ClientPropertiesBuilder()
+class AdminPropertiesBuilder : ClientPropertiesBuilder()
 
 /**
  * Used to constraint consumer and producer builders to provide a schema registry url
@@ -422,8 +457,9 @@ internal interface SchemaRegistryProvider {
  */
 @Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection", "CyclomaticComplexMethod")
 class ProducerPropertiesBuilder(
-    override var schemaRegistryUrl: String? = null
-) : ClientPropertiesBuilder(), SchemaRegistryProvider {
+    override var schemaRegistryUrl: String? = null,
+) : ClientPropertiesBuilder(),
+    SchemaRegistryProvider {
     var batchSize: Any? = null
     var acks: Any? = null
     var lingerMs: Any? = null
@@ -471,8 +507,9 @@ class ProducerPropertiesBuilder(
  */
 @Suppress("MemberVisibilityCanBePrivate", "CyclomaticComplexMethod")
 class ConsumerPropertiesBuilder(
-    override var schemaRegistryUrl: String? = null
-) : ClientPropertiesBuilder(), SchemaRegistryProvider {
+    override var schemaRegistryUrl: String? = null,
+) : ClientPropertiesBuilder(),
+    SchemaRegistryProvider {
     var groupId: Any? = null
     var groupInstanceId: Any? = null
     var maxPollRecords: Any? = null
@@ -529,7 +566,8 @@ typealias KafkaProperties = MutableMap<String, Any?>
 
 @Suppress("unused")
 enum class MessageTimestampType {
-    CreateTime, LogAppendTime
+    CreateTime,
+    LogAppendTime,
 }
 
 typealias CompressionType = org.apache.kafka.common.record.CompressionType

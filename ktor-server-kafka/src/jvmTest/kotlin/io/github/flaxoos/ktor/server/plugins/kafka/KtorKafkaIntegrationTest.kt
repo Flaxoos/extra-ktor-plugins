@@ -97,7 +97,7 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
                 consumerRecordHandler(topicName) { record ->
                     logger.debug("Consumed record: {} on topic: {}", record, topicName)
                     recordChannel.send(
-                        fromRecord<TestRecord>(record.value())
+                        fromRecord<TestRecord>(record.value()),
                     )
                 }
             }
@@ -129,7 +129,7 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
 
     private fun testKafkaApplication(
         extraAssertions: Application.() -> Unit = {},
-        pluginInstallation: Application.() -> Unit
+        pluginInstallation: Application.() -> Unit,
     ) {
         testApplication {
             val client = setupClient()
@@ -177,7 +177,7 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
 
     private fun ApplicationTestBuilder.setupApplication(
         extraAssertions: Application.() -> Unit = {},
-        pluginInstallation: Application.() -> Unit
+        pluginInstallation: Application.() -> Unit,
     ) {
         application {
             install(ContentNegotiation) {
@@ -230,5 +230,5 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
 @AvroNamespace("io.github.flaxoos")
 data class TestRecord(
     val id: Int,
-    val topic: String
+    val topic: String,
 )

@@ -35,7 +35,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         call: ApplicationCall,
         by: Double,
         shouldUpdateTime: Boolean = false,
-        consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
+        consideringLastUpdateTime: suspend Double.(Long) -> Double = { this },
     ): Double? {
         by.checkNotNegative()
         return reduceVolume(call, by, shouldUpdateTime, consideringLastUpdateTime)
@@ -51,7 +51,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         call: ApplicationCall,
         by: Double,
         shouldUpdateTime: Boolean = false,
-        consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
+        consideringLastUpdateTime: suspend Double.(Long) -> Double = { this },
     ): Double? {
         by.checkNotNegative()
         return tryUpdateVolume(call, shouldUpdateTime) { volume, timeSinceLastUpdate ->
@@ -69,7 +69,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         call: ApplicationCall,
         by: Double,
         shouldUpdateTime: Boolean = false,
-        consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
+        consideringLastUpdateTime: suspend Double.(Long) -> Double = { this },
     ): Double? {
         by.checkNotNegative()
         return increaseVolume(call, by, shouldUpdateTime, consideringLastUpdateTime)
@@ -85,7 +85,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         call: ApplicationCall,
         by: Double,
         shouldUpdateTime: Boolean = false,
-        consideringLastUpdateTime: suspend Double.(Long) -> Double = { this }
+        consideringLastUpdateTime: suspend Double.(Long) -> Double = { this },
     ): Double? {
         by.checkNotNegative()
         return tryUpdateVolume(call, shouldUpdateTime) { volume, timeSinceLastUpdate ->
@@ -104,7 +104,7 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
     private suspend fun tryUpdateVolume(
         call: ApplicationCall,
         shouldUpdateTime: Boolean = false,
-        update: suspend (Double, Long) -> Double
+        update: suspend (Double, Long) -> Double,
     ): Double? {
         return currentVolumeMutex.withLock {
             val now = clock()

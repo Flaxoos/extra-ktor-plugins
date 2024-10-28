@@ -27,7 +27,7 @@ internal fun Application.startConsumer(
     consumer: Consumer,
     pollFrequency: Duration,
     consumerRecordHandlers: Map<TopicName, ConsumerRecordHandler>,
-    cleanUp: () -> Unit
+    cleanUp: () -> Unit,
 ): Job {
     val consumerFlow = subscribe(consumer, pollFrequency, consumerRecordHandlers.keys.toList())
     return launch(Dispatchers.IO) {
@@ -57,7 +57,7 @@ internal fun Application.startConsumer(
 fun Application.subscribe(
     consumer: Consumer,
     pollFrequency: Duration,
-    topics: List<TopicName>
+    topics: List<TopicName>,
 ) = flow {
     consumer.subscribe(topics.map { it.value })
     while (consumerShouldRun) {

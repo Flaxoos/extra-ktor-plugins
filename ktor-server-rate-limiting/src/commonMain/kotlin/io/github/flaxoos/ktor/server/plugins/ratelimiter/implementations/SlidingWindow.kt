@@ -27,7 +27,7 @@ data class SlidingWindow(
     /**
      * A time provider
      */
-    override val clock: () -> Long = { now().toEpochMilliseconds() }
+    override val clock: () -> Long = { now().toEpochMilliseconds() },
 ) : RateLimiter() {
     private val timeWindowMs = rate.inWholeMilliseconds
     private var timestamps = ConcurrentFixedSizeWeightedQueue<Long>(capacity * callVolumeUnit.size)
@@ -53,7 +53,7 @@ data class SlidingWindow(
             this,
             resetIn = resetIn,
             exceededBy = callSize,
-            message = "$capacity calls were already made during $rate"
+            message = "$capacity calls were already made during $rate",
         )
     }
 
@@ -73,7 +73,7 @@ class ConcurrentFixedSizeWeightedQueue<T>(
     /**
      * the maximum weight, must be greater than 0
      */
-    private val maxWeight: Int
+    private val maxWeight: Int,
 ) {
     private val list = queueList<Pair<T, Double>>()
     private val size: Int

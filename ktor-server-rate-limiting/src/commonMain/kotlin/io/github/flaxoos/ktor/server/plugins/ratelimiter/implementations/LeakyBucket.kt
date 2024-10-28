@@ -40,7 +40,7 @@ class LeakyBucket(
     /**
      * A time provider in milliseconds
      */
-    clock: () -> Long = { Clock.System.now().toEpochMilliseconds() }
+    clock: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) : Bucket(0, clock, capacity) {
     private val leakHole = Mutex()
     private var lastLeak: Long = Instant.DISTANT_PAST.toEpochMilliseconds()
@@ -53,7 +53,7 @@ class LeakyBucket(
             leak(call)
             RateLimiterResponse.NotLimited(
                 this@LeakyBucket,
-                remaining = null
+                remaining = null,
             )
         } ?: run {
             log.debug { "${call.id()}: Rejected due to bucket overflow" }
@@ -61,7 +61,7 @@ class LeakyBucket(
                 this,
                 resetIn = rate,
                 exceededBy = 1,
-                message = "Bucket of size $capacity is full, call rejected"
+                message = "Bucket of size $capacity is full, call rejected",
             )
         }
     }

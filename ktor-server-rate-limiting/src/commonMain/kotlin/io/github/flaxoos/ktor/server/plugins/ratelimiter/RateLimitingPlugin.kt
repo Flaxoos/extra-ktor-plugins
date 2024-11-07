@@ -38,11 +38,11 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
     on(AuthenticationChecked) { call ->
         with(pluginConfig) {
             if (excludePaths.any {
-                call.request
-                    .path()
-                    .trimStart { c -> c == '/' }
-                    .matches(it)
-            }
+                    call.request
+                        .path()
+                        .trimStart { c -> c == '/' }
+                        .matches(it)
+                }
             ) {
                 return@with
             }
@@ -56,11 +56,11 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
             ) {
                 application.log.debug(
                     "User ${caller.toIdentifier()} is blacklisted by ${
-                    listOfNotNull(
-                        if (caller.remoteHost in blackListedHosts) "host" else null,
-                        if (caller.principal in blackListedPrincipals) "principal" else null,
-                        if (caller.userAgent in blackListedAgents) "user agent" else null,
-                    ).joinToString(",")
+                        listOfNotNull(
+                            if (caller.remoteHost in blackListedHosts) "host" else null,
+                            if (caller.principal in blackListedPrincipals) "principal" else null,
+                            if (caller.userAgent in blackListedAgents) "user agent" else null,
+                        ).joinToString(",")
                     }",
                 )
                 blackListedCallerCallHandler(call)
@@ -72,11 +72,11 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
             ) {
                 application.log.debug(
                     "User ${caller.toIdentifier()} is whitelisted by ${
-                    listOfNotNull(
-                        if (caller.remoteHost in whiteListedHosts) "host" else null,
-                        if (caller.principal in whiteListedPrincipals) "principal" else null,
-                        if (caller.userAgent in whiteListedAgents) "user agent" else null,
-                    ).joinToString(",")
+                        listOfNotNull(
+                            if (caller.remoteHost in whiteListedHosts) "host" else null,
+                            if (caller.principal in whiteListedPrincipals) "principal" else null,
+                            if (caller.userAgent in whiteListedAgents) "user agent" else null,
+                        ).joinToString(",")
                     }",
                 )
                 return@with
@@ -110,11 +110,11 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
 
 private fun RateLimiterResponse.debugDetails(caller: Caller) =
     "call from $caller ${if (this is RateLimiterResponse.LimitedBy) "" else "not"} limited ${
-    if (this is RateLimiterResponse.LimitedBy) {
-        this.message
-    } else {
-        ""
-    }
+        if (this is RateLimiterResponse.LimitedBy) {
+            this.message
+        } else {
+            ""
+        }
     }"
 
 private fun ApplicationCall.extractCaller(): Caller {

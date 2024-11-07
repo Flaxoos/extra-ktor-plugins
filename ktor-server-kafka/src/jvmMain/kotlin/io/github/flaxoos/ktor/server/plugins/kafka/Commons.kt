@@ -12,7 +12,9 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 
 @JvmInline
-value class TopicName(val value: String) {
+value class TopicName(
+    val value: String,
+) {
     companion object {
         infix fun named(name: String) = TopicName(name)
     }
@@ -41,16 +43,18 @@ object Attributes {
     /**
      * Attribute key for [Producer]
      */
-    val ProducerAttributeKey = AttributeKey<KafkaProducer<KafkaRecordKey, GenericRecord>>(
-        KTOR_KAFKA_PRODUCER_ATTRIBUTE_KEY,
-    )
+    val ProducerAttributeKey =
+        AttributeKey<KafkaProducer<KafkaRecordKey, GenericRecord>>(
+            KTOR_KAFKA_PRODUCER_ATTRIBUTE_KEY,
+        )
 
     /**
      * Attribute key for [Consumer]
      */
-    val ConsumerAttributeKey = AttributeKey<KafkaConsumer<KafkaRecordKey, GenericRecord>>(
-        KTOR_KAFKA_CONSUMER_ATTRIBUTE_KEY,
-    )
+    val ConsumerAttributeKey =
+        AttributeKey<KafkaConsumer<KafkaRecordKey, GenericRecord>>(
+            KTOR_KAFKA_CONSUMER_ATTRIBUTE_KEY,
+        )
 
     /**
      * Attribute key for [HttpClient] used for registering [Schema]s to the configured schema registry

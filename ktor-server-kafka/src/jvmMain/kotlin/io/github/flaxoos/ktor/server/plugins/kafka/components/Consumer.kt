@@ -20,14 +20,13 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
-internal fun Map<String, Any?>.createConsumer(): Consumer =
-    KafkaConsumer<KafkaRecordKey, GenericRecord>(this)
+internal fun Map<String, Any?>.createConsumer(): Consumer = KafkaConsumer<KafkaRecordKey, GenericRecord>(this)
 
 internal fun Application.startConsumer(
     consumer: Consumer,
     pollFrequency: Duration,
     consumerRecordHandlers: Map<TopicName, ConsumerRecordHandler>,
-    cleanUp: () -> Unit,
+    cleanUp: suspend () -> Unit,
 ): Job {
     val consumerFlow = subscribe(consumer, pollFrequency, consumerRecordHandlers.keys.toList())
     return launch(Dispatchers.IO) {
@@ -37,6 +36,7 @@ internal fun Application.startConsumer(
                     ?: log.warn("No handler defined for topic ${record.topic()}")
             }
         } finally {
+            log.info("Running clean up for consumer job")
             withContext(NonCancellable) {
                 cleanUp()
             }

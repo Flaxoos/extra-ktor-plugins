@@ -21,4 +21,6 @@
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
+
+    <logger name="io.github.flaxoos.ktor.server.plugins" level="debug"/>
 </configuration>

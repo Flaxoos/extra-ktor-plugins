@@ -74,21 +74,29 @@ class SchemaRegistryClient(
         val schema = Avro.default.schema(klass.serializer())
         val payload = mapOf("schema" to schema.toString()) // Creating a map to form the payload
         application.launch(Dispatchers.IO) {
-            client
-                .post("subjects/${topicName.value}.${schema.name}/versions") {
-                    contentType(ContentType.Application.Json)
-                    setBody(payload)
-                }.let {
-                    if (it.status == HttpStatusCode.Conflict) {
-                        onConflict()
+            runCatching {
+                application.log.info("Registering schema to schema registry: $payload")
+                client
+                    .post("subjects/${topicName.value}.${schema.name}/versions") {
+                        contentType(ContentType.Application.Json)
+                        setBody(payload)
+                    }.let {
+                        if (it.status == HttpStatusCode.Conflict) {
+                            onConflict()
+                        }
+                        if (!it.status.isSuccess()) {
+                            application.log.error(
+                                "Failed registering schema to schema registry at ${it.call.request.url}:\n${it.status} " +
+                                    "${it.bodyAsText()}:\nschema: $payload",
+                            )
+                        }
                     }
-                    if (!it.status.isSuccess()) {
-                        application.log.error(
-                            "Failed registering schema to schema registry at ${it.call.request.url}:\n${it.status} " +
-                                "${it.bodyAsText()}:\nschema: $payload",
-                        )
-                    }
-                }
+            }.onFailure {
+                application.log.error(
+                    "Failed registering schema to schema registry:\nschema: $payload",
+                    it,
+                )
+            }
         }
     }
 }

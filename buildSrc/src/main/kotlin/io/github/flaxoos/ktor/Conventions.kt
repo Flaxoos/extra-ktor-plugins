@@ -30,7 +30,9 @@ import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.utils.named
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 
 open class Conventions : Plugin<Project> {
     open fun KotlinMultiplatformExtension.conventionSpecifics(project: Project) {}
@@ -107,11 +109,17 @@ open class Conventions : Plugin<Project> {
                 buildUponDefaultConfig = true
             }
 
-            tasks.named("build").configure {
-                dependsOn("ktlintFormat")
-                dependsOn(tasks.matching { it.name.matches(Regex("detekt(?!.*Baseline).*\\b(Main|Test)\\b\n")) })
+            the<KtlintExtension>().apply {
+                version.set(versionOf("ktlint"))
             }
 
+            tasks.withType<KtLintCheckTask> {
+                dependsOn(tasks.withType<KtLintFormatTask>())
+            }
+
+            tasks.named("build") {
+                dependsOn(tasks.matching { it.name.matches(Regex("detekt(?!.*Baseline).*\\b(Main|Test)\\b\n")) })
+            }
             tasks.withType(Test::class) {
                 useJUnitPlatform()
             }

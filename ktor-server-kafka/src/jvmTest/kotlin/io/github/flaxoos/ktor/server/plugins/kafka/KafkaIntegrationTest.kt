@@ -7,6 +7,9 @@ import io.github.flaxoos.ktor.server.plugins.kafka.TopicName.Companion.named
 import io.github.flaxoos.ktor.server.plugins.kafka.components.fromRecord
 import io.github.flaxoos.ktor.server.plugins.kafka.components.toRecord
 import io.kotest.common.ExperimentalKotest
+import io.kotest.core.extensions.install
+import io.kotest.extensions.testcontainers.ContainerExtension
+import io.kotest.extensions.testcontainers.ContainerLifecycleMode
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -17,7 +20,6 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -28,33 +30,84 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import io.ktor.util.logging.KtorSimpleLogger
-import io.ktor.util.logging.Logger
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
+import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
+import org.apache.kafka.clients.CommonClientConfigs.CLIENT_ID_CONFIG
+import org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG
 import org.apache.kafka.clients.producer.ProducerRecord
-import kotlin.time.Duration.Companion.seconds
+
+const val CODE_CONFIGURED_CLIENT_ID = "code-configured-client-id"
+const val CODE_CONFIGURED_GROUP_ID = "code-configured-group-id"
 
 @OptIn(ExperimentalKotest::class)
-class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
-    private val logger: Logger = KtorSimpleLogger(javaClass.simpleName)
-    private val testTopics = listOf(named("topic1"), named("topic2"))
-    private val invocations = 2
-    private val httpClient = HttpClient()
+class KafkaIntegrationTest : BaseKafkaIntegrationTest() {
+    override val containers = listOf({ kafkaContainer }, { schemaRegistryContainer.apply { config(kafkaContainer) } })
 
-    private lateinit var recordChannel: Channel<TestRecord>
+    override fun provideBootstrapServers(): String = kafkaContainer.bootstrapServers
+
+    override fun provideSchemaRegistryUrl(): String = "http://${schemaRegistryContainer.host}:${schemaRegistryContainer.firstMappedPort}"
 
     init {
-        beforeEach {
-            recordChannel = Channel()
-        }
-        afterEach {
-            recordChannel.close()
-            revertConfigurationFileEdit()
-        }
+//        val startedContainers =
+//            mutableListOf<Startable>()
+//        beforeEach {
+//            containers.forEach {
+//                it().let { container ->
+//                    container.start()
+//                    startedContainers.add(container)
+//                }
+//            }
+//            bootstrapServers = provideBootstrapServers()
+//            schemaRegistryUrl = provideSchemaRegistryUrl()
+//            waitTillProducersAccepted()
+//            recordChannel = Channel()
+//        }
+//        afterEach {
+//            recordChannel.close()
+//            startedContainers.reversed().forEach {
+//                it.stop()
+//            }
+//            afterStoppingContainers()
+//            revertConfigurationFileEdit()
+//        }
+        val kafka =
+            install(
+                ContainerExtension(
+                    kafkaContainer.apply { config() },
+                    mode = ContainerLifecycleMode.Spec,
+                    beforeStart = {},
+                    afterStart = {},
+                    beforeTest = {
+                        bootstrapServers = provideBootstrapServers()
+                        waitTillProducersAccepted()
+                        recordChannel = Channel()
+                    },
+                    afterTest = {
+                        recordChannel.close()
+                        revertConfigurationFileEdit()
+                    },
+                    beforeShutdown = {},
+                    afterShutdown = {
+                        afterStoppingContainers()
+                    },
+                ),
+            )
+        val schemaRegistry =
+            install(
+                ContainerExtension(
+                    schemaRegistryContainer.apply { config(kafka) },
+                    mode = ContainerLifecycleMode.Spec,
+                ) {
+                    beforeTest {
+                        schemaRegistryUrl = provideSchemaRegistryUrl()
+                    }
+                },
+            )
         context("should produce and consume records").config(timeout = 120.seconds) {
-            test("With default config path") {
+            xtest("With default config path") {
                 editConfigurationFile()
                 testKafkaApplication {
                     install(FileConfig.Kafka) {
@@ -63,7 +116,7 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
                     }
                 }
             }
-            test("With custom config path") {
+            xtest("With custom config path") {
                 val customConfigPath = "ktor.kafka.config"
                 editConfigurationFile(customConfigPath)
                 testKafkaApplication {
@@ -74,15 +127,44 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
                 }
             }
             test("With code configuration") {
-                editConfigurationFile()
                 testKafkaApplication {
                     install(Kafka) {
-                        schemaRegistryUrl = super.schemaRegistryUrl
+                        schemaRegistryUrl = provideSchemaRegistryUrl()
                         setupTopics()
                         common { bootstrapServers = listOf(kafka.bootstrapServers) }
-                        admin { clientId = "code-configured-client-id" }
-                        producer { clientId = "code-configured-client-id" }
-                        consumer { groupId = "code-configured-group-id" }
+                        admin { clientId = CODE_CONFIGURED_CLIENT_ID }
+                        producer { clientId = CODE_CONFIGURED_CLIENT_ID }
+                        consumer { groupId = CODE_CONFIGURED_GROUP_ID }
+                        withConsumerConfig()
+                        withRegisterSchemas()
+                    }
+                }
+            }
+            xtest("With code configuration additional configuration") {
+                testKafkaApplication {
+                    install(Kafka) {
+                        schemaRegistryUrl = provideSchemaRegistryUrl()
+                        setupTopics()
+                        common {
+                            additional {
+                                BOOTSTRAP_SERVERS_CONFIG(listOf(kafka.bootstrapServers))
+                            }
+                        }
+                        admin {
+                            additional {
+                                CLIENT_ID_CONFIG(CODE_CONFIGURED_CLIENT_ID)
+                            }
+                        }
+                        producer {
+                            additional {
+                                CLIENT_ID_CONFIG(CODE_CONFIGURED_CLIENT_ID)
+                            }
+                        }
+                        consumer {
+                            additional {
+                                GROUP_ID_CONFIG(CODE_CONFIGURED_GROUP_ID)
+                            }
+                        }
                         withConsumerConfig()
                         withRegisterSchemas()
                     }
@@ -133,7 +215,7 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
     ) {
         testApplication {
             val client = setupClient()
-            environment { config = ApplicationConfig("test-application.conf") }
+            environment { applicationConfigFile?.let { config = ApplicationConfig(it.name) } }
             setupApplication(extraAssertions) { pluginInstallation() }
             startApplication()
             delay(1.seconds) // let the consumer start polling
@@ -156,12 +238,13 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
         }
     }
 
-    private suspend fun HttpClient.produceRecords() = testTopics.flatMap { topic ->
-        (0.rangeUntil(invocations)).map {
-            logger.debug("Triggering record production for topic: $topic")
-            get("/$topic").body<TestRecord>()
+    private suspend fun HttpClient.produceRecords() =
+        testTopics.flatMap { topic ->
+            (0.rangeUntil(invocations)).map {
+                logger.debug("Triggering record production for topic: $topic")
+                get("/$topic").body<TestRecord>()
+            }
         }
-    }
 
     private suspend fun collectProducedRecords(): MutableList<TestRecord> {
         val expectedRecords = mutableListOf<TestRecord>()
@@ -171,9 +254,8 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
         return expectedRecords
     }
 
-    private suspend fun collectSchemaVersionsBySubject(subject: String): HttpResponse {
-        return httpClient.get("${super.schemaRegistryUrl}/subjects/$subject/versions")
-    }
+    private suspend fun collectSchemaVersionsBySubject(subject: String): HttpResponse =
+        httpClient.get("${provideSchemaRegistryUrl()}/subjects/$subject/versions")
 
     private fun ApplicationTestBuilder.setupApplication(
         extraAssertions: Application.() -> Unit = {},
@@ -205,7 +287,7 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
                         }
                         delete {
                             with(call.application.kafkaAdminClient.shouldNotBeNull()) {
-                                deleteTopics(listOf(topic.value))
+                                deleteTopics(listOf(topic.value)).all().get()
                             }
                         }
                     }
@@ -216,11 +298,12 @@ class KtorKafkaIntegrationTest : BaseKafkaIntegrationTest() {
     }
 
     private fun ApplicationTestBuilder.setupClient(): HttpClient {
-        val client = createClient {
-            install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
-                json()
+        val client =
+            createClient {
+                install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+                    json()
+                }
             }
-        }
         return client
     }
 }

@@ -9,20 +9,26 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
 
-sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, final override val capacity: Int) :
-    RateLimiter() {
+sealed class Bucket(
+    initialVolume: Int,
+    final override val clock: () -> Long,
+    final override val capacity: Int,
+) : RateLimiter() {
     internal abstract val log: KLogger
 
-    internal var currentVolume = initialVolume.toDouble()
-        .also {
-            require(0 <= it && it <= capacity) {
-                "Volume $initialVolume must be between 0 and $capacity"
+    internal var currentVolume =
+        initialVolume
+            .toDouble()
+            .also {
+                require(0 <= it && it <= capacity) {
+                    "Volume $initialVolume must be between 0 and $capacity"
+                }
             }
-        }
         private set
 
     private val currentVolumeMutex = Mutex()
 
+    @Suppress("ktlint:standard:backing-property-naming")
     private val _lastUpdateTime = atomic(clock())
 
     /**
@@ -105,8 +111,8 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
         call: ApplicationCall,
         shouldUpdateTime: Boolean = false,
         update: suspend (Double, Long) -> Double,
-    ): Double? {
-        return currentVolumeMutex.withLock {
+    ): Double? =
+        currentVolumeMutex.withLock {
             val now = clock()
             val lastUpdateTime = _lastUpdateTime.value
             val timeSinceLastUpdate = now - lastUpdateTime
@@ -130,11 +136,12 @@ sealed class Bucket(initialVolume: Int, final override val clock: () -> Long, fi
                 }
                 currentVolume
             } else {
-                log.trace { "${call.id()}: Volume not updated due to exceeding volume: currentVolume: $currentVolume, updatedVolume: $updatedVolume, diff: $diff, max: ${capacity * callVolumeUnit.size}" }
+                log.trace {
+                    "${call.id()}: Volume not updated due to exceeding volume: currentVolume: $currentVolume, updatedVolume: $updatedVolume, diff: $diff, max: ${capacity * callVolumeUnit.size}"
+                }
                 null
             }
         }
-    }
 
     private fun Double.checkNotNegative(): Double {
         check(this >= 0) { "Volume change figure must not be negative. was: $this" }

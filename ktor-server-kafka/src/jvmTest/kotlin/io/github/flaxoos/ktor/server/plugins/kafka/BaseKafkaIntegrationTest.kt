@@ -1,150 +1,150 @@
 package io.github.flaxoos.ktor.server.plugins.kafka
 
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CONFIG_PATH
+import io.github.flaxoos.ktor.server.plugins.kafka.TopicName.Companion.named
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestScope
+import io.ktor.client.HttpClient
 import io.ktor.util.logging.KtorSimpleLogger
+import io.ktor.util.logging.Logger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
-import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.KafkaContainer
-import org.testcontainers.containers.Network
-import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.utility.DockerImageName
+import org.testcontainers.lifecycle.Startable
 import java.io.File
 import java.util.Properties
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-private const val CONFLUENT_PLATFORM_VERSION = "7.5.0"
-private const val BOOTSTRAP_SERVERS_PLACEHOLDER = "BOOTSTRAP_SERVERS"
+internal const val BOOTSTRAP_SERVERS_PLACEHOLDER = "BOOTSTRAP_SERVERS"
+internal const val CONFIG_PATH_PLACEHOLDER = "CONFIG_PATH"
+internal const val GROUP_ID_PLACEHOLDER = "GROUP_ID"
+internal const val CLIENT_ID_PLACEHOLDER = "CLIENT_ID"
 private const val SCHEMA_REGISTRY_URL_PLACEHOLDER = "SCHEMA_REGISTRY_URL"
-private const val CONFIG_PATH_PLACEHOLDER = "CONFIG_PATH"
-private const val GROUP_ID_PLACEHOLDER = "GROUP_ID"
-private const val CLIENT_ID_PLACEHOLDER = "CLIENT_ID"
 
 abstract class BaseKafkaIntegrationTest : FunSpec() {
+    open suspend fun beforeStartingContainers() {}
 
-    private lateinit var applicationConfigFile: File
-    private lateinit var applicationConfigFileContent: String
+    open fun afterStoppingContainers() {}
 
-    lateinit var schemaRegistryUrl: String
+    abstract val containers: List<() -> Startable>
 
-    init {
-        beforeSpec {
-            kafka.start()
-            schemaRegistry.withKafka(kafka).start()
-            schemaRegistryUrl = "http://${schemaRegistry.host}:${schemaRegistry.firstMappedPort}"
+    abstract fun provideBootstrapServers(): String
 
-            waitTillProducersAccepted(10, 5.seconds)
+    abstract fun provideSchemaRegistryUrl(): String
+
+    open val additionalProducerProperties: Map<String, Any> = emptyMap()
+
+    protected lateinit var bootstrapServers: String
+    protected var applicationConfigFile: File? = null
+    private lateinit var originalApplicationConfigFileContent: String
+    protected lateinit var schemaRegistryUrl: String
+    protected val logger: Logger = KtorSimpleLogger(javaClass.simpleName)
+    protected val testTopics = listOf(named("topic1"), named("topic2"))
+    protected val invocations = 2
+    protected open val httpClient = HttpClient()
+    protected lateinit var recordChannel: Channel<TestRecord>
+
+//    init {
+//        val startedContainers =
+//            mutableListOf<Startable>()
+//        beforeEach {
+//            containers.forEach {
+//                it().let { container ->
+//                    container.start()
+//                    startedContainers.add(container)
+//                }
+//            }
+//            bootstrapServers = provideBootstrapServers()
+//            schemaRegistryUrl = provideSchemaRegistryUrl()
+//            waitTillProducersAccepted()
+//            recordChannel = Channel()
+//        }
+//        afterEach {
+//            recordChannel.close()
+//            startedContainers.reversed().forEach {
+//                it.stop()
+//            }
+//            afterStoppingContainers()
+//            revertConfigurationFileEdit()
+//        }
+//    }
+
+    @Suppress("SwallowedException")
+    open suspend fun waitTillProducersAccepted(
+        attempts: Int = 10,
+        delay: Duration = 5.seconds,
+    ) {
+        val props = Properties()
+        props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
+        props[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java.name
+        props[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java.name
+
+        additionalProducerProperties.forEach { (key, value) ->
+            props[key] = value
         }
+
+        val producer = KafkaProducer<String, String>(props)
+        var isConnected = false
+
+        logger.info("Waiting to connect to Kafka broker at bootstrap.servers: $bootstrapServers")
+        for (i in 0 until attempts) {
+            try {
+                val record = ProducerRecord("test-topic", "key", "value")
+                val futureResult = producer.send(record)
+                withContext(Dispatchers.IO) {
+                    futureResult.get()
+                }
+                isConnected = true
+                break
+            } catch (e: Exception) {
+                logger.info(
+                    "Attempt $i to connect to Kafka broker at bootstrap.servers: " +
+                        "$bootstrapServers failed, retrying",
+                )
+                delay(delay)
+            }
+        }
+
+        producer.close()
+
+        if (!isConnected) {
+            throw AssertionError(
+                "Unable to connect to Kafka broker at bootstrap.servers: $bootstrapServers",
+            )
+        }
+        logger.info("Connected to Kafka broker at bootstrap.servers: $bootstrapServers")
     }
 
     protected fun revertConfigurationFileEdit() {
-        applicationConfigFile.writeText(applicationConfigFileContent)
+        applicationConfigFile?.writeText(originalApplicationConfigFileContent)
     }
 
     protected fun TestScope.editConfigurationFile(configPath: String = DEFAULT_CONFIG_PATH) {
-        applicationConfigFile = javaClass.getResource("/test-application.conf")?.toURI()?.let { File(it) }
-            ?: error("Application config file not found")
-        applicationConfigFileContent = applicationConfigFile.readText()
-        applicationConfigFile.writeText(
-            applicationConfigFileContent
-                .replace(CONFIG_PATH_PLACEHOLDER, configPath)
-                .replace(BOOTSTRAP_SERVERS_PLACEHOLDER, kafka.bootstrapServers)
-                .replace(SCHEMA_REGISTRY_URL_PLACEHOLDER, schemaRegistryUrl)
-                .replace(GROUP_ID_PLACEHOLDER, this.testCase.name.testName.plus("-group"))
-                .replace(CLIENT_ID_PLACEHOLDER, this.testCase.name.testName.plus("-client")),
-        )
-    }
-
-    protected companion object {
-        private val logger = KtorSimpleLogger(this::class.java.simpleName)
-
-        private val kafkaImage: DockerImageName =
-            DockerImageName.parse("confluentinc/cp-kafka:$CONFLUENT_PLATFORM_VERSION")
-        private val schemaRegistry = SchemaRegistryContainer()
-        private val kafkaNetwork = Network.newNetwork()
-
-        val kafka: KafkaContainer = KafkaContainer(kafkaImage).apply {
-            if (System.getProperty("os.name").lowercase().contains("mac")) {
-                withCreateContainerCmdModifier { it.withPlatform("linux/amd64") }
-            }
-            withNetwork(kafkaNetwork)
-            withEnv("KAFKA_AUTO_CREATE_TOPIC_ENABLE", "false")
-            withEnv("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1")
-            withEnv("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1")
-        }
-
-        @Suppress("SwallowedException")
-        suspend fun waitTillProducersAccepted(attempts: Int, delay: Duration) {
-            val props = Properties()
-            props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = kafka.bootstrapServers
-            props[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java.name
-            props[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java.name
-
-            val producer = KafkaProducer<String, String>(props)
-            var isConnected = false
-
-            logger.info("Waiting to connect to Kafka broker at bootstrap.servers: $kafka.bootstrapServers")
-            for (i in 0 until attempts) {
-                try {
-                    val record = ProducerRecord("test-topic", "key", "value")
-                    val futureResult = producer.send(record)
-                    withContext(Dispatchers.IO) {
-                        futureResult.get()
-                    }
-                    isConnected = true
-                    break
-                } catch (e: Exception) {
-                    logger.info(
-                        "Attempt $i to connect to Kafka broker at bootstrap.servers: " +
-                            "$kafka.bootstrapServers failed, retrying",
-                    )
-                    delay(delay)
-                }
-            }
-
-            producer.close()
-
-            if (!isConnected) {
-                throw AssertionError(
-                    "Unable to connect to Kafka broker at bootstrap.servers: " +
-                        "$kafka.bootstrapServers",
+        applicationConfigFile =
+            (
+                javaClass.getResource("/test-application.conf")?.toURI()?.let { File(it) }
+                    ?: error("Application config file not found")
+            ).also {
+                originalApplicationConfigFileContent = it.readText()
+                it.writeText(
+                    originalApplicationConfigFileContent
+                        .replace(CONFIG_PATH_PLACEHOLDER, configPath)
+                        .replace(BOOTSTRAP_SERVERS_PLACEHOLDER, kafkaContainer.bootstrapServers)
+                        .replace(SCHEMA_REGISTRY_URL_PLACEHOLDER, schemaRegistryUrl)
+                        .replace(
+                            GROUP_ID_PLACEHOLDER,
+                            testCase.name.testName.plus("-group"),
+                        ).replace(
+                            CLIENT_ID_PLACEHOLDER,
+                            testCase.name.testName.plus("-client"),
+                        ),
                 )
             }
-            logger.info("Connected to Kafka broker at bootstrap.servers: $kafka.bootstrapServers")
-        }
-    }
-}
-
-internal class SchemaRegistryContainer :
-    GenericContainer<SchemaRegistryContainer>("$schemaRegistryImage:$CONFLUENT_PLATFORM_VERSION") {
-
-    init {
-        waitingFor(Wait.forHttp("/subjects").forStatusCode(200))
-        withExposedPorts(SCHEMA_REGISTRY_PORT)
-    }
-
-    fun withKafka(kafka: KafkaContainer): SchemaRegistryContainer {
-        return withKafka(kafka.network, "${kafka.networkAliases[0]}:9092")
-    }
-
-    private fun withKafka(network: Network?, bootstrapServers: String): SchemaRegistryContainer {
-        withNetwork(network)
-        withEnv("SCHEMA_REGISTRY_HOST_NAME", "schema-registry")
-        withEnv("SCHEMA_REGISTRY_LISTENERS", "http://0.0.0.0:$SCHEMA_REGISTRY_PORT")
-        withEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", "PLAINTEXT://$bootstrapServers")
-        return self()
-    }
-
-    internal companion object {
-        const val SCHEMA_REGISTRY_PORT = 8081
-        val schemaRegistryImage: DockerImageName = DockerImageName.parse("confluentinc/cp-schema-registry")
     }
 }

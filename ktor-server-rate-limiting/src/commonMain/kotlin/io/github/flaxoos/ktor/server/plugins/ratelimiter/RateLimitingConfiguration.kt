@@ -169,7 +169,7 @@ class RateLimitingConfiguration {
                             clock = clock,
                         )
                     }
-                    )
+                )
 
                 TokenBucket::class -> (
                     {
@@ -180,7 +180,7 @@ class RateLimitingConfiguration {
                             clock = clock,
                         )
                     }
-                    )
+                )
 
                 else -> {
                     error("Unsupported provider type: $type")

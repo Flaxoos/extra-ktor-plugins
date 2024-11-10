@@ -2,10 +2,11 @@
 
 package io.github.flaxoos.ktor.server.plugins.kafka
 
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
+import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
 import io.confluent.kafka.serializers.KafkaAvroSerializer
+import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CLIENT_ID
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CONSUMER_POLL_FREQUENCY_MS
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_GROUP_ID
@@ -81,13 +82,17 @@ class KafkaConfig : AbstractKafkaConfig() {
 
     override val commonProperties: KafkaProperties? by lazy {
         commonPropertiesBuilder?.build()?.apply {
-            commonSslPropertiesBuilders?.let { (broker, schemaRegistry) ->
+            commonSslPropertiesBuilderPair?.let { (broker, schemaRegistry) ->
+                broker?.let { putAll(it.build()) }
+                schemaRegistry?.let { putAll(it.build()) }
+            }
+            commonSaslPropertiesBuilderPair?.let { (broker, schemaRegistry) ->
                 broker?.let { putAll(it.build()) }
                 schemaRegistry?.let { putAll(it.build()) }
             }
         }
     }
-    override val adminProperties: KafkaProperties? by lazy {
+    override val adminProperties: KafkaProperties? get() =
         adminPropertiesBuilder
             ?.build()
             ?.propertiesContext(this@KafkaConfig)
@@ -95,12 +100,12 @@ class KafkaConfig : AbstractKafkaConfig() {
             ?.withDefaultAdminConfig()
             ?.delegatingToCommon()
             ?.kafkaProperties
-    }
+
     override val producerProperties: KafkaProperties? by lazy {
         producerPropertiesBuilder
             ?.build()
             ?.propertiesContext(this@KafkaConfig)
-            ?.withSslProperties(producerSslPropertiesBuilders)
+            ?.withSslProperties(producerSslPropertiesBuilderPair)
             ?.withSchemaRegistryUrl()
             ?.withDefaultProducerConfig()
             ?.delegatingToCommon()
@@ -110,7 +115,7 @@ class KafkaConfig : AbstractKafkaConfig() {
         consumerPropertiesBuilder
             ?.build()
             ?.propertiesContext(this@KafkaConfig)
-            ?.withSslProperties(consumerSslPropertiesBuilders)
+            ?.withSslProperties(consumerSslPropertiesBuilderPair)
             ?.withSchemaRegistryUrl()
             ?.withDefaultConsumerConfig()
             ?.delegatingToCommon()
@@ -124,11 +129,18 @@ class KafkaConfig : AbstractKafkaConfig() {
     internal var consumerPropertiesBuilder: ConsumerPropertiesBuilder? = null
 
     // SSL Configurations
-    internal var commonSslPropertiesBuilders: SslPropertiesBuilders? = null
+    internal var commonSslPropertiesBuilderPair: SslPropertiesBuilderPair? = null
     internal var adminSslPropertiesBuilder: SslPropertiesBuilder? = null
-    internal var producerSslPropertiesBuilders: SslPropertiesBuilders? = null
-    internal var consumerSslPropertiesBuilders: SslPropertiesBuilders? = null
+    internal var producerSslPropertiesBuilderPair: SslPropertiesBuilderPair? = null
+    internal var consumerSslPropertiesBuilderPair: SslPropertiesBuilderPair? = null
     internal var schemaRegistryClientSslPropertiesBuilder: SslPropertiesBuilder? = null
+
+    // SASL Configurations
+    internal var commonSaslPropertiesBuilderPair: SaslPropertiesBuilderPair? = null
+    internal var adminSaslPropertiesBuilder: SaslPropertiesBuilderPair? = null
+    internal var producerSaslPropertiesBuilderPair: SaslPropertiesBuilderPair? = null
+    internal var consumerSaslPropertiesBuilderPair: SaslPropertiesBuilderPair? = null
+    internal var schemaRegistryClientSaslPropertiesBuilder: SaslPropertiesBuilder? = null
 }
 
 /**
@@ -221,10 +233,10 @@ internal fun KafkaConfigPropertiesContext.withDefaultConsumerConfig() =
 
 internal fun KafkaConfigPropertiesContext.withSchemaRegistryUrl() =
     apply {
-        kafkaProperties[AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG] = this.kafkaConfig.schemaRegistryUrl
+        kafkaProperties[AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG] = this.kafkaConfig.schemaRegistryUrl
     }
 
-internal fun KafkaConfigPropertiesContext.withSslProperties(properties: SslPropertiesBuilders?) =
+internal fun KafkaConfigPropertiesContext.withSslProperties(properties: SslPropertiesBuilderPair?) =
     apply {
         properties?.let { (broker, schemaRegistry) ->
             broker?.let { kafkaProperties.putAll(it.build()) }
@@ -233,6 +245,11 @@ internal fun KafkaConfigPropertiesContext.withSslProperties(properties: SslPrope
     }
 
 internal fun KafkaConfigPropertiesContext.withSslProperties(properties: SslPropertiesBuilder?) =
+    apply {
+        properties?.let { kafkaProperties.putAll(it.build()) }
+    }
+
+internal fun KafkaConfigPropertiesContext.withSaslProperties(properties: SaslPropertiesBuilder?) =
     apply {
         properties?.let { kafkaProperties.putAll(it.build()) }
     }
@@ -263,7 +280,10 @@ fun AbstractKafkaConfig.registerSchemas(configuration: SchemaRegistrationBuilder
         schemaRegistryClientProvider = {
             val sslClientProvider =
                 if (this is KafkaConfig) {
-                    (this.schemaRegistryClientSslPropertiesBuilder ?: this.commonSslPropertiesBuilders?.schemaRegistry)?.toHttpClient()
+                    (
+                        this.schemaRegistryClientSslPropertiesBuilder
+                            ?: this.commonSslPropertiesBuilderPair?.schemaRegistry
+                    )?.toHttpClient()
                 } else {
                     null
                 }
@@ -438,8 +458,12 @@ class TopicPropertiesBuilder : KafkaPropertiesBuilder() {
     var minInSyncReplicas: Int? = null
     var compressionType: CompressionType? = null
     var preallocate: Boolean? = null
+
+    @Deprecated("see [TopicConfig.MESSAGE_FORMAT_VERSION_CONFIG]")
     var messageFormatVersion: String? = null
     var messageTimestampType: MessageTimestampType? = null
+
+    @Deprecated("see [TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG]")
     var messageTimestampDifferenceMaxMs: Long? = null
     var messageDownconversionEnable: Boolean? = null
 
@@ -494,8 +518,11 @@ class TopicPropertiesBuilder : KafkaPropertiesBuilder() {
                 TopicConfig.PREALLOCATE_CONFIG,
             ] = it
         }
+
+        @Suppress("DEPRECATION")
         messageFormatVersion?.let { configMap[TopicConfig.MESSAGE_FORMAT_VERSION_CONFIG] = it }
         messageTimestampType?.let { configMap[TopicConfig.MESSAGE_TIMESTAMP_TYPE_CONFIG] = it }
+        @Suppress("DEPRECATION")
         messageTimestampDifferenceMaxMs?.let {
             configMap[
                 TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG,
@@ -599,12 +626,15 @@ class ProducerPropertiesBuilder(
     var transactionTimeout: Any? = null
     var transactionalId: Any? = null
 
-//    private var serializerPropertiesBuilder: KafkaAvroSerializerPropertiesBuilder? = null
-//
-//    @KafkaDsl
-//    fun serializer(configuration: KafkaAvroSerializerPropertiesBuilder.() -> Unit = { KafkaAvroSerializerPropertiesBuilder() }) {
-//        serializerPropertiesBuilder = KafkaAvroSerializerPropertiesBuilder().apply(configuration)
-//    }
+    private var serializerPropertiesBuilder: KafkaAvroSerializerPropertiesBuilder? = null
+
+    /**
+     * This is not yet tested but should work as it just does the same thing all the config function do which is to add these properties to the config map
+     */
+    @KafkaDsl
+    fun serializer(configuration: KafkaAvroSerializerPropertiesBuilder.() -> Unit = { KafkaAvroSerializerPropertiesBuilder() }) {
+        serializerPropertiesBuilder = KafkaAvroSerializerPropertiesBuilder().apply(configuration)
+    }
 
     override fun doBuild(): KafkaProperties {
         val configMap = buildCommon()
@@ -628,9 +658,9 @@ class ProducerPropertiesBuilder(
         transactionalId?.let { configMap[ProducerConfig.TRANSACTIONAL_ID_CONFIG] = it }
 
         return configMap
-//            .apply {
-//            serializerPropertiesBuilder?.let { serializer -> putAll(serializer.build()) }
-//        }
+            .apply {
+                serializerPropertiesBuilder?.let { serializer -> putAll(serializer.build()) }
+            }
     }
 }
 
@@ -665,12 +695,15 @@ class ConsumerPropertiesBuilder(
     var isolationLevel: Any? = null
     var allowAutoCreateTopics: Any? = null
 
-//    var deserializerPropertiesBuilder: KafkaAvroDeserializerPropertiesBuilder? = null
-//
-//    @KafkaDsl
-//    fun deserializer(configuration: KafkaAvroDeserializerPropertiesBuilder.() -> Unit = { KafkaAvroDeserializerPropertiesBuilder() }) {
-//        deserializerPropertiesBuilder = KafkaAvroDeserializerPropertiesBuilder().apply(configuration)
-//    }
+    var deserializerPropertiesBuilder: KafkaAvroDeserializerPropertiesBuilder? = null
+
+    /**
+     * This is not yet tested but should work as it just does the same thing all the config function do which is to add these properties to the config map
+     */
+    @KafkaDsl
+    fun deserializer(configuration: KafkaAvroDeserializerPropertiesBuilder.() -> Unit = { KafkaAvroDeserializerPropertiesBuilder() }) {
+        deserializerPropertiesBuilder = KafkaAvroDeserializerPropertiesBuilder().apply(configuration)
+    }
 
     override fun doBuild(): KafkaProperties {
         val configMap = buildCommon()
@@ -698,15 +731,16 @@ class ConsumerPropertiesBuilder(
         allowAutoCreateTopics?.let { configMap[ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG] = it }
 
         return configMap
-//            .apply {
-//            deserializerPropertiesBuilder?.let { deserializer -> putAll(deserializer.build()) }
-//        }
+            .apply {
+                deserializerPropertiesBuilder?.let { deserializer -> putAll(deserializer.build()) }
+            }
     }
 }
 
 /**
  * see [AbstractKafkaSchemaSerDeConfig]
  */
+@Suppress("MemberVisibilityCanBePrivate")
 abstract class KafkaAvroSerDePropertiesBuilder : KafkaPropertiesBuilder() {
     var schemaRegistryUrl: List<String>? = null
     var maxSchemasPerSubject: Int? = null
@@ -818,67 +852,66 @@ abstract class KafkaAvroSerDePropertiesBuilder : KafkaPropertiesBuilder() {
     override fun doBuild(): KafkaProperties = buildCommon()
 }
 
-//
-// /**
-// * see [KafkaAvroDeserializerConfig]
-// */
-// class KafkaAvroDeserializerPropertiesBuilder : KafkaAvroSerDePropertiesBuilder() {
-//    var specificAvroReader: Boolean? = null
-//    var specificAvroKeyType: Class<*>? = null
-//    var specificAvroValueType: Class<*>? = null
-//    var avroReflectionAllowNull: Boolean? = null
-//    var avroUseLogicalTypeConverters: Boolean? = null
-//
-//    override fun doBuild(): KafkaProperties {
-//        val configMap = mutableMapOf<String, Any?>()
-//
-//        specificAvroReader?.let {
-//            configMap[KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG] = it
-//        }
-//        specificAvroKeyType?.let {
-//            configMap[KafkaAvroDeserializerConfig.SPECIFIC_AVRO_KEY_TYPE_CONFIG] = it
-//        }
-//        specificAvroValueType?.let {
-//            configMap[KafkaAvroDeserializerConfig.SPECIFIC_AVRO_VALUE_TYPE_CONFIG] = it
-//        }
-//        avroReflectionAllowNull?.let {
-//            configMap[KafkaAvroDeserializerConfig.AVRO_REFLECTION_ALLOW_NULL_CONFIG] = it
-//        }
-//        avroUseLogicalTypeConverters?.let {
-//            configMap[KafkaAvroDeserializerConfig.AVRO_USE_LOGICAL_TYPE_CONVERTERS_CONFIG] = it
-//        }
-//
-//        return configMap
-//    }
-// }
-//
-// /**
-// * See [KafkaAvroSerializerConfig]
-// */
-// class KafkaAvroSerializerPropertiesBuilder : KafkaAvroSerDePropertiesBuilder() {
-//    var avroReflectionAllowNull: Boolean? = null
-//    var avroUseLogicalTypeConverters: Boolean? = null
-//    var avroRemoveJavaProperties: Boolean? = null
-//
-//    override fun doBuild(): KafkaProperties {
-//        val configMap = mutableMapOf<String, Any?>()
-//
-//        avroReflectionAllowNull?.let {
-//            configMap[KafkaAvroSerializerConfig.AVRO_REFLECTION_ALLOW_NULL_CONFIG] = it
-//        }
-//        avroUseLogicalTypeConverters?.let {
-//            configMap[KafkaAvroSerializerConfig.AVRO_USE_LOGICAL_TYPE_CONVERTERS_CONFIG] = it
-//        }
-//        avroRemoveJavaProperties?.let {
-//            configMap[KafkaAvroSerializerConfig.AVRO_REMOVE_JAVA_PROPS_CONFIG] = it
-//        }
-//
-//        return configMap
-//    }
-// }
-typealias KafkaProperties = MutableMap<String, Any?>
+/**
+ * see [KafkaAvroDeserializerConfig]
+ */
+@Suppress("MemberVisibilityCanBePrivate")
+class KafkaAvroDeserializerPropertiesBuilder : KafkaAvroSerDePropertiesBuilder() {
+    var specificAvroReader: Boolean? = null
+    var specificAvroKeyType: Class<*>? = null
+    var specificAvroValueType: Class<*>? = null
+    var avroReflectionAllowNull: Boolean? = null
+    var avroUseLogicalTypeConverters: Boolean? = null
 
-fun KafkaProperties.removeNullValues() = filterValues { it != null }.toMutableMap()
+    override fun doBuild(): KafkaProperties {
+        val configMap = mutableMapOf<String, Any?>()
+
+        specificAvroReader?.let {
+            configMap[KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG] = it
+        }
+        specificAvroKeyType?.let {
+            configMap[KafkaAvroDeserializerConfig.SPECIFIC_AVRO_KEY_TYPE_CONFIG] = it
+        }
+        specificAvroValueType?.let {
+            configMap[KafkaAvroDeserializerConfig.SPECIFIC_AVRO_VALUE_TYPE_CONFIG] = it
+        }
+        avroReflectionAllowNull?.let {
+            configMap[KafkaAvroDeserializerConfig.AVRO_REFLECTION_ALLOW_NULL_CONFIG] = it
+        }
+        avroUseLogicalTypeConverters?.let {
+            configMap[KafkaAvroDeserializerConfig.AVRO_USE_LOGICAL_TYPE_CONVERTERS_CONFIG] = it
+        }
+
+        return configMap
+    }
+}
+
+/**
+ * See [KafkaAvroSerializerConfig]
+ */
+@Suppress("MemberVisibilityCanBePrivate")
+class KafkaAvroSerializerPropertiesBuilder : KafkaAvroSerDePropertiesBuilder() {
+    var avroReflectionAllowNull: Boolean? = null
+    var avroUseLogicalTypeConverters: Boolean? = null
+    var avroRemoveJavaProperties: Boolean? = null
+
+    override fun doBuild(): KafkaProperties {
+        val configMap = mutableMapOf<String, Any?>()
+
+        avroReflectionAllowNull?.let {
+            configMap[KafkaAvroSerializerConfig.AVRO_REFLECTION_ALLOW_NULL_CONFIG] = it
+        }
+        avroUseLogicalTypeConverters?.let {
+            configMap[KafkaAvroSerializerConfig.AVRO_USE_LOGICAL_TYPE_CONVERTERS_CONFIG] = it
+        }
+        avroRemoveJavaProperties?.let {
+            configMap[KafkaAvroSerializerConfig.AVRO_REMOVE_JAVA_PROPS_CONFIG] = it
+        }
+
+        return configMap
+    }
+}
+typealias KafkaProperties = MutableMap<String, Any?>
 
 @Suppress("unused")
 enum class MessageTimestampType {

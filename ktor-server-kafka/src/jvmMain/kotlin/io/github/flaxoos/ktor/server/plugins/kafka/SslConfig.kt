@@ -67,10 +67,13 @@ class SslSettings(
  * Sets the default SSL configuration for all components.
  */
 @KafkaDsl
-fun KafkaConfig.commonSsl(configuration: SslPropertiesBuilders.() -> Unit) {
-    commonSslPropertiesBuilders = SslPropertiesBuilders().apply(configuration)
+fun KafkaConfig.commonSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
+    commonSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
 
+/**
+ * Sets a specific SSL configuration for the admin client.
+ */
 @KafkaDsl
 fun KafkaConfig.adminSsl(configuration: SslPropertiesBuilder.() -> Unit) {
     adminSslPropertiesBuilder = SslPropertiesBuilder().apply(configuration)
@@ -80,16 +83,16 @@ fun KafkaConfig.adminSsl(configuration: SslPropertiesBuilder.() -> Unit) {
  * Sets a specific SSL configuration for the producer.
  */
 @KafkaDsl
-fun KafkaConfig.producerSsl(configuration: SslPropertiesBuilders.() -> Unit) {
-    producerSslPropertiesBuilders = SslPropertiesBuilders().apply(configuration)
+fun KafkaConfig.producerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
+    producerSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
 
 /**
  * Sets a specific SSL configuration for the consumer.
  */
 @KafkaDsl
-fun KafkaConfig.consumerSsl(configuration: SslPropertiesBuilders.() -> Unit) {
-    consumerSslPropertiesBuilders = SslPropertiesBuilders().apply(configuration)
+fun KafkaConfig.consumerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
+    consumerSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
 
 /**
@@ -98,6 +101,47 @@ fun KafkaConfig.consumerSsl(configuration: SslPropertiesBuilders.() -> Unit) {
 @KafkaDsl
 fun KafkaConfig.schemaRegistryClientSsl(configuration: SslPropertiesBuilder.() -> Unit) {
     schemaRegistryClientSslPropertiesBuilder = SslPropertiesBuilder("schema.registry.").apply(configuration)
+}
+
+
+/**
+ * Sets the default SASL configuration for all components.
+ */
+@KafkaDsl
+fun KafkaConfig.commonSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
+    commonSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
+}
+
+/**
+ * Sets a specific SASL configuration for the admin client.
+ */
+@KafkaDsl
+fun KafkaConfig.adminSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
+    adminSaslPropertiesBuilder = SaslPropertiesBuilderPair().apply(configuration)
+}
+
+/**
+ * Sets a specific SASL configuration for the producer.
+ */
+@KafkaDsl
+fun KafkaConfig.producerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
+    producerSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
+}
+
+/**
+ * Sets a specific SASL configuration for the consumer.
+ */
+@KafkaDsl
+fun KafkaConfig.consumerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
+    consumerSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
+}
+
+/**
+ * Sets a specific SASL configuration for the Schema Registry client.
+ */
+@KafkaDsl
+fun KafkaConfig.schemaRegistryClientSasl(configuration: SaslPropertiesBuilder.() -> Unit) {
+    schemaRegistryClientSaslPropertiesBuilder = SaslPropertiesBuilder("schema.registry.").apply(configuration)
 }
 
 /**
@@ -131,7 +175,7 @@ class KeyStorePropertiesBuilder {
 }
 
 @KafkaDsl
-data class SslPropertiesBuilders(
+data class SslPropertiesBuilderPair(
     var broker: SslPropertiesBuilder? = null,
     var schemaRegistry: SslPropertiesBuilder? = null,
 ) {
@@ -146,6 +190,23 @@ data class SslPropertiesBuilders(
     }
 }
 
+@KafkaDsl
+data class SaslPropertiesBuilderPair(
+    var broker: SaslPropertiesBuilder? = null,
+    var schemaRegistry: SaslPropertiesBuilder? = null,
+) {
+    @KafkaDsl
+    fun broker(configuration: SaslPropertiesBuilder.() -> Unit) {
+        broker = SaslPropertiesBuilder().apply(configuration)
+    }
+
+    @KafkaDsl
+    fun schemaRegistry(configuration: SaslPropertiesBuilder.() -> Unit) {
+        schemaRegistry = SaslPropertiesBuilder("schema.registry.").apply(configuration)
+    }
+}
+
+@Suppress("MemberVisibilityCanBePrivate")
 @KafkaDsl
 class SslPropertiesBuilder(
     val namespace: String = "",
@@ -199,8 +260,9 @@ class SslPropertiesBuilder(
     }
 }
 
-class SASLPropertiesBuilder(
-    val namespace: String,
+@Suppress("MemberVisibilityCanBePrivate")
+class SaslPropertiesBuilder(
+    val namespace: String = "",
 ) : KafkaPropertiesBuilder() {
     var kerberosServiceName: String? = null
     var kerberosKinitCmd: String? = null
@@ -255,10 +317,10 @@ interface SecurityPropertiesBuilder {
         schemaRegistrySslPropertiesBuilder = SslPropertiesBuilder("schema.registry.").apply(configuration)
     }
 
-    var saslPropertiesBuilder: SASLPropertiesBuilder?
+    var saslPropertiesBuilder: SaslPropertiesBuilder?
 
     @KafkaDsl
-    fun sasl(configuration: SASLPropertiesBuilder.() -> Unit = { SASLPropertiesBuilder(namespace) }) {
-        saslPropertiesBuilder = SASLPropertiesBuilder(namespace).apply(configuration)
+    fun sasl(configuration: SaslPropertiesBuilder.() -> Unit = { SaslPropertiesBuilder(namespace) }) {
+        saslPropertiesBuilder = SaslPropertiesBuilder(namespace).apply(configuration)
     }
 }

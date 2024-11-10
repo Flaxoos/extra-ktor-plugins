@@ -8,15 +8,11 @@
         </encoder>
     </appender>
 
-    <logger name="org.eclipse.jetty" level="INFO"/>
-    <logger name="io.netty" level="INFO"/>
-
-    <logger name="org.apache.kafka.clients" level="INFO" additivity="false">
-        <appender-ref ref="KAFKA"/>
-    </logger>
-    <logger name="io.confluent.developer" level="DEBUG" additivity="false">
-        <appender-ref ref="KAFKA"/>
-    </logger>
+    <logger name="io.ktor" level="INFO"/>
+    <logger name="io.github.flaxoos" level="INFO"/>
+    <logger name="org.testcontainers" level="WARN"/>
+    <logger name="io.confluent.developer" level="INFO"/>
+    <logger name="org.apache.kafka.clients" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

@@ -37,7 +37,8 @@ class SslSettings(
      */
     fun getKeyManagerFactory(): KeyManagerFactory? {
         val keyStore = getKeyStore() ?: return null
-        val keyPassword = sslConfig.keyPassword?.toCharArray() ?: error("Key password must be provided if keystore is used")
+        val keyPassword =
+            sslConfig.keyPassword?.toCharArray() ?: error("Key password must be provided if keystore is used")
 
         val keyManagerFactory =
             KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()).apply {
@@ -102,7 +103,6 @@ fun KafkaConfig.consumerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) 
 fun KafkaConfig.schemaRegistryClientSsl(configuration: SslPropertiesBuilder.() -> Unit) {
     schemaRegistryClientSslPropertiesBuilder = SslPropertiesBuilder("schema.registry.").apply(configuration)
 }
-
 
 /**
  * Sets the default SASL configuration for all components.
@@ -243,9 +243,11 @@ class SslPropertiesBuilder(
         }
         keyPassword?.let { configMap[namespace + SslConfigs.SSL_KEY_PASSWORD_CONFIG] = it }
         endpointIdentificationAlgorithm?.let {
-            configMap[ namespace + SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG] = it
+            configMap[namespace + SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG] = it
         }
-        secureRandomImplementation?.let { configMap[namespace + SslConfigs.SSL_SECURE_RANDOM_IMPLEMENTATION_CONFIG] = it }
+        secureRandomImplementation?.let {
+            configMap[namespace + SslConfigs.SSL_SECURE_RANDOM_IMPLEMENTATION_CONFIG] = it
+        }
         return configMap
     }
 
@@ -287,10 +289,14 @@ class SaslPropertiesBuilder(
             configMap[SaslConfigs.SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR] = it
         }
         kerberosTicketRenewJitter?.let { configMap[namespace + SaslConfigs.SASL_KERBEROS_TICKET_RENEW_JITTER] = it }
-        kerberosMinTimeBeforeRelogin?.let { configMap[namespace + SaslConfigs.SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN] = it }
+        kerberosMinTimeBeforeRelogin?.let {
+            configMap[namespace + SaslConfigs.SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN] = it
+        }
         loginRefreshWindowFactor?.let { configMap[namespace + SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_FACTOR] = it }
         loginRefreshWindowJitter?.let { configMap[namespace + SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_JITTER] = it }
-        loginRefreshMinPeriodSeconds?.let { configMap[namespace + SaslConfigs.SASL_LOGIN_REFRESH_MIN_PERIOD_SECONDS] = it }
+        loginRefreshMinPeriodSeconds?.let {
+            configMap[namespace + SaslConfigs.SASL_LOGIN_REFRESH_MIN_PERIOD_SECONDS] = it
+        }
         loginRefreshBufferSeconds?.let { configMap[namespace + SaslConfigs.SASL_LOGIN_REFRESH_BUFFER_SECONDS] = it }
         mechanism?.let { configMap[namespace + SaslConfigs.SASL_MECHANISM] = it }
         jaasConfig?.let { configMap[namespace + SaslConfigs.SASL_JAAS_CONFIG] = it }

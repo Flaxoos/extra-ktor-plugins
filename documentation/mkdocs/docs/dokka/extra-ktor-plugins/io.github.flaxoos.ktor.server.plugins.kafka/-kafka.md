@@ -1,22 +1,15 @@
 ---
 title: Kafka
 ---
+
 //[extra-ktor-plugins](../../index.md)/[io.github.flaxoos.ktor.server.plugins.kafka](index.md)/[Kafka](-kafka.md)
 
-
-
 # Kafka
-
-
 
 [jvm]\
 val [Kafka](-kafka.md): ApplicationPlugin&lt;[KafkaConfig](-kafka-config/index.md)&gt;
 
-
-
 Plugin for setting up a kafka client
-
-
 
 Example:
 

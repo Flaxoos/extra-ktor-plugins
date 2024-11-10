@@ -184,11 +184,13 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.failCreatingClient(
     clientProperties: KafkaProperties,
     exception: Exception,
 ) {
-    val message = "Failed creating kafka $clientName: ${exception.message}.\nProperties used:\n\t${clientProperties.entries.joinToString(
-        "\n\t",
-    ) {
-        "${it.key}: ${it.value}"
-    }}"
+    val message = "Failed creating kafka $clientName: ${exception.message}.\nProperties used:\n\t${
+        clientProperties.entries.joinToString(
+            "\n\t",
+        ) {
+            "${it.key}: ${it.value}"
+        }
+    }"
     application.log.error(message, exception)
     application.coroutineContext.cancel(CancellationException(message))
 }

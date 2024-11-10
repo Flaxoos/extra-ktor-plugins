@@ -4,12 +4,10 @@ import io.kotest.core.extensions.install
 import io.kotest.extensions.testcontainers.ContainerExtension
 import io.kotest.extensions.testcontainers.ContainerLifecycleMode
 import io.ktor.server.application.install
-import java.io.File
-import java.nio.file.Paths
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.config.SslConfigs
+import java.io.File
+import java.nio.file.Paths
 
 class KafkaSSLIntegrationTest : BaseKafkaIntegrationTest() {
     override val additionalProducerProperties: Map<String, Any> by lazy {

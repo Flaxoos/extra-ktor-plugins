@@ -7,11 +7,11 @@ import io.kotest.core.extensions.install
 import io.kotest.extensions.testcontainers.ContainerExtension
 import io.kotest.extensions.testcontainers.ContainerLifecycleMode
 import io.ktor.server.application.install
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.Serializable
 import org.apache.kafka.clients.CommonClientConfigs.CLIENT_ID_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG
 import org.testcontainers.containers.KafkaContainer
+import kotlin.time.Duration.Companion.seconds
 
 const val CODE_CONFIGURED_CLIENT_ID = "code-configured-client-id"
 const val CODE_CONFIGURED_GROUP_ID = "code-configured-group-id"

@@ -32,11 +32,6 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import java.io.File
-import java.util.Properties
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -45,6 +40,11 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
+import java.io.File
+import java.util.Properties
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 internal const val BOOTSTRAP_SERVERS_PLACEHOLDER = "BOOTSTRAP_SERVERS"
 internal const val CONFIG_PATH_PLACEHOLDER = "CONFIG_PATH"
@@ -186,7 +186,7 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
 
     protected fun testKafkaApplication(
         extraAssertions: Application.() -> Unit = {},
-        waitSecondsAfterApplicationStart:Int = 1,
+        waitSecondsAfterApplicationStart: Int = 1,
         pluginInstallation: Application.() -> Unit,
     ) {
         testApplication {
@@ -207,7 +207,8 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
                 val expectedSubject = "${topicName.value}-value"
                 logger.info("Making call to check subject version: $expectedSubject")
 
-                client.get("/check-subject-versions") {
+                client
+                    .get("/check-subject-versions") {
                         parameter("subject", expectedSubject)
                     }.status shouldBe OK
             }
@@ -233,10 +234,11 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
     private suspend fun collectProducedRecords(): MutableList<TestRecord> {
         val expectedRecords = mutableListOf<TestRecord>()
         repeat(invocations * testTopics.size) {
-            expectedRecords.add(recordChannel.receive().also {
-                logger.info("Received record: {}", it)
-            })
-
+            expectedRecords.add(
+                recordChannel.receive().also {
+                    logger.info("Received record: {}", it)
+                },
+            )
         }
         return expectedRecords
     }
@@ -276,7 +278,6 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
                         }
                     }
                 }
-
 
                 get("/check-subject-versions") {
                     retry(maxRetry = 10, timeout = 5.seconds, delay = 500.milliseconds) {

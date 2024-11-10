@@ -57,7 +57,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
 
       # Enable SSL Debugging
-#      KAFKA_OPTS: "-Djavax.net.debug=ssl:handshake"
+    #      KAFKA_OPTS: "-Djavax.net.debug=ssl:handshake"
 
     logging:
       driver: "json-file"
@@ -104,7 +104,7 @@ services:
       SCHEMA_REGISTRY_DEBUG: 'true'
 
       # Enable SSL Debugging
-#      KAFKA_OPTS: "-Djavax.net.debug=ssl:handshake"
+    #      KAFKA_OPTS: "-Djavax.net.debug=ssl:handshake"
 
     logging:
       driver: "json-file"

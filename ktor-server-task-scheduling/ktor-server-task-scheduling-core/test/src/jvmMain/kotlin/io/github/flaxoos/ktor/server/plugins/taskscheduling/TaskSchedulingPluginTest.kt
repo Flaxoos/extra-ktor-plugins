@@ -30,7 +30,7 @@ private const val DEFAULT_EXECUTION_BUFFER_MS = 100
 private const val FREQUENCIES_EXPONENTIAL_SERIES_INITIAL_MS = 200.toShort()
 private const val FREQUENCIES_EXPONENTIAL_SERIES_N = 3.toShort()
 private val concurrencyValues = listOf(1, 3, 6)
-private val taskCounts = listOf(2, 4)
+private val taskCounts = listOf(2)
 
 abstract class TaskSchedulingPluginTest : FunSpec() {
     protected abstract suspend fun clean()

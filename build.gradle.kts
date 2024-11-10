@@ -11,7 +11,11 @@ import ru.vyarus.gradle.plugin.python.PythonExtension
 
 plugins {
     alias(libs.plugins.nexusPublish)
-    id(libs.plugins.dokka.get().pluginId)
+    id(
+        libs.plugins.dokka
+            .get()
+            .pluginId,
+    )
     id("ru.vyarus.mkdocs-build") version "3.0.0"
 }
 

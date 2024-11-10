@@ -3,9 +3,6 @@ package io.github.flaxoos.ktor.server.plugins.kafka
 import io.github.flaxoos.ktor.server.plugins.kafka.KafkaGenericContainer.Companion.kafkaImage
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import java.io.File
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 import org.testcontainers.containers.DockerComposeContainer
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.KafkaContainer
@@ -14,6 +11,9 @@ import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 import org.testcontainers.utility.MountableFile
+import java.io.File
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 private const val CONFLUENT_PLATFORM_VERSION = "7.7.1"
 private val logger: Logger = KtorSimpleLogger(BaseKafkaIntegrationTest::class.java.simpleName)

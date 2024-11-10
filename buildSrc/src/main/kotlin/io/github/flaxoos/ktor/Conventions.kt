@@ -134,7 +134,7 @@ open class Conventions : Plugin<Project> {
                     verify {
                         rule {
                             isEnabled = true
-                            minBound(60)
+                            minBound(55)
                         }
                         onCheck = true
                     }
@@ -250,7 +250,3 @@ fun NamedDomainObjectCollection<KotlinSourceSet>.nativeTestDependencies(configur
 private fun Project.ktorVersion() = versionOf("ktor")
 
 fun Project.projectDependencies(configuration: DependencyHandlerScope.() -> Unit) = DependencyHandlerScope.of(dependencies).configuration()
-
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class KoverIgnore

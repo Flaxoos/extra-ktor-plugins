@@ -23,7 +23,6 @@ import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.HttpStatusCode.Companion.TooManyRequests
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.AuthenticationStrategy
@@ -189,7 +188,7 @@ class RateLimitingPluginTest : FunSpec() {
 
                 testRateLimiting("Should let whitelisted hosts pass", {
                     whiteListedHosts = setOf(LOCALHOST)
-                },) {
+                }) {
                     it.testCalls(
                         times = LIMIT + EXCEED,
                     ) { shouldBeOk() }
@@ -197,7 +196,7 @@ class RateLimitingPluginTest : FunSpec() {
 
                 testRateLimiting("Should let whitelisted user agents pass", {
                     whiteListedAgents = setOf(USER_AGENT)
-                },) {
+                }) {
                     it.testCalls(
                         times = LIMIT + EXCEED,
                         userAgent = USER_AGENT,
@@ -208,7 +207,7 @@ class RateLimitingPluginTest : FunSpec() {
             context("Blacklisting") {
                 testRateLimiting("Should not let blacklisted users pass", {
                     blackListedPrincipals = setOf(UserIdPrincipal(CALLER1))
-                },) {
+                }) {
                     it.testCalls(
                         times = 1,
                     ) { shouldBeForbidden() }
@@ -216,7 +215,7 @@ class RateLimitingPluginTest : FunSpec() {
 
                 testRateLimiting("Should not let blacklisted hosts pass", {
                     blackListedHosts = setOf(LOCALHOST)
-                },) {
+                }) {
                     it.testCalls(
                         times = 1,
                     ) { shouldBeForbidden() }
@@ -224,7 +223,7 @@ class RateLimitingPluginTest : FunSpec() {
 
                 testRateLimiting("Should not let blacklisted user agents pass", {
                     blackListedAgents = setOf(USER_AGENT)
-                },) {
+                }) {
                     it.testCalls(
                         times = 1,
                         userAgent = USER_AGENT,

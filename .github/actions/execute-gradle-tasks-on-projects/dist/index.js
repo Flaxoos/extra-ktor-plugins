@@ -1,18 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = {
+            enumerable: true, get: function () {
+                return m[k];
+            }
+        };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
+    Object.defineProperty(o, "default", {enumerable: true, value: v});
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || function (mod) {
@@ -22,20 +26,24 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 const core = __importStar(require("@actions/core"));
 const child_process_1 = require("child_process");
+
 class StringBuilder {
     constructor() {
         this._parts = [];
     }
+
     append(value) {
         this._parts.push(value);
     }
+
     toString() {
         return this._parts.join("");
     }
 }
+
 async function run() {
     var _a, _b;
     try {
@@ -56,8 +64,7 @@ async function run() {
         if (projects === 'buildSrc') {
             core.debug(`only buildSrc has changed, setting gradleProjectsTasks to ${tasks.replace(",", " ")}`);
             gradleProjectsTasks = `${tasks.replace(",", " ")} `;
-        }
-        else {
+        } else {
             const projArr = projects.split(',').filter((p) => p.trim() !== '');
             core.debug(`building gradleProjectsTasks with projects: ${projArr} and tasks: ${taskArr}`);
             if (taskArr.length === 0 && !rootProjectTask) {
@@ -74,8 +81,7 @@ async function run() {
                         return acc2 + `:${proj}:${task} `;
                     }, '');
                 }, '');
-            }
-            else {
+            } else {
                 gradleProjectsTasks = taskArr.reduce((acc1, task) => {
                     return acc1 + `${task} `;
                 }, '');
@@ -101,16 +107,15 @@ async function run() {
             gradleChild.on('exit', (code, signal) => {
                 if (code !== 0) {
                     reject(new Error(`Gradle exited with code ${code} due to signal ${signal}`));
-                }
-                else {
+                } else {
                     resolve(gradleOutputBuilder.toString());
                 }
             });
         });
         core.setOutput('gradle_output', await processPromise);
-    }
-    catch (error) {
+    } catch (error) {
         core.setFailed(error.message);
     }
 }
+
 run();

@@ -70,9 +70,11 @@ class TokenBucket(
         logger.debug { "${call.id()}: Maybe adding tokens" }
         increaseVolume(call, shouldUpdateTime = true, by = callVolumeUnit.size.toDouble()) { timeSinceLastUpdate ->
             logger.debug {
-                "${call.id()}: Checking if should add tokens: ${Instant.fromEpochMilliseconds(
-                    clock(),
-                )}, time since last update: $timeSinceLastUpdate"
+                "${call.id()}: Checking if should add tokens: ${
+                    Instant.fromEpochMilliseconds(
+                        clock(),
+                    )
+                }, time since last update: $timeSinceLastUpdate"
             }
             if (this > 0) {
                 ((timeSinceLastUpdate / rate.inWholeMilliseconds) * this) * callVolumeUnit.size()

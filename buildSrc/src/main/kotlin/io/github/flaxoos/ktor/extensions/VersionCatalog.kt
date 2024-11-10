@@ -7,13 +7,36 @@ import org.gradle.kotlin.dsl.the
 fun Project.libs() = project.the<VersionCatalogsExtension>().find("libs")
 
 fun Project.versionOf(version: String): String =
-    this.libs().get().findVersion(version).get().toString()
+    this
+        .libs()
+        .get()
+        .findVersion(version)
+        .get()
+        .toString()
 
 fun Project.library(name: String): String =
-    this.libs().get().findLibrary(name).get().get().toString()
+    this
+        .libs()
+        .get()
+        .findLibrary(name)
+        .get()
+        .get()
+        .toString()
 
 fun Project.bundle(name: String): String =
-    this.libs().get().findBundle(name).get().get().toString()
+    this
+        .libs()
+        .get()
+        .findBundle(name)
+        .get()
+        .get()
+        .toString()
 
 fun Project.plugin(name: String): String =
-    this.libs().get().findPlugin(name).get().get().pluginId
+    this
+        .libs()
+        .get()
+        .findPlugin(name)
+        .get()
+        .get()
+        .pluginId

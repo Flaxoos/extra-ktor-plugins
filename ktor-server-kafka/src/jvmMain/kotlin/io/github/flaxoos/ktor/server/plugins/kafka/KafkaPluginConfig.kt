@@ -92,14 +92,15 @@ class KafkaConfig : AbstractKafkaConfig() {
             }
         }
     }
-    override val adminProperties: KafkaProperties? get() =
-        adminPropertiesBuilder
-            ?.build()
-            ?.propertiesContext(this@KafkaConfig)
-            ?.withSslProperties(adminSslPropertiesBuilder)
-            ?.withDefaultAdminConfig()
-            ?.delegatingToCommon()
-            ?.kafkaProperties
+    override val adminProperties: KafkaProperties?
+        get() =
+            adminPropertiesBuilder
+                ?.build()
+                ?.propertiesContext(this@KafkaConfig)
+                ?.withSslProperties(adminSslPropertiesBuilder)
+                ?.withDefaultAdminConfig()
+                ?.delegatingToCommon()
+                ?.kafkaProperties
 
     override val producerProperties: KafkaProperties? by lazy {
         producerPropertiesBuilder

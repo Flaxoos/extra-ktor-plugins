@@ -12,6 +12,7 @@ class StringBuilder {
         return this._parts.join("");
     }
 }
+
 async function run() {
     try {
         let projects = core.getInput('projects');

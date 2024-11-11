@@ -1,62 +1,49 @@
 ---
 title: RateLimitingConfiguration
 ---
+
 //[extra-ktor-plugins](../../../index.md)/[io.github.flaxoos.ktor.server.plugins.ratelimiter](../index.md)/[RateLimitingConfiguration](index.md)
 
-
-
 # RateLimitingConfiguration
-
-
 
 [common]\
 class [RateLimitingConfiguration](index.md)
 
 Rate limit plugin configuration.
 
-
-
-Be careful using whitelisting, as the caller can abuse it by overriding the host or user-agent by manipulating the headers, it is safest to use Principal whitelisting, as it relies on authentication.
-
-
+Be careful using whitelisting, as the caller can abuse it by overriding the host or user-agent by manipulating the
+headers, it is safest to use Principal whitelisting, as it relies on authentication.
 
 ## Constructors
 
-
-| | |
-|---|---|
+|                                                              |                           |
+|--------------------------------------------------------------|---------------------------|
 | [RateLimitingConfiguration](-rate-limiting-configuration.md) | [common]<br>constructor() |
-
 
 ## Types
 
-
-| Name | Summary |
-|---|---|
+| Name                                                             | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+|------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [RateLimiterConfiguration](-rate-limiter-configuration/index.md) | [common]<br>class [RateLimiterConfiguration](-rate-limiter-configuration/index.md)(var type: [KClass](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.md)&lt;out [RateLimiter](../-rate-limiter/index.md)&gt; = TokenBucket::class, var rate: [Duration](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.time/-duration/index.md) = INFINITE, var capacity: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md) = Int.MAX_VALUE, var clock: () -&gt; [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.md) = { now().toEpochMilliseconds() }, var callVolumeUnit: [CallVolumeUnit](../-call-volume-unit/index.md) = CallVolumeUnit.Calls()) |
-
 
 ## Properties
 
-
-| Name | Summary |
-|---|---|
-| [blackListedAgents](black-listed-agents.md) | [common]<br>var [blackListedAgents](black-listed-agents.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)&gt;<br>Any user-agents that are blacklisted, i.e. will not be allowed through in any case, handled by [blackListedCallerCallHandler](black-listed-caller-call-handler.md) |
-| [blackListedCallerCallHandler](black-listed-caller-call-handler.md) | [common]<br>var [blackListedCallerCallHandler](black-listed-caller-call-handler.md): suspend [RateLimitingConfiguration](index.md).(ApplicationCall) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)<br>The call handler for blacklisted Callers, use to define the response for blacklisted Callers, default is respond with 403 |
-| [blackListedHosts](black-listed-hosts.md) | [common]<br>var [blackListedHosts](black-listed-hosts.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)&gt;<br>Any Hosts that are blacklisted, i.e. will not be allowed through in any case, handled by [blackListedCallerCallHandler](black-listed-caller-call-handler.md) |
-| [blackListedPrincipals](black-listed-principals.md) | [common]<br>var [blackListedPrincipals](black-listed-principals.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;Principal&gt;<br>Any Principals that are blacklisted, i.e. will not be allowed through in any case, handled by [blackListedCallerCallHandler](black-listed-caller-call-handler.md) |
-| [callAcceptedHandler](call-accepted-handler.md) | [common]<br>val [callAcceptedHandler](call-accepted-handler.md): suspend ApplicationCall.([RateLimiterResponse.NotLimited](../-rate-limiter-response/-not-limited/index.md)) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)<br>The call handler for accepted calls, use to define the response for accepted calls, by default, adds appropriate X-RateLimit headers |
-| [excludePaths](exclude-paths.md) | [common]<br>var [excludePaths](exclude-paths.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[Regex](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.text/-regex/index.md)&gt;<br>Regexes for paths to exclude from this rate limiter |
-| [rateLimitExceededHandler](rate-limit-exceeded-handler.md) | [common]<br>val [rateLimitExceededHandler](rate-limit-exceeded-handler.md): suspend ApplicationCall.([RateLimiterResponse.LimitedBy](../-rate-limiter-response/-limited-by/index.md)) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)<br>The call handler for rate limited IPs, use to define the response for rate limited IPs. The default is to respond with 429 and appropriate X-RateLimit headers |
-| [whiteListedAgents](white-listed-agents.md) | [common]<br>var [whiteListedAgents](white-listed-agents.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)&gt;<br>Any user-agents that are whitelisted, i.e. will be allowed through without rate limiting |
-| [whiteListedHosts](white-listed-hosts.md) | [common]<br>var [whiteListedHosts](white-listed-hosts.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)&gt;<br>Any Hosts that are whitelisted, i.e. will be allowed through without rate limiting |
-| [whiteListedPrincipals](white-listed-principals.md) | [common]<br>var [whiteListedPrincipals](white-listed-principals.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;Principal&gt;<br>Any Principals that are whitelisted, i.e. will be allowed through without rate limiting |
-
+| Name                                                                | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [blackListedAgents](black-listed-agents.md)                         | [common]<br>var [blackListedAgents](black-listed-agents.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)&gt;<br>Any user-agents that are blacklisted, i.e. will not be allowed through in any case, handled by [blackListedCallerCallHandler](black-listed-caller-call-handler.md)                            |
+| [blackListedCallerCallHandler](black-listed-caller-call-handler.md) | [common]<br>var [blackListedCallerCallHandler](black-listed-caller-call-handler.md): suspend [RateLimitingConfiguration](index.md).(ApplicationCall) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)<br>The call handler for blacklisted Callers, use to define the response for blacklisted Callers, default is respond with 403                                                                       |
+| [blackListedHosts](black-listed-hosts.md)                           | [common]<br>var [blackListedHosts](black-listed-hosts.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)&gt;<br>Any Hosts that are blacklisted, i.e. will not be allowed through in any case, handled by [blackListedCallerCallHandler](black-listed-caller-call-handler.md)                                    |
+| [blackListedPrincipals](black-listed-principals.md)                 | [common]<br>var [blackListedPrincipals](black-listed-principals.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;Principal&gt;<br>Any Principals that are blacklisted, i.e. will not be allowed through in any case, handled by [blackListedCallerCallHandler](black-listed-caller-call-handler.md)                                                                                          |
+| [callAcceptedHandler](call-accepted-handler.md)                     | [common]<br>val [callAcceptedHandler](call-accepted-handler.md): suspend ApplicationCall.([RateLimiterResponse.NotLimited](../-rate-limiter-response/-not-limited/index.md)) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)<br>The call handler for accepted calls, use to define the response for accepted calls, by default, adds appropriate X-RateLimit headers                                    |
+| [excludePaths](exclude-paths.md)                                    | [common]<br>var [excludePaths](exclude-paths.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[Regex](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.text/-regex/index.md)&gt;<br>Regexes for paths to exclude from this rate limiter                                                                                                                                                   |
+| [rateLimitExceededHandler](rate-limit-exceeded-handler.md)          | [common]<br>val [rateLimitExceededHandler](rate-limit-exceeded-handler.md): suspend ApplicationCall.([RateLimiterResponse.LimitedBy](../-rate-limiter-response/-limited-by/index.md)) -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)<br>The call handler for rate limited IPs, use to define the response for rate limited IPs. The default is to respond with 429 and appropriate X-RateLimit headers |
+| [whiteListedAgents](white-listed-agents.md)                         | [common]<br>var [whiteListedAgents](white-listed-agents.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)&gt;<br>Any user-agents that are whitelisted, i.e. will be allowed through without rate limiting                                                                                                      |
+| [whiteListedHosts](white-listed-hosts.md)                           | [common]<br>var [whiteListedHosts](white-listed-hosts.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)&gt;<br>Any Hosts that are whitelisted, i.e. will be allowed through without rate limiting                                                                                                              |
+| [whiteListedPrincipals](white-listed-principals.md)                 | [common]<br>var [whiteListedPrincipals](white-listed-principals.md): [Set](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.md)&lt;Principal&gt;<br>Any Principals that are whitelisted, i.e. will be allowed through without rate limiting                                                                                                                                                                    |
 
 ## Functions
 
-
-| Name | Summary |
-|---|---|
+| Name                           | Summary                                                                                                                                                                                                                                       |
+|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [rateLimiter](rate-limiter.md) | [common]<br>fun [rateLimiter](rate-limiter.md)(configuration: [RateLimitingConfiguration.RateLimiterConfiguration](-rate-limiter-configuration/index.md).() -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.md)) |
 

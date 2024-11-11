@@ -27,6 +27,8 @@ internal class CircuitBreaker(
     private val resetInterval: Duration = config.resetInterval
     private val failureTrigger = config.failureTrigger
     private val failureCounter = atomic(0)
+
+    @Suppress("ktlint:standard:backing-property-naming")
     private val _state = atomic(CLOSED)
     private val responseDecorator: HttpResponse.() -> Unit = {}
 
@@ -75,12 +77,16 @@ internal class CircuitBreaker(
         logger.trace("Finished handling response status ${response.status.value}")
     }
 
-    private fun handleResponse(state: CircuitBreakerState, response: HttpResponse) {
-        val selectedFailureThreshold = when (state) {
-            CLOSED -> failureThreshold
-            HALF_OPEN -> halfOpenFailureThreshold
-            OPEN -> error("Circuit breaker is already open")
-        }
+    private fun handleResponse(
+        state: CircuitBreakerState,
+        response: HttpResponse,
+    ) {
+        val selectedFailureThreshold =
+            when (state) {
+                CLOSED -> failureThreshold
+                HALF_OPEN -> halfOpenFailureThreshold
+                OPEN -> error("Circuit breaker is already open")
+            }
         val failureCount = failureCounter.value
         if (failureCount < selectedFailureThreshold) {
             if (!response.failureTrigger()) {
@@ -122,8 +128,11 @@ internal class CircuitBreaker(
 }
 
 internal enum class CircuitBreakerState {
-    CLOSED, OPEN, HALF_OPEN
+    CLOSED,
+    OPEN,
+    HALF_OPEN,
 }
 
-class CircuitBreakerException(failureThreshold: Int) :
-    Exception("Action failed more than $failureThreshold times, subsequent calls will be prevented until action is successful again")
+class CircuitBreakerException(
+    failureThreshold: Int,
+) : Exception("Action failed more than $failureThreshold times, subsequent calls will be prevented until action is successful again")

@@ -12,9 +12,10 @@ import org.testcontainers.utility.DockerImageName
 
 class MongodbLockManagerTest : TaskSchedulingPluginTest() {
     private val mongodb = MongoDBContainer(DockerImageName.parse("mongo:6.0.4"))
-    private val mongodbContainer = install(ContainerExtension(mongodb)) {
-        waitingFor(Wait.forListeningPort())
-    }
+    private val mongodbContainer =
+        install(ContainerExtension(mongodb)) {
+            waitingFor(Wait.forListeningPort())
+        }
     private val mongoClient = MongoClient.create(mongodbContainer.connectionString)
 
     override suspend fun clean() {

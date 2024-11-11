@@ -30,6 +30,7 @@ kotlin {
                 api(libs.kafka.schema.registry.client)
                 api(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.cio)
+                implementation(libs.ktor.client.java)
                 implementation(libs.ktor.client.contentNegotiation)
             }
         }

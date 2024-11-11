@@ -8,7 +8,6 @@ import kotlin.jvm.JvmInline
 import kotlin.time.Duration
 
 abstract class RateLimiter {
-
     /**
      * Desired change over time
      */
@@ -74,9 +73,12 @@ interface CallVolumeUnit {
      * Volume is measured in number of calls, with an optional call weighting function to give more weight to a call
      * based on any of it's properties
      */
-    open class Calls(val callWeighting: ApplicationCall.() -> Double = { 1.0 }) : CallVolumeUnit {
+    open class Calls(
+        val callWeighting: ApplicationCall.() -> Double = { 1.0 },
+    ) : CallVolumeUnit {
         override val name = "calls"
         override val size: Int = 1
+
         override suspend fun callSize(call: ApplicationCall) = this.callWeighting(call)
     }
 
@@ -84,7 +86,9 @@ interface CallVolumeUnit {
      * Volume is measured in number of bytes of request
      */
     @JvmInline
-    value class Bytes(override val size: Int) : CallVolumeUnit {
+    value class Bytes(
+        override val size: Int,
+    ) : CallVolumeUnit {
         override val name: String
             get() = "bytes"
 

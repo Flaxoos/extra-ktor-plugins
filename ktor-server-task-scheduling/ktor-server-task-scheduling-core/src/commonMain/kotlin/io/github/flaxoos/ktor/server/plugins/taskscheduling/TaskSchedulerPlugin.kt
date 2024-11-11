@@ -57,7 +57,8 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.initializeTaskManagers(ta
                         manager.init(tasks)
                         tasks.toList()
                     }
-            } ?: error("Configuration verification did not check for missing task managers assigned to tasks, this is a bug")
+            }
+                ?: error("Configuration verification did not check for missing task managers assigned to tasks, this is a bug")
         }.toMap()
 
 private fun PluginBuilder<TaskSchedulingConfiguration>.checkTaskMangerAssignments(taskManagers: List<TaskManager<*>>) {

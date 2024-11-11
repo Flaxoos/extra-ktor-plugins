@@ -73,7 +73,7 @@ class RateLimitingConfiguration {
     /**
      * The call handler for accepted calls, use to define the response for accepted calls, by default, adds appropriate X-RateLimit headers
      */
-    val callAcceptedHandler: suspend ApplicationCall.(RateLimiterResponse.NotLimited) -> Unit = {
+    var callAcceptedHandler: suspend ApplicationCall.(RateLimiterResponse.NotLimited) -> Unit = {
         response.headers.append("$X_RATE_LIMIT-Remaining", "${it.remaining}")
         response.headers.append("$X_RATE_LIMIT-Measured-by", it.rateLimiter.callVolumeUnit.name)
     }
@@ -81,7 +81,7 @@ class RateLimitingConfiguration {
     /**
      * The call handler for rate limited IPs, use to define the response for rate limited IPs. The default is to respond with 429 and appropriate X-RateLimit headers
      */
-    val rateLimitExceededHandler: suspend ApplicationCall.(RateLimiterResponse.LimitedBy) -> Unit =
+    var rateLimitExceededHandler: suspend ApplicationCall.(RateLimiterResponse.LimitedBy) -> Unit =
         { rateLimiterResponse ->
             respond(HttpStatusCode.TooManyRequests, "$RATE_LIMIT_EXCEEDED_MESSAGE: ${rateLimiterResponse.message}")
             this.response.headers.append("$X_RATE_LIMIT-Limit", "${rateLimiterResponse.rateLimiter.capacity}")
@@ -169,7 +169,7 @@ class RateLimitingConfiguration {
                             clock = clock,
                         )
                     }
-                    )
+                )
 
                 TokenBucket::class -> (
                     {
@@ -180,7 +180,7 @@ class RateLimitingConfiguration {
                             clock = clock,
                         )
                     }
-                    )
+                )
 
                 else -> {
                     error("Unsupported provider type: $type")

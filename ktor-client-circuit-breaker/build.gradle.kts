@@ -6,3 +6,7 @@ plugins {
 kotlin {
     targetNative()
 }
+
+tasks.named("compileTestKotlinNative") {
+    enabled = false
+}

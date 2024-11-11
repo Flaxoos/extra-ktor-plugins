@@ -15,13 +15,13 @@ fun Project.enableContextReceivers() {
     }
 }
 
-
 fun Project.setLanguageAndApiVersions() {
     tasks.withType(KotlinCompilationTask::class) {
         compilerOptions {
-            val gradleKotlinVersion = KotlinVersion.valueOf(
-                KOTLIN.uppercase() + "_" + versionOf(KOTLIN).substringBeforeLast(".").replace(".", "_")
-            )
+            val gradleKotlinVersion =
+                KotlinVersion.valueOf(
+                    KOTLIN.uppercase() + "_" + versionOf(KOTLIN).substringBeforeLast(".").replace(".", "_"),
+                )
             languageVersion.set(gradleKotlinVersion)
             apiVersion.set(gradleKotlinVersion)
         }

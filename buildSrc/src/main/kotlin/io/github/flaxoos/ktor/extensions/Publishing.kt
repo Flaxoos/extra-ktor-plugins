@@ -1,5 +1,6 @@
 package io.github.flaxoos.ktor.extensions
 
+import java.util.Base64
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
@@ -14,7 +15,6 @@ import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.Sign
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
-import java.util.Base64
 
 private const val DOKKA = "dokka"
 private const val DOKKA_JAR_TASK_NAME = "${DOKKA}Jar"

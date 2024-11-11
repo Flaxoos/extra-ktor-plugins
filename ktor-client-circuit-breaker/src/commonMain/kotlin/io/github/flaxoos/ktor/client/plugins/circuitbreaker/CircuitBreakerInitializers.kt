@@ -22,10 +22,11 @@ fun CircuitBreakerConfig.register(
  */
 @CircuitBreakerDsl
 fun CircuitBreakerConfig.global(config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit) {
-    global = CircuitBreaker(
-        CIRCUIT_BREAKER_NAME_GLOBAL,
-        CircuitBreakerConfig.CircuitBreakerBuilder().apply(config),
-    )
+    global =
+        CircuitBreaker(
+            CIRCUIT_BREAKER_NAME_GLOBAL,
+            CircuitBreakerConfig.CircuitBreakerBuilder().apply(config),
+        )
 }
 
 /**
@@ -43,12 +44,11 @@ fun HttpRequestBuilder.withCircuitBreaker(name: CircuitBreakerName = CIRCUIT_BRE
 suspend fun HttpClient.requestWithCircuitBreaker(
     name: CircuitBreakerName = CIRCUIT_BREAKER_NAME_GLOBAL,
     block: HttpRequestBuilder.() -> Unit,
-): HttpResponse {
-    return request {
+): HttpResponse =
+    request {
         withCircuitBreaker(name)
         block()
     }
-}
 
 /**
  * Adds a [CircuitBreaker] to a [ConcurrentMap]

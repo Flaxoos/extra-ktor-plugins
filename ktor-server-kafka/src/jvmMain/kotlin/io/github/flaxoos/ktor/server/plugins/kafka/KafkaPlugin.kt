@@ -141,21 +141,21 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafka(pluginConfig: 
     try {
         pluginConfig.adminProperties?.createKafkaAdminClient()
     } catch (e: Exception) {
-        failCreatingClient("admin client", pluginConfig.adminProperties!!)
+        failCreatingClient("admin client", pluginConfig.adminProperties!!, e)
         return
     }?.also {
         application.attributes.put(AdminClientAttributeKey, it)
         application.log.info("Kafka admin setup finished")
         runBlocking(Dispatchers.IO) {
             CoroutineScopedAdminClient(it).createKafkaTopics(topicBuilders = pluginConfig.topics) {
-                application.log.info("Created Topics: $first")
+                application.log.info("Created Topic: $first")
             }
         }
     }
     try {
         pluginConfig.producerProperties?.createProducer()
     } catch (e: Exception) {
-        failCreatingClient("producer", pluginConfig.producerProperties!!)
+        failCreatingClient("producer", pluginConfig.producerProperties!!, e)
         return
     }?.also {
         application.attributes.put(ProducerAttributeKey, it)
@@ -166,7 +166,7 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafka(pluginConfig: 
         try {
             pluginConfig.consumerProperties?.createConsumer()
         } catch (e: Exception) {
-            failCreatingClient("consumer", pluginConfig.consumerProperties!!)
+            failCreatingClient("consumer", pluginConfig.consumerProperties!!, e)
             return
         }?.also { consumer ->
             application.attributes.put(ConsumerAttributeKey, consumer)
@@ -182,13 +182,17 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafka(pluginConfig: 
 private fun <T : AbstractKafkaConfig> PluginBuilder<T>.failCreatingClient(
     clientName: String,
     clientProperties: KafkaProperties,
+    exception: Exception,
 ) {
-    application.coroutineContext.cancel(
-        CancellationException(
-            "Failed creating kafka $clientName using properties: " +
-                clientProperties.entries.joinToString { "${it.key}: ${it.value}\n" },
-        ),
-    )
+    val message = "Failed creating kafka $clientName: ${exception.message}.\nProperties used:\n\t${
+        clientProperties.entries.joinToString(
+            "\n\t",
+        ) {
+            "${it.key}: ${it.value}"
+        }
+    }"
+    application.log.error(message, exception)
+    application.coroutineContext.cancel(CancellationException(message))
 }
 
 private fun <T : AbstractKafkaConfig> PluginBuilder<T>.onStop() {
@@ -208,31 +212,38 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.onStop() {
         runCatching {
             application.kafkaConsumerJob?.let {
                 if (it.isActive) {
-                    closeConsumer()
                     it.cancel()
                 }
+                application.log.info("Kafka consumer job is inactive")
             }
         }.onFailure {
             if (it !is CancellationException) {
                 application.log.error("Error closing kafka consumer", it)
             }
         }
+
+        runCatching {
+            application.schemaRegistryClient?.let {
+                it.client.close()
+                application.log.info("Closed schema registry client")
+            }
+        }.onFailure {
+            application.log.error("Error closing schema registry client", it)
+        }
     }
 }
 
-private fun <T : AbstractKafkaConfig> PluginBuilder<T>.closeConsumer() {
+private suspend fun <T : AbstractKafkaConfig> PluginBuilder<T>.closeConsumer() {
     val consumer = application.kafkaConsumer
-    runBlocking(application.coroutineContext) {
-        application.log.info("Closing kafka consumer")
-        with(
-            checkNotNull(pluginConfig.consumerConfig) {
-                "Consumer config changed to null during application start, this shouldn't happen"
-            },
-        ) {
-            // Let it finish one round to avoid race condition
-            delay(consumerPollFrequency)
-            consumer?.close()
-        }
+    application.log.info("Closing kafka consumer")
+    with(
+        checkNotNull(pluginConfig.consumerConfig) {
+            "Consumer config changed to null during application start, this shouldn't happen"
+        },
+    ) {
+        // Let it finish one round to avoid race condition
+        delay(consumerPollFrequency)
+        consumer?.close()
     }
     application.log.info("Closed kafka consumer")
 }
@@ -269,6 +280,8 @@ private fun <T : AbstractKafkaConfig> PluginBuilder<T>.onStart() {
                             .also {
                                 application.attributes.put(ConsumerJob, it)
                                 application.log.info("Started kafka consumer")
+                            }.invokeOnCompletion {
+                                application.log.info("Stopped kafka consumer")
                             }
                     }.onFailure {
                         application.log.error("Error starting kafka consumer", it)

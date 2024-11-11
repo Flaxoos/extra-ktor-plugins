@@ -1,9 +1,12 @@
 # Circuit Breaker Plugin for Ktor Client
+
 <a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/ktor-client-circuit-breaker/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/93.58-green?logo=kotlin&label=koverage&style=flat)</a>
 
 ---
 
-The Circuit Breaker pattern is a crucial part of modern software architecture, allowing you to gracefully handle potential failures when communicating with external services. The Ktor Circuit Breaker plugin is an implementation of this pattern, providing you with an easy way to incorporate this mechanism into your Ktor clients.
+The Circuit Breaker pattern is a crucial part of modern software architecture, allowing you to gracefully handle
+potential failures when communicating with external services. The Ktor Circuit Breaker plugin is an implementation of
+this pattern, providing you with an easy way to incorporate this mechanism into your Ktor clients.
 
 ---
 
@@ -17,9 +20,11 @@ The Circuit Breaker pattern is a crucial part of modern software architecture, a
 
 ## How to Use:
 
-You can configure the Circuit Breaker plugin during the installation phase of the HttpClient. Both global and named configurations can be set.
+You can configure the Circuit Breaker plugin during the installation phase of the HttpClient. Both global and named
+configurations can be set.
 
-Global, if registered, will be the default choice, whereas registering with a specific name allows you to apply it to specific services
+Global, if registered, will be the default choice, whereas registering with a specific name allows you to apply it to
+specific services
 
 ```kotlin
 HttpClient {
@@ -39,7 +44,7 @@ HttpClient {
 }
 ```
 
-You can then make requests using the circuit breaker, either by calling `HttpClient.requestWithCircuitBreaker` 
+You can then make requests using the circuit breaker, either by calling `HttpClient.requestWithCircuitBreaker`
 
 ```kotlin
 client.requestWithCircuitBreaker {
@@ -53,7 +58,8 @@ client.requestWithCircuitBreaker(name = "strict".toCircuitBreakerName()) {
 }
 ```
 
-Or `HttpRequestBuilder.withCircuitBreaker` 
+Or `HttpRequestBuilder.withCircuitBreaker`
+
 ```kotlin
 client.get("https://service.com") {
    withCircuitBreaker()
@@ -68,7 +74,8 @@ client.get("https://unreliable-service.com") {
 
 The following are the configurable parameters:
 
-- `failureThreshold`: The number of failures allowed before moving the circuit to the `HALF_OPEN` state for the global configuration.
+- `failureThreshold`: The number of failures allowed before moving the circuit to the `HALF_OPEN` state for the global
+  configuration.
 
 - `halfOpenFailureThreshold`: The number of failures allowed in the `HALF_OPEN` state for the global configuration.
 

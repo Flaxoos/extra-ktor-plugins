@@ -76,8 +76,8 @@ fun KafkaConfig.commonSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
  * Sets a specific SSL configuration for the admin client.
  */
 @KafkaDsl
-fun KafkaConfig.adminSsl(configuration: SslPropertiesBuilder.() -> Unit) {
-    adminSslPropertiesBuilder = SslPropertiesBuilder().apply(configuration)
+fun KafkaConfig.adminSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
+    adminSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
 
 /**
@@ -117,7 +117,7 @@ fun KafkaConfig.commonSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) 
  */
 @KafkaDsl
 fun KafkaConfig.adminSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
-    adminSaslPropertiesBuilder = SaslPropertiesBuilderPair().apply(configuration)
+    adminSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
 }
 
 /**

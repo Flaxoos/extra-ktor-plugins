@@ -97,7 +97,7 @@ class KafkaConfig : AbstractKafkaConfig() {
             adminPropertiesBuilder
                 ?.build()
                 ?.propertiesContext(this@KafkaConfig)
-                ?.withSslProperties(adminSslPropertiesBuilder)
+                ?.withSslProperties(adminSslPropertiesBuilderPair)
                 ?.withDefaultAdminConfig()
                 ?.delegatingToCommon()
                 ?.kafkaProperties
@@ -131,14 +131,14 @@ class KafkaConfig : AbstractKafkaConfig() {
 
     // SSL Configurations
     internal var commonSslPropertiesBuilderPair: SslPropertiesBuilderPair? = null
-    internal var adminSslPropertiesBuilder: SslPropertiesBuilder? = null
+    internal var adminSslPropertiesBuilderPair: SslPropertiesBuilderPair? = null
     internal var producerSslPropertiesBuilderPair: SslPropertiesBuilderPair? = null
     internal var consumerSslPropertiesBuilderPair: SslPropertiesBuilderPair? = null
     internal var schemaRegistryClientSslPropertiesBuilder: SslPropertiesBuilder? = null
 
     // SASL Configurations
     internal var commonSaslPropertiesBuilderPair: SaslPropertiesBuilderPair? = null
-    internal var adminSaslPropertiesBuilder: SaslPropertiesBuilderPair? = null
+    internal var adminSaslPropertiesBuilderPair: SaslPropertiesBuilderPair? = null
     internal var producerSaslPropertiesBuilderPair: SaslPropertiesBuilderPair? = null
     internal var consumerSaslPropertiesBuilderPair: SaslPropertiesBuilderPair? = null
     internal var schemaRegistryClientSaslPropertiesBuilder: SaslPropertiesBuilder? = null

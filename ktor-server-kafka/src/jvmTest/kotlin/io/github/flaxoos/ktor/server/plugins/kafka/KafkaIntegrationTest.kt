@@ -118,3 +118,4 @@ data class TestRecord(
     val id: Int,
     val topic: String,
 )
+

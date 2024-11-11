@@ -42,6 +42,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
 import java.io.File
 import java.util.Properties
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -267,7 +268,7 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
                                 TestRecord(topicIdCounters[topic]?.inc() ?: error("topic not counted"), topic.value)
                             val genericRecord = testRecord.toRecord()
                             val record = ProducerRecord(topic.value, "testKey", genericRecord)
-                            with(call.application.kafkaProducer.shouldNotBeNull()) { send(record) }
+                            with(call.application.kafkaProducer.shouldNotBeNull()) { send(record).get(100, TimeUnit.MILLISECONDS) }
                             logger.debug("Produced record: {}", record)
                             call.respond(testRecord)
                         }

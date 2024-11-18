@@ -49,7 +49,7 @@ detekt = "1.23.1"
 kotlinx-datetime = "0.4.0"
 
 # Functional Programming
-arrow = "1.2.0"
+arrow = "1.2.4"
 
 # Messaging
 kafka = "3.5.1"

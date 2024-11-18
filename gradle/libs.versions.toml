@@ -72,7 +72,7 @@ nexusPublish = "2.0.0-rc-1"
 
 # Miscellaneous
 krontab = "2.2.1"
-uuid = "0.8.1"
+uuid = "0.8.4"
 
 [libraries]
 # Core libraries

@@ -83,13 +83,13 @@ class RateLimitingConfiguration {
      */
     var rateLimitExceededHandler: suspend ApplicationCall.(RateLimiterResponse.LimitedBy) -> Unit =
         { rateLimiterResponse ->
-            respond(HttpStatusCode.TooManyRequests, "$RATE_LIMIT_EXCEEDED_MESSAGE: ${rateLimiterResponse.message}")
             this.response.headers.append("$X_RATE_LIMIT-Limit", "${rateLimiterResponse.rateLimiter.capacity}")
             this.response.headers.append(
                 "$X_RATE_LIMIT-Measured-by",
                 rateLimiterResponse.rateLimiter.callVolumeUnit.name,
             )
             this.response.headers.append("$X_RATE_LIMIT-Reset", "${rateLimiterResponse.resetIn.inWholeMilliseconds}")
+            respond(HttpStatusCode.TooManyRequests, "$RATE_LIMIT_EXCEEDED_MESSAGE: ${rateLimiterResponse.message}")
         }
 
     /**

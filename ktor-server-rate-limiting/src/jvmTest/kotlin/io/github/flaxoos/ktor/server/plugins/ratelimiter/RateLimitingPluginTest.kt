@@ -11,6 +11,7 @@ import io.kotest.core.spec.style.scopes.FunSpecContainerScope
 import io.kotest.datatest.withData
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainOnly
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.ktor.client.HttpClient
@@ -347,6 +348,7 @@ class RateLimitingPluginTest : FunSpec() {
         withClue("Should be limited") {
             logErrors()
             map { it.status } shouldContain TooManyRequests
+            flatMap { it.headers.names() } shouldContainAll listOf("X-RateLimit-Limit", "X-RateLimit-Measured-by", "X-RateLimit-Reset")
         }
     }
 

@@ -43,8 +43,8 @@ routing {
       whiteListedHosts = setOf("trusted-host.com")
       blackListedAgents = setOf("malicious-agent")
       rateLimitExceededHandler = { rateLimiterResponse ->
+        ...
         respond(HttpStatusCode.TooManyRequests, rateLimiterResponse.message)
-          ...
       }
     }
     
@@ -92,10 +92,10 @@ routing {
 
     rateLimitExceededHandler = { limitedBy ->
         // Respond with a 429 status and appropriate headers for rate-limited callers
-        respond(HttpStatusCode.TooManyRequests, "Rate limit exceeded: ${limitedBy.message}")
         response.headers.append("X-RateLimit-Limit", "${limitedBy.rateLimiter.capacity}")
         response.headers.append("X-RateLimit-Measured-by", limitedBy.rateLimiter.callVolumeUnit.name)
         response.headers.append("X-RateLimit-Reset", "${limitedBy.resetIn.inWholeMilliseconds}")
+        respond(HttpStatusCode.TooManyRequests, "Rate limit exceeded: ${limitedBy.message}")
     }
 
 ```

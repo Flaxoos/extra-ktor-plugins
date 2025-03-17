@@ -1,22 +1,22 @@
 [versions]
 # Core technologies
-kotlin = "2.0.20"
-java = "11"
-kotlinx-serialization = "1.7.3"
-kotlinx-io = "0.3.0"
-ksp = "1.9.10-1.0.13"
+kotlin = "2.1.10"
+java = "17"
+kotlinx-serialization = "1.8.0"
+kotlinx-io = "0.7.0"
+ksp = "2.1.10-1.0.31"
 
 # Web Framework
-ktor = "3.0.0"
+ktor = "3.1.1"
 
 # Android
 android = "8.1.0"
 
 # Database
-h2 = "2.2.224"
-postgres = "42.6.0"
-exposed = "0.44.0"
-mongodb = "5.2.0"
+h2 = "2.3.232"
+postgres = "42.7.5"
+exposed = "0.60.0"
+mongodb = "5.3.1"
 
 # Logging
 logback = "1.5.12"
@@ -24,8 +24,8 @@ kotlin-logging = "5.1.0"
 logging_capabilities = "0.11.1"
 
 # Asynchronous and Concurrency
-atomicfu = "0.25.0"
-kotlinx-coroutines = "1.9.0"
+atomicfu = "0.27.0"
+kotlinx-coroutines = "1.10.1"
 
 # Testing
 #kotest = "6.0.0.M1"
@@ -35,7 +35,7 @@ kotest-test-containers = "2.0.2"
 mockk = "1.13.4"
 mockative = "2.0.1"
 kmock = "0.3.0-rc08"
-testcontainers = "1.19.8"
+testcontainers = "1.20.6"
 redis-testcontainers = "1.6.4"
 
 # Code Quality and Coverage
@@ -46,10 +46,11 @@ koverBadge = "0.0.6"
 detekt = "1.23.1"
 
 # Date and Time
-kotlinx-datetime = "0.4.0"
+kotlinx-datetime = "0.6.2"
 
 # Functional Programming
 arrow = "1.2.0"
+reactor = "3.7.4"
 
 # Messaging
 kafka = "3.5.1"
@@ -60,6 +61,8 @@ avro = "1.12.0"
 # Redis
 kreds = "0.9.1"
 redis-mp-client = "0.0.3"
+microutils = "3.0.5" # required for kreds lib that doesn't expose via api() - https://github.com/crackthecodeabhi/kreds/blob/main/build.gradle.kts#L74-L76
+netty = "4.1.104.Final" # required for kreds lib that doesn't expose via api() - https://github.com/crackthecodeabhi/kreds/blob/main/build.gradle.kts#L74-L76
 
 # Documentation
 dokka = "1.9.10"
@@ -71,8 +74,8 @@ gradle-release = "3.0.2"
 nexusPublish = "2.0.0-rc-1"
 
 # Miscellaneous
-krontab = "2.2.1"
-uuid = "0.8.1"
+krontab = "2.7.2"
+uuid = "0.8.4"
 
 [libraries]
 # Core libraries
@@ -83,9 +86,11 @@ kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
 
 # Web Framework
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
@@ -188,6 +193,9 @@ gradle-release-gradlePlugin = { module = "net.researchgate:gradle-release", vers
 krontab = { module = "dev.inmo:krontab", version.ref = "krontab" }
 uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
 kreds = { module = "io.github.crackthecodeabhi:kreds", version.ref = "kreds" }
+microutils-logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "microutils" }
+netty-codec-redis = { module = "io.netty:netty-codec-redis", version.ref = "netty" }
+netty-handler = { module = "io.netty:netty-handler", version.ref = "netty" }
 redis-mp-client = { module = "io.github.flaxoos:redis-client-multiplatform", version.ref = "redis-mp-client" }
 
 [plugins]

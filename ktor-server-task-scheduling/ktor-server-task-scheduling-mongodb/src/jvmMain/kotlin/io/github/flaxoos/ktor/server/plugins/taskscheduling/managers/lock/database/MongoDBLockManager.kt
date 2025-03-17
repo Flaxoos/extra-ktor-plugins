@@ -61,8 +61,8 @@ public class MongoDBLockManager(
                 Filters.and(
                     Filters.eq(MongoDbTaskLock::name.name, task.name),
                     Filters.eq(MongoDbTaskLock::concurrencyIndex.name, concurrencyIndex),
+                    Filters.eq(MongoDbTaskLock::lockedAt.name, DateTime.EPOCH),
                 ),
-                Filters.ne(MongoDbTaskLock::lockedAt.name, executionTime),
             )
         val updates =
             Updates.combine(
@@ -86,6 +86,7 @@ public class MongoDBLockManager(
             Indexes.compoundIndex(
                 Indexes.ascending(MongoDbTaskLock::name.name),
                 Indexes.ascending(MongoDbTaskLock::concurrencyIndex.name),
+                Indexes.ascending(MongoDbTaskLock::lockedAt.name),
             ),
             IndexOptions().unique(true),
         )
@@ -103,6 +104,7 @@ public class MongoDBLockManager(
                     Filters.and(
                         Filters.eq(MongoDbTaskLock::name.name, task.name),
                         Filters.eq(MongoDbTaskLock::concurrencyIndex.name, taskConcurrencyIndex),
+                        Filters.eq(MongoDbTaskLock::lockedAt.name, DateTime.EPOCH),
                     ),
                 ).firstOrNull()
                 ?.let { false } ?: runCatching {
@@ -127,7 +129,32 @@ public class MongoDBLockManager(
         }
     }
 
-    protected override suspend fun releaseLockKey(key: MongoDbTaskLock) {}
+    protected override suspend fun releaseLockKey(key: MongoDbTaskLock) {
+        val query =
+            Filters.and(
+                Filters.and(
+                    Filters.eq(MongoDbTaskLock::name.name, key.name),
+                    Filters.eq(MongoDbTaskLock::concurrencyIndex.name, key.concurrencyIndex),
+                    Filters.eq(MongoDbTaskLock::lockedAt.name, key.lockedAt),
+                ),
+            )
+        val updates =
+            Updates.combine(
+                Updates.set(MongoDbTaskLock::lockedAt.name, DateTime.EPOCH),
+            )
+        val options = FindOneAndUpdateOptions().upsert(false)
+        client.startSession().use { session ->
+            session.startTransaction(transactionOptions = majorityJTransaction())
+            runCatching {
+                collection.findOneAndUpdate(query, updates, options).also {
+                    session.commitTransaction()
+                }
+            }.onFailure {
+                session.abortTransaction()
+                if (it !is MongoWriteException) throw it
+            }
+        }
+    }
 
     override fun close() {
         client.close()
@@ -143,12 +170,55 @@ public class MongoDBLockManager(
             .build()
 }
 
-public data class MongoDbTaskLock(
+public class MongoDbTaskLock(
     override val name: String,
     override val concurrencyIndex: Int,
     override var lockedAt: DateTime,
 ) : DatabaseTaskLock {
     override fun toString(): String = "MongoDbTaskLockKey(name=$name, concurrencyIndex=$concurrencyIndex, lockedAt=${lockedAt.format2()})"
+}
+
+internal class MongoDbTaskLockCodec : Codec<MongoDbTaskLock> {
+    override fun encode(
+        writer: BsonWriter,
+        value: MongoDbTaskLock,
+        encoderContext: EncoderContext,
+    ) {
+        writer.writeStartDocument()
+        writer.writeString("name", value.name)
+        writer.writeInt32("concurrencyIndex", value.concurrencyIndex)
+        writer.writeString("lockedAt", value.lockedAt.format2())
+        writer.writeEndDocument()
+    }
+
+    override fun decode(
+        reader: BsonReader,
+        decoderContext: DecoderContext,
+    ): MongoDbTaskLock {
+        reader.readStartDocument()
+        var name: String? = null
+        var concurrencyIndex: Int? = null
+        var lockedAt: DateTime? = null
+
+        while (reader.readBsonType() != org.bson.BsonType.END_OF_DOCUMENT) {
+            when (reader.readName()) {
+                "_id" -> reader.skipValue()
+                "name" -> name = reader.readString()
+                "concurrencyIndex" -> concurrencyIndex = reader.readInt32()
+                "lockedAt" -> lockedAt = reader.readString().format2ToDateTime()
+                else -> reader.skipValue() // Skip unknown fields
+            }
+        }
+        reader.readEndDocument()
+
+        if (name != null && concurrencyIndex != null && lockedAt != null) {
+            return MongoDbTaskLock(name = name, concurrencyIndex = concurrencyIndex, lockedAt = lockedAt)
+        } else {
+            throw IllegalStateException("Missing required fields in MongoDbTaskLock document")
+        }
+    }
+
+    override fun getEncoderClass(): Class<MongoDbTaskLock> = MongoDbTaskLock::class.java
 }
 
 internal class DateTimeCodec : Codec<DateTime> {
@@ -170,7 +240,10 @@ internal class DateTimeCodec : Codec<DateTime> {
 
 internal val codecRegistry =
     CodecRegistries.fromRegistries(
-        CodecRegistries.fromCodecs(DateTimeCodec()),
+        CodecRegistries.fromCodecs(
+            DateTimeCodec(),
+            MongoDbTaskLockCodec(),
+        ),
         MongoClientSettings.getDefaultCodecRegistry(),
     )
 

@@ -14,6 +14,8 @@ kotlin {
             api(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore)
             api(libs.mongodb.driver.kotlin.coroutine)
             api(libs.mongodb.bson.kotlinx)
+            api(libs.reactor.core)
+            implementation(libs.kotlinx.coroutines.reactive)
         }
         jvmTestDependencies {
             implementation(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore.test)

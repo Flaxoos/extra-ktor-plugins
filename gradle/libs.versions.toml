@@ -5,6 +5,7 @@ java = "11"
 kotlinx-serialization = "1.7.3"
 kotlinx-io = "0.3.0"
 ksp = "1.9.10-1.0.13"
+reactor = "3.7.4"
 
 # Web Framework
 ktor = "3.0.0"
@@ -60,6 +61,8 @@ avro = "1.12.0"
 # Redis
 kreds = "0.9.1"
 redis-mp-client = "0.0.3"
+microutils = "3.0.5" # required for kreds lib that doesn't expose via api() - https://github.com/crackthecodeabhi/kreds/blob/main/build.gradle.kts#L74-L76
+netty = "4.1.104.Final" # required for kreds lib that doesn't expose via api() - https://github.com/crackthecodeabhi/kreds/blob/main/build.gradle.kts#L74-L76
 
 # Documentation
 dokka = "1.9.10"
@@ -82,10 +85,12 @@ arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref 
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
 
 # Web Framework
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
@@ -188,6 +193,9 @@ gradle-release-gradlePlugin = { module = "net.researchgate:gradle-release", vers
 krontab = { module = "dev.inmo:krontab", version.ref = "krontab" }
 uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
 kreds = { module = "io.github.crackthecodeabhi:kreds", version.ref = "kreds" }
+microutils-logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "microutils" }
+netty-codec-redis = { module = "io.netty:netty-codec-redis", version.ref = "netty" }
+netty-handler = { module = "io.netty:netty-handler", version.ref = "netty" }
 redis-mp-client = { module = "io.github.flaxoos:redis-client-multiplatform", version.ref = "redis-mp-client" }
 
 [plugins]

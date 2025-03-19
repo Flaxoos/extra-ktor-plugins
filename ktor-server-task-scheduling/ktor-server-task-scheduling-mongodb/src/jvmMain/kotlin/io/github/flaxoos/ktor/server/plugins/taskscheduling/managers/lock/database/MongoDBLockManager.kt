@@ -151,6 +151,49 @@ public data class MongoDbTaskLock(
     override fun toString(): String = "MongoDbTaskLockKey(name=$name, concurrencyIndex=$concurrencyIndex, lockedAt=${lockedAt.format2()})"
 }
 
+internal class MongoDbTaskLockCodec : Codec<MongoDbTaskLock> {
+    override fun encode(
+        writer: BsonWriter,
+        value: MongoDbTaskLock,
+        encoderContext: EncoderContext,
+    ) {
+        writer.writeStartDocument()
+        writer.writeString("name", value.name)
+        writer.writeInt32("concurrencyIndex", value.concurrencyIndex)
+        writer.writeString("lockedAt", value.lockedAt.format2())
+        writer.writeEndDocument()
+    }
+
+    override fun decode(
+        reader: BsonReader,
+        decoderContext: DecoderContext,
+    ): MongoDbTaskLock {
+        reader.readStartDocument()
+        var name: String? = null
+        var concurrencyIndex: Int? = null
+        var lockedAt: DateTime? = null
+
+        while (reader.readBsonType() != org.bson.BsonType.END_OF_DOCUMENT) {
+            when (reader.readName()) {
+                "_id" -> reader.skipValue()
+                "name" -> name = reader.readString()
+                "concurrencyIndex" -> concurrencyIndex = reader.readInt32()
+                "lockedAt" -> lockedAt = reader.readString().format2ToDateTime()
+                else -> reader.skipValue() // Skip unknown fields
+            }
+        }
+        reader.readEndDocument()
+
+        if (name != null && concurrencyIndex != null && lockedAt != null) {
+            return MongoDbTaskLock(name = name, concurrencyIndex = concurrencyIndex, lockedAt = lockedAt)
+        } else {
+            throw IllegalStateException("Missing required fields in MongoDbTaskLock document")
+        }
+    }
+
+    override fun getEncoderClass(): Class<MongoDbTaskLock> = MongoDbTaskLock::class.java
+}
+
 internal class DateTimeCodec : Codec<DateTime> {
     override fun encode(
         writer: BsonWriter,
@@ -170,7 +213,10 @@ internal class DateTimeCodec : Codec<DateTime> {
 
 internal val codecRegistry =
     CodecRegistries.fromRegistries(
-        CodecRegistries.fromCodecs(DateTimeCodec()),
+        CodecRegistries.fromCodecs(
+            DateTimeCodec(),
+            MongoDbTaskLockCodec(),
+        ),
         MongoClientSettings.getDefaultCodecRegistry(),
     )
 

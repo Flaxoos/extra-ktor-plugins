@@ -10,7 +10,7 @@ plugins {
 
 kotlin {
     explicitApi()
-    targetJvm()
+    targetJvm(project)
     targetNative()
     sourceSets {
         commonMainDependencies {
@@ -23,6 +23,9 @@ kotlin {
             implementation(libs.mockk)
             implementation(libs.testcontainers.redis)
             implementation(libs.kreds)
+            implementation(libs.microutils.logging)
+            implementation(libs.netty.handler)
+            implementation(libs.netty.codec.redis)
         }
         nativeMainDependencies {
             api(projects.common)

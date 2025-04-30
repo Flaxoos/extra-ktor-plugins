@@ -1,30 +1,35 @@
 # Rate Limiting Plugin for Ktor Server
+
 <a href="file:/Users/ido/IdeaProjects/flax-ktor-plugins/ktor-server-rate-limiting/build/reports/kover/html/index.html">![koverage](https://img.shields.io/badge/94.24-green?logo=kotlin&label=koverage&style=flat)</a>
 
 ---
 
-Manage request rate limiting as you see fit with `RateLimiting` in your Ktor server, ensuring you protect your application from potential abuse or resource overload.
+Manage request rate limiting as you see fit with `RateLimiting` in your Ktor server, ensuring you protect your
+application from potential abuse or resource overload.
 
 ---
 
 ## Features:
+
 ### Three Strategies Available:
 
 1) **Token Bucket:** Supports variable request rate and is suitable for handling bursts of requests.
 
 2) **Leaky Bucket:** Guarantees a constant request rate, providing fair distribution between clients
 
-3) **Sliding Window:** Allows a specific weight of calls to be made over a designated duration, considering the rate and call weight configured.
+3) **Sliding Window:** Allows a specific weight of calls to be made over a designated duration, considering the rate and
+   call weight configured.
 
 ### Robust Configurability
 
-- **Configurable capacity unit of measure**: Measure call count or call weight in bytes 
+- **Configurable capacity unit of measure**: Measure call count or call weight in bytes
 - **Configurable call weighting**: Calls can be made to take up more capacity based on a given function
 
 - **Whitelist & Blacklist**:
     - Whitelist or blacklist based on the client's host, user-agent, or principal.
 
-- **Customizable Response**: Set your custom response when the rate limit is exceeded. The default response status is `429 Too Many Requests`.
+- **Customizable Response**: Set your custom response when the rate limit is exceeded. The default response status is
+  `429 Too Many Requests`.
 
 - **Logging**: Log rate limit hits for better monitoring and debugging.
 

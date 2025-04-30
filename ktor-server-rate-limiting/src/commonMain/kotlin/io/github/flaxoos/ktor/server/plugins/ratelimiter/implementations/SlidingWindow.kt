@@ -27,7 +27,7 @@ data class SlidingWindow(
     /**
      * A time provider
      */
-    override val clock: () -> Long = { now().toEpochMilliseconds() }
+    override val clock: () -> Long = { now().toEpochMilliseconds() },
 ) : RateLimiter() {
     private val timeWindowMs = rate.inWholeMilliseconds
     private var timestamps = ConcurrentFixedSizeWeightedQueue<Long>(capacity * callVolumeUnit.size)
@@ -53,7 +53,7 @@ data class SlidingWindow(
             this,
             resetIn = resetIn,
             exceededBy = callSize,
-            message = "$capacity calls were already made during $rate"
+            message = "$capacity calls were already made during $rate",
         )
     }
 
@@ -61,7 +61,13 @@ data class SlidingWindow(
         val cutoff = nowMs - timeWindowMs
         logger.debug { "Trimming timestamps before: $cutoff" }
         timestamps.trimWhere { timestamp ->
-            if (timestamp < cutoff) -1 else if (timestamp > cutoff) 1 else 0
+            if (timestamp < cutoff) {
+                -1
+            } else if (timestamp > cutoff) {
+                1
+            } else {
+                0
+            }
         }
     }
 }
@@ -73,7 +79,7 @@ class ConcurrentFixedSizeWeightedQueue<T>(
     /**
      * the maximum weight, must be greater than 0
      */
-    private val maxWeight: Int
+    private val maxWeight: Int,
 ) {
     private val list = queueList<Pair<T, Double>>()
     private val size: Int
@@ -81,9 +87,7 @@ class ConcurrentFixedSizeWeightedQueue<T>(
     private var weight = 0.0
     private val lock = reentrantLock()
 
-    override fun toString(): String {
-        return "ConcurrentFixedSizeWeightedQueue(size=$size, weight=$weight, maxWeight=$maxWeight)"
-    }
+    override fun toString(): String = "ConcurrentFixedSizeWeightedQueue(size=$size, weight=$weight, maxWeight=$maxWeight)"
 
     init {
         require(maxWeight > 0) {
@@ -91,7 +95,10 @@ class ConcurrentFixedSizeWeightedQueue<T>(
         }
     }
 
-    fun tryAdd(t: T, weight: Double = 1.0) = lock.withLock {
+    fun tryAdd(
+        t: T,
+        weight: Double = 1.0,
+    ) = lock.withLock {
         if (this.weight + weight <= maxWeight) {
             this.weight += weight
             list.add(t to weight).also {
@@ -104,21 +111,23 @@ class ConcurrentFixedSizeWeightedQueue<T>(
 
     fun peekNext() = list.firstOrNull()
 
-    fun trimWhere(comparison: (T) -> Int) = lock.withLock {
-        subListWhere(comparison)?.apply {
-            val toTrim = sumOf { it.second }
-            logger.debug { "Trimmed ${this.size} items, weighing: $toTrim from queue with weight $weight" }
-            weight -= toTrim
-            clear()
-        }
-    }
-
-    private fun subListWhere(comparison: (T) -> Int): MutableList<Pair<T, Double>>? {
-        val index = lock.withLock {
-            list.binarySearch {
-                comparison(it.first)
+    fun trimWhere(comparison: (T) -> Int) =
+        lock.withLock {
+            subListWhere(comparison)?.apply {
+                val toTrim = sumOf { it.second }
+                logger.debug { "Trimmed ${this.size} items, weighing: $toTrim from queue with weight $weight" }
+                weight -= toTrim
+                clear()
             }
         }
+
+    private fun subListWhere(comparison: (T) -> Int): MutableList<Pair<T, Double>>? {
+        val index =
+            lock.withLock {
+                list.binarySearch {
+                    comparison(it.first)
+                }
+            }
         val insertionPoint = if (index < 0) -index - 1 else index
         return if (insertionPoint > 0) {
             list.subList(0, insertionPoint)

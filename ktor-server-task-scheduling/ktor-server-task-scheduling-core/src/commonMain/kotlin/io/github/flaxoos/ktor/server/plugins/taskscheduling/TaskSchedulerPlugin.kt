@@ -20,54 +20,54 @@ import kotlinx.coroutines.launch
  * The tasks are managed by some implementation of [TaskManager], that is responsible for coordinating the execution
  * of the tasks across the different instances of the application.
  */
-public val TaskScheduling: ApplicationPlugin<TaskSchedulingConfiguration> = createApplicationPlugin(
-    name = "TaskScheduling",
-    createConfiguration = ::TaskSchedulingConfiguration
-) {
-    application.log.debug("Configuring TaskScheduler")
+public val TaskScheduling: ApplicationPlugin<TaskSchedulingConfiguration> =
+    createApplicationPlugin(
+        name = "TaskScheduling",
+        createConfiguration = ::TaskSchedulingConfiguration,
+    ) {
+        application.log.debug("Configuring TaskScheduler")
 
-    checkUniqueTaskNames()
+        checkUniqueTaskNames()
 
-    val taskManagers = createTaskManagers()
+        val taskManagers = createTaskManagers()
 
-    checkTaskMangerAssignments(taskManagers)
+        checkTaskMangerAssignments(taskManagers)
 
-    val taskManagerInits = initializeTaskManagers(taskManagers)
+        val taskManagerInits = initializeTaskManagers(taskManagers)
 
-    on(MonitoringEvent(ApplicationStarted)) { application ->
-        taskManagers.forEach { manager ->
-            taskManagerInits[manager]?.let { tasks ->
-                application.launch {
-                    tasks.await().forEach { task ->
-                        manager.startTask(task)
+        on(MonitoringEvent(ApplicationStarted)) { application ->
+            taskManagers.forEach { manager ->
+                taskManagerInits[manager]?.let { tasks ->
+                    application.launch {
+                        tasks.await().forEach { task ->
+                            manager.startTask(task)
+                        }
                     }
                 }
             }
         }
     }
-}
 
-private fun PluginBuilder<TaskSchedulingConfiguration>.initializeTaskManagers(
-    taskManagers: List<TaskManager<*>>
-) = taskManagers.mapNotNull { manager ->
-    pluginConfig.tasks[manager.name]?.let { tasks ->
-        manager to application.async {
-            manager.init(tasks)
-            tasks.toList()
-        }
-    } ?: error("Configuration verification did not check for missing task managers assigned to tasks, this is a bug")
-}.toMap()
-
-private fun PluginBuilder<TaskSchedulingConfiguration>.checkTaskMangerAssignments(
-    taskManagers: List<TaskManager<*>>
-) {
-    with(pluginConfig.tasks.filter { it.key !in taskManagers.map { it.name } }) {
-        require(isEmpty()) {
-            "Bad configuration: The following tasks manager names were assigned tasks but were not created: ${
-            this.toList().joinToString {
-                "${it.first}: ${it.second.joinToString() { task -> task.name }}}"
+private fun PluginBuilder<TaskSchedulingConfiguration>.initializeTaskManagers(taskManagers: List<TaskManager<*>>) =
+    taskManagers
+        .mapNotNull { manager ->
+            pluginConfig.tasks[manager.name]?.let { tasks ->
+                manager to
+                    application.async {
+                        manager.init(tasks)
+                        tasks.toList()
+                    }
             }
-            }"
+                ?: error("Configuration verification did not check for missing task managers assigned to tasks, this is a bug")
+        }.toMap()
+
+private fun PluginBuilder<TaskSchedulingConfiguration>.checkTaskMangerAssignments(taskManagers: List<TaskManager<*>>) {
+    with(pluginConfig.tasks.filter { it.key !in taskManagers.map { taskManager -> taskManager.name } }) {
+        require(isEmpty()) {
+            "Bad configuration: The following tasks manager names were assigned tasks but were not created: " +
+                toList().joinToString {
+                    "${it.first}: ${it.second.joinToString { task -> task.name }}}"
+                }
         }
     }
 }
@@ -79,7 +79,12 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.createTaskManagers(): Lis
 }
 
 private fun PluginBuilder<TaskSchedulingConfiguration>.checkUniqueTaskNames() {
-    with(pluginConfig.tasks.values.flatten().groupingBy { it.name }.eachCount()) {
+    with(
+        pluginConfig.tasks.values
+            .flatten()
+            .groupingBy { it.name }
+            .eachCount(),
+    ) {
         require(all { it.value == 1 }) {
             "Bad configuration: Task names must be unique, but the following tasks names are repeated: ${this.keys.joinToString()}"
         }
@@ -88,9 +93,11 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.checkUniqueTaskNames() {
 
 private fun TaskManager<*>.startTask(task: Task) {
     application.launch(
-        context = application.coroutineContext.apply {
-            task.dispatcher?.let { this + it } ?: this
-        }.apply { this + CoroutineName(task.name) }
+        context =
+            application.coroutineContext
+                .apply {
+                    task.dispatcher?.let { this + it } ?: this
+                }.apply { this + CoroutineName(task.name) },
     ) {
         task.kronSchedule.doInfinity { executionTime ->
             execute(task, executionTime)

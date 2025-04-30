@@ -18,23 +18,31 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
     public abstract val name: TaskManagerConfiguration.TaskManagerName
     public abstract val application: Application
 
-    internal suspend fun execute(task: Task, executionTime: DateTime) {
-        val runs = task.concurrencyRange().map { concurrencyIndex ->
-            application.async {
-                logger.trace { "${application.host()}: Attempting task execution at ${executionTime.format2()} for ${task.name} - $concurrencyIndex" }
-                attemptExecute(task, executionTime, concurrencyIndex)?.let { key ->
+    internal suspend fun execute(
+        task: Task,
+        executionTime: DateTime,
+    ) {
+        val runs =
+            task.concurrencyRange().map { concurrencyIndex ->
+                application.async {
                     logger.trace {
-                        "${application.host()}: Starting task execution at ${executionTime.format2()} using key $key"
+                        "${application.host()}: Attempting task execution at ${executionTime.format2()} for ${task.name} - $concurrencyIndex"
                     }
-                    task.task.invoke(application, executionTime)
-                    logger.trace { "${application.host()}: Finished task execution using key $key" }
-                    key
-                } ?: run {
-                    logger.debug { "${application.host()}: Denied task execution for${task.name} - $concurrencyIndex at ${executionTime.format2()}" }
-                    null
+                    attemptExecute(task, executionTime, concurrencyIndex)?.let { key ->
+                        logger.trace {
+                            "${application.host()}: Starting task execution at ${executionTime.format2()} using key $key"
+                        }
+                        task.task.invoke(application, executionTime)
+                        logger.trace { "${application.host()}: Finished task execution using key $key" }
+                        key
+                    } ?: run {
+                        logger.debug {
+                            "${application.host()}: Denied task execution for${task.name} - $concurrencyIndex at ${executionTime.format2()}"
+                        }
+                        null
+                    }
                 }
             }
-        }
         runs.awaitAll().filterNotNull().forEach {
             markExecuted(it)
         }
@@ -51,7 +59,7 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
     public abstract suspend fun attemptExecute(
         task: Task,
         executionTime: DateTime,
-        concurrencyIndex: Int
+        concurrencyIndex: Int,
     ): TASK_EXECUTION_TOKEN?
 
     /**
@@ -60,10 +68,10 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
     public abstract suspend fun markExecuted(key: TASK_EXECUTION_TOKEN)
 
     public companion object {
-        public fun Application.host(): String =
-            "Host ${environment.config.property("ktor.deployment.host").getString()}"
+        public fun Application.host(): String = "Host ${environment.config.property("ktor.deployment.host").getString()}"
 
         public fun DateTime.format2(): String = format(DateFormat.FORMAT2)
+
         public fun String.format2ToDateTime(): DateTime = DateFormat.FORMAT2.parseLocal(this)
     }
 }
@@ -85,9 +93,12 @@ public abstract class TaskManagerConfiguration<TASK_EXECUTION_TOKEN> {
     public abstract fun createTaskManager(application: Application): TaskManager<out TaskExecutionToken>
 
     @JvmInline
-    public value class TaskManagerName(public val value: String) {
+    public value class TaskManagerName(
+        public val value: String,
+    ) {
         public companion object {
             private const val DEFAULT_TASK_MANAGER_NAME: String = "KTOR_DEFAULT_TASK_MANAGER"
+
             public fun String?.toTaskManagerName(): TaskManagerName {
                 require(this != DEFAULT_TASK_MANAGER_NAME) {
                     "$DEFAULT_TASK_MANAGER_NAME is a reserved name, please use another name"

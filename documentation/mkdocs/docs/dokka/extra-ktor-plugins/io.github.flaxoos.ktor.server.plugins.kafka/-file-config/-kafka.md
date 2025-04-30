@@ -1,25 +1,18 @@
 ---
 title: Kafka
 ---
+
 //[extra-ktor-plugins](../../../index.md)/[io.github.flaxoos.ktor.server.plugins.kafka](../index.md)/[FileConfig](index.md)/[Kafka](-kafka.md)
-
-
 
 # Kafka
 
-
-
 [jvm]\
-fun [Kafka](-kafka.md)(configurationPath: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)): ApplicationPlugin&lt;[KafkaFileConfig](../-kafka-file-config/index.md)&gt;
-
-
-
-
+fun [Kafka](-kafka.md)(
+configurationPath: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md)):
+ApplicationPlugin&lt;[KafkaFileConfig](../-kafka-file-config/index.md)&gt;
 
 [jvm]\
 val [Kafka](-kafka.md): ApplicationPlugin&lt;[KafkaFileConfig](../-kafka-file-config/index.md)&gt;
-
-
 
 Plugin for setting up a kafka client, configured in application config file Example:
 

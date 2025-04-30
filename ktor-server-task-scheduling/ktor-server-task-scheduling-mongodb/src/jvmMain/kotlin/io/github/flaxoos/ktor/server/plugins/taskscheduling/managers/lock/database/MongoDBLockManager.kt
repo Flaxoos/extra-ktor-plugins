@@ -43,28 +43,31 @@ public class MongoDBLockManager(
     /**
      * The name of the database
      */
-    databaseName: String
+    databaseName: String,
 ) : DatabaseTaskLockManager<MongoDbTaskLock>() {
-
-    private val collection = client.getDatabase(databaseName)
-        .getCollection<MongoDbTaskLock>("TASK_LOCKS")
-        .withCodecRegistry(codecRegistry)
+    private val collection =
+        client
+            .getDatabase(databaseName)
+            .getCollection<MongoDbTaskLock>("TASK_LOCKS")
+            .withCodecRegistry(codecRegistry)
 
     override suspend fun updateTaskLock(
         task: Task,
         concurrencyIndex: Int,
-        executionTime: DateTime
+        executionTime: DateTime,
     ): MongoDbTaskLock? {
-        val query = Filters.and(
+        val query =
             Filters.and(
-                Filters.eq(MongoDbTaskLock::name.name, task.name),
-                Filters.eq(MongoDbTaskLock::concurrencyIndex.name, concurrencyIndex)
-            ),
-            Filters.ne(MongoDbTaskLock::lockedAt.name, executionTime)
-        )
-        val updates = Updates.combine(
-            Updates.set(MongoDbTaskLock::lockedAt.name, executionTime)
-        )
+                Filters.and(
+                    Filters.eq(MongoDbTaskLock::name.name, task.name),
+                    Filters.eq(MongoDbTaskLock::concurrencyIndex.name, concurrencyIndex),
+                ),
+                Filters.ne(MongoDbTaskLock::lockedAt.name, executionTime),
+            )
+        val updates =
+            Updates.combine(
+                Updates.set(MongoDbTaskLock::lockedAt.name, executionTime),
+            )
         val options = FindOneAndUpdateOptions().upsert(false)
         client.startSession().use { session ->
             session.startTransaction(transactionOptions = majorityJTransaction())
@@ -81,35 +84,38 @@ public class MongoDBLockManager(
     override suspend fun initTaskLockTable() {
         collection.createIndex(
             Indexes.compoundIndex(
-                Indexes.text(MongoDbTaskLock::name.name),
-                Indexes.ascending(MongoDbTaskLock::concurrencyIndex.name)
+                Indexes.ascending(MongoDbTaskLock::name.name),
+                Indexes.ascending(MongoDbTaskLock::concurrencyIndex.name),
             ),
-            IndexOptions().unique(true)
+            IndexOptions().unique(true),
         )
     }
 
     override suspend fun insertTaskLock(
         task: Task,
-        taskConcurrencyIndex: Int
+        taskConcurrencyIndex: Int,
     ): Boolean {
         client.startSession().use { session ->
             session.startTransaction(transactionOptions = majorityJTransaction())
 
-            return collection.find(
-                Filters.and(
-                    Filters.eq(MongoDbTaskLock::name.name, task.name),
-                    Filters.eq(MongoDbTaskLock::concurrencyIndex.name, taskConcurrencyIndex)
-                )
-            ).firstOrNull()?.let { false } ?: runCatching {
+            return collection
+                .find(
+                    Filters.and(
+                        Filters.eq(MongoDbTaskLock::name.name, task.name),
+                        Filters.eq(MongoDbTaskLock::concurrencyIndex.name, taskConcurrencyIndex),
+                    ),
+                ).firstOrNull()
+                ?.let { false } ?: runCatching {
                 collection.insertOne(
                     MongoDbTaskLock(
                         task.name,
                         taskConcurrencyIndex,
-                        DateTime.EPOCH
+                        DateTime.EPOCH,
                     ),
-                    options = InsertOneOptions().apply {
-                        comment("Initial task insertion")
-                    }
+                    options =
+                        InsertOneOptions().apply {
+                            comment("Initial task insertion")
+                        },
                 )
                 true
             }.onFailure {
@@ -127,53 +133,104 @@ public class MongoDBLockManager(
         client.close()
     }
 
-    private fun majorityJTransaction(): TransactionOptions = TransactionOptions.builder()
-        .readConcern(ReadConcern.MAJORITY)
-        .readConcern(ReadConcern.LINEARIZABLE)
-        .writeConcern(WriteConcern.MAJORITY)
-        .writeConcern(WriteConcern.JOURNALED)
-        .build()
+    private fun majorityJTransaction(): TransactionOptions =
+        TransactionOptions
+            .builder()
+            .readConcern(ReadConcern.MAJORITY)
+            .readConcern(ReadConcern.LINEARIZABLE)
+            .writeConcern(WriteConcern.MAJORITY)
+            .writeConcern(WriteConcern.JOURNALED)
+            .build()
 }
 
 public data class MongoDbTaskLock(
     override val name: String,
     override val concurrencyIndex: Int,
-    override var lockedAt: DateTime
+    override var lockedAt: DateTime,
 ) : DatabaseTaskLock {
-    override fun toString(): String {
-        return "MongoDbTaskLockKey(name=$name, concurrencyIndex=$concurrencyIndex, lockedAt=${lockedAt.format2()})"
+    override fun toString(): String = "MongoDbTaskLockKey(name=$name, concurrencyIndex=$concurrencyIndex, lockedAt=${lockedAt.format2()})"
+}
+
+internal class MongoDbTaskLockCodec : Codec<MongoDbTaskLock> {
+    override fun encode(
+        writer: BsonWriter,
+        value: MongoDbTaskLock,
+        encoderContext: EncoderContext,
+    ) {
+        writer.writeStartDocument()
+        writer.writeString("name", value.name)
+        writer.writeInt32("concurrencyIndex", value.concurrencyIndex)
+        writer.writeString("lockedAt", value.lockedAt.format2())
+        writer.writeEndDocument()
     }
+
+    override fun decode(
+        reader: BsonReader,
+        decoderContext: DecoderContext,
+    ): MongoDbTaskLock {
+        reader.readStartDocument()
+        var name: String? = null
+        var concurrencyIndex: Int? = null
+        var lockedAt: DateTime? = null
+
+        while (reader.readBsonType() != org.bson.BsonType.END_OF_DOCUMENT) {
+            when (reader.readName()) {
+                "_id" -> reader.skipValue()
+                "name" -> name = reader.readString()
+                "concurrencyIndex" -> concurrencyIndex = reader.readInt32()
+                "lockedAt" -> lockedAt = reader.readString().format2ToDateTime()
+                else -> reader.skipValue() // Skip unknown fields
+            }
+        }
+        reader.readEndDocument()
+
+        if (name != null && concurrencyIndex != null && lockedAt != null) {
+            return MongoDbTaskLock(name = name, concurrencyIndex = concurrencyIndex, lockedAt = lockedAt)
+        } else {
+            throw IllegalStateException("Missing required fields in MongoDbTaskLock document")
+        }
+    }
+
+    override fun getEncoderClass(): Class<MongoDbTaskLock> = MongoDbTaskLock::class.java
 }
 
 internal class DateTimeCodec : Codec<DateTime> {
-    override fun encode(writer: BsonWriter, value: DateTime?, encoderContext: EncoderContext) {
+    override fun encode(
+        writer: BsonWriter,
+        value: DateTime?,
+        encoderContext: EncoderContext,
+    ) {
         writer.writeString(value?.format2())
     }
 
-    override fun getEncoderClass(): Class<DateTime> {
-        return DateTime::class.java
-    }
+    override fun getEncoderClass(): Class<DateTime> = DateTime::class.java
 
-    override fun decode(reader: BsonReader, decoderContext: DecoderContext): DateTime? {
-        return reader.readString()?.format2ToDateTime()
-    }
+    override fun decode(
+        reader: BsonReader,
+        decoderContext: DecoderContext,
+    ): DateTime? = reader.readString()?.format2ToDateTime()
 }
 
-internal val codecRegistry = CodecRegistries.fromRegistries(
-    CodecRegistries.fromCodecs(DateTimeCodec()),
-    MongoClientSettings.getDefaultCodecRegistry()
-)
+internal val codecRegistry =
+    CodecRegistries.fromRegistries(
+        CodecRegistries.fromCodecs(
+            DateTimeCodec(),
+            MongoDbTaskLockCodec(),
+        ),
+        MongoClientSettings.getDefaultCodecRegistry(),
+    )
 
 @TaskSchedulingDsl
 public class MongoDBJobLockManagerConfiguration : DatabaseTaskLockManagerConfiguration<MongoDbTaskLock>() {
     public var client: MongoClient by Delegates.notNull()
     public var databaseName: String by Delegates.notNull()
+
     override fun createTaskManager(application: Application): MongoDBLockManager =
         MongoDBLockManager(
             name = name.toTaskManagerName(),
             application = application,
             client = client,
-            databaseName = databaseName
+            databaseName = databaseName,
         )
 }
 
@@ -182,18 +239,17 @@ public class MongoDBJobLockManagerConfiguration : DatabaseTaskLockManagerConfigu
  */
 @TaskSchedulingDsl
 public fun TaskSchedulingConfiguration.mongoDb(
-
     /**
      * The name of the task manager, will be used to identify the task manager when assigning tasks to it
      * if none is provided, it will be considered the default one. only one default task manager is allowed.
      */
     name: String? = null,
-    config: MongoDBJobLockManagerConfiguration.() -> Unit
+    config: MongoDBJobLockManagerConfiguration.() -> Unit,
 ) {
     this.addTaskManager(
         MongoDBJobLockManagerConfiguration().apply {
             config()
             this.name = name
-        }
+        },
     )
 }

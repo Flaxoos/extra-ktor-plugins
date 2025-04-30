@@ -49,7 +49,9 @@ class CircuitBreakerConfig {
  * Value class for a [CircuitBreaker] name
  */
 @JvmInline
-value class CircuitBreakerName(val value: String) {
+value class CircuitBreakerName(
+    val value: String,
+) {
     companion object {
         fun String.toCircuitBreakerName() = CircuitBreakerName(this)
     }

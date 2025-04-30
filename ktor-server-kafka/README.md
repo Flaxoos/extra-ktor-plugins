@@ -4,23 +4,29 @@
 
 ---
 
-Integrate Kafka effortlessly into your Ktor application with this powerful Kafka Plugin. This plugin provides an easy setup for Kafka clients, allowing you to configure and manage Kafka Admin, Producer, and Consumer instances directly in your Ktor server.
+Integrate Kafka effortlessly into your Ktor application with this powerful Kafka Plugin. This plugin provides an easy
+setup for Kafka clients, allowing you to configure and manage Kafka Admin, Producer, and Consumer instances directly in
+your Ktor server.
 
 --- 
 
 ## Features:
 
-- **Streamlined Configuration**: Install Kafka client configurations either through application configuration files or directly in code.
+- **Streamlined Configuration**: Install Kafka client configurations either through application configuration files or
+  directly in code.
 - **Admin Client**: Easy setup and topic creation for your Kafka admin client.
 - **Producer Client**: Initialize Kafka producer instances effortlessly.
 - **Consumer Client**: Configure and manage Kafka consumer instances, including polling logic and record handling.
-- **Built in Avro4k support**: Avro schemas are supported by default. There's no need to define key/value serializers. Schemas can be registered automatically. Avro records to and from conversion methods
+- **Built in Avro4k support**: Avro schemas are supported by default. There's no need to define key/value serializers.
+  Schemas can be registered automatically. Avro records to and from conversion methods
 
 ## How to Use:
 
 ### From Code:
 
-The plugin provides a DSL that enables comprehensive Kafka configuration, adhering to the classes and properties defined in [org.apache.kafka.common.config](https://kafka.apache.org/21/javadoc/index.html?org/apache/kafka/common/config/package-summary.html), the DSL offers a fluent, programmatic way to set up your Kafka settings right within your Ktor application.
+The plugin provides a DSL that enables comprehensive Kafka configuration, adhering to the classes and properties defined
+in [org.apache.kafka.common.config](https://kafka.apache.org/21/javadoc/index.html?org/apache/kafka/common/config/package-summary.html),
+the DSL offers a fluent, programmatic way to set up your Kafka settings right within your Ktor application.
 
 ```kotlin
 install(Kafka) {
@@ -75,6 +81,7 @@ install(KafkaFromFileConfig.Kafka) {
     }
 }
 ```
+
 The above will look for the config in `ktor.kafka` by default.
 
 You can also specify a different path if needed:
@@ -86,6 +93,7 @@ install(KafkaFromFileConfig.Kafka("ktor.my.kafka")){
 ```
 
 Example file configuration:
+
 ```hocon
 ktor {
   kafka {
@@ -132,7 +140,8 @@ val consumer = application.kafkaConsumer
 
 ## Important Notes:
 
-- Make sure you define a consumer configuration when you initialize a consumer client, or the consumer job will not start automatically.
+- Make sure you define a consumer configuration when you initialize a consumer client, or the consumer job will not
+  start automatically.
 
 - Ensure that the `pollFrequency` for consumers is set appropriately, depending on your use-case.
 
@@ -140,10 +149,10 @@ val consumer = application.kafkaConsumer
 
 - This plugin works asynchronously, so it's advised to monitor the logs for setup completion and error notifications.
 
-
 ## Acknowledgements
 
-This project uses code from [gAmUssA/ktor-kafka](https://github.com/gAmUssA/ktor-kafka), which is available under the MIT License. This project expands on concepts that were introduced there in a few ways:
+This project uses code from [gAmUssA/ktor-kafka](https://github.com/gAmUssA/ktor-kafka), which is available under the
+MIT License. This project expands on concepts that were introduced there in a few ways:
 
 - The Topic DSL idea was expanded to allow for configuration of all components in a similar manner
 - The consumer behaviour can be configured in the plugin setup

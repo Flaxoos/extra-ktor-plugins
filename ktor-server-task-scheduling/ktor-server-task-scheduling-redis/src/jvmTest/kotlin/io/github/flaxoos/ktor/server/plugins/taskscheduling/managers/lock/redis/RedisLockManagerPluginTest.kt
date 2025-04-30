@@ -10,12 +10,14 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 class RedisLockManagerPluginTest : TaskSchedulingPluginTest() {
-    private val redis = RedisContainer(DockerImageName.parse("redis:latest"))
-        .withEnv("REDIS_USERNAME", "flaxoos")
-        .withEnv("REDIS_PASSWORD", "password")
-    private val redisContainer = install(ContainerExtension(redis)) {
-        waitingFor(Wait.forListeningPort()).withStartupTimeout(1.minutes.toJavaDuration())
-    }
+    private val redis =
+        RedisContainer(DockerImageName.parse("redis:latest"))
+            .withEnv("REDIS_USERNAME", "flaxoos")
+            .withEnv("REDIS_PASSWORD", "password")
+    private val redisContainer =
+        install(ContainerExtension(redis)) {
+            waitingFor(Wait.forListeningPort()).withStartupTimeout(1.minutes.toJavaDuration())
+        }
 
     override suspend fun clean() {}
 

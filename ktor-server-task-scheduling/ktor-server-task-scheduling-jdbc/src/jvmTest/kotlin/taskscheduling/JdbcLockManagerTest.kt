@@ -13,9 +13,10 @@ import org.testcontainers.utility.DockerImageName
 
 class JdbcLockManagerTest : TaskSchedulingPluginTest() {
     private val postgres = PostgreSQLContainer(DockerImageName.parse("postgres:13.3"))
-    private val postgresContainer = install(ContainerExtension(postgres)) {
-        waitingFor(Wait.forListeningPort())
-    }
+    private val postgresContainer =
+        install(ContainerExtension(postgres)) {
+            waitingFor(Wait.forListeningPort())
+        }
 
     override suspend fun clean() {
         transaction { DefaultTaskLockTable.deleteAll() }
@@ -25,14 +26,16 @@ class JdbcLockManagerTest : TaskSchedulingPluginTest() {
         context("jdbc lock manager") {
             testTaskScheduling {
                 jdbc {
-                    database = org.jetbrains.exposed.sql.Database.connect(
-                        url = postgresContainer.getJdbcUrl(),
-                        driver = "org.postgresql.Driver",
-                        user = postgresContainer.username,
-                        password = postgresContainer.password
-                    ).also {
-                        transaction { SchemaUtils.create(DefaultTaskLockTable) }
-                    }
+                    database =
+                        org.jetbrains.exposed.sql.Database
+                            .connect(
+                                url = postgresContainer.getJdbcUrl(),
+                                driver = "org.postgresql.Driver",
+                                user = postgresContainer.username,
+                                password = postgresContainer.password,
+                            ).also {
+                                transaction { SchemaUtils.create(DefaultTaskLockTable) }
+                            }
                 }
             }
         }

@@ -26,13 +26,11 @@ class TokenBucket(
      * At what rate should token be added to the bucket
      */
     override val rate: Duration,
-
     /**
      * The token to be added at every refill, can be [CallVolumeUnit.Calls] with optional call weight factor,
      * or [CallVolumeUnit.Bytes], specifying how many bytes to add at every refill
      */
     override val callVolumeUnit: CallVolumeUnit = CallVolumeUnit.Calls(),
-
     /**
      * The maximum capacity, as measured in the specified [CallVolumeUnit]
      */
@@ -40,9 +38,8 @@ class TokenBucket(
     /**
      * A time provider in milliseconds
      */
-    clock: () -> Long = { Clock.System.now().toEpochMilliseconds() }
+    clock: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) : Bucket(capacity * callVolumeUnit.size, clock, capacity * callVolumeUnit.size) {
-
     init {
         log.debug { "Initialized TokenBucket with volume: $currentVolume" }
     }
@@ -61,9 +58,10 @@ class TokenBucket(
                 this@TokenBucket,
                 resetIn = rate,
                 exceededBy = callSize,
-                message = "Insufficient tokens to accept call. tokens: $currentVolume, " +
-                    "measured in ${callVolumeUnit::class.simpleName?.lowercase()} of size ${callVolumeUnit.size}. " +
-                    "call size: $callSize"
+                message =
+                    "Insufficient tokens to accept call. tokens: $currentVolume, " +
+                        "measured in ${callVolumeUnit::class.simpleName?.lowercase()} of size ${callVolumeUnit.size}. " +
+                        "call size: $callSize",
             )
         }
     }
@@ -71,7 +69,13 @@ class TokenBucket(
     private suspend fun addTokensForDuration(call: ApplicationCall) {
         logger.debug { "${call.id()}: Maybe adding tokens" }
         increaseVolume(call, shouldUpdateTime = true, by = callVolumeUnit.size.toDouble()) { timeSinceLastUpdate ->
-            logger.debug { "${call.id()}: Checking if should add tokens: ${Instant.fromEpochMilliseconds(clock())}, time since last update: $timeSinceLastUpdate" }
+            logger.debug {
+                "${call.id()}: Checking if should add tokens: ${
+                    Instant.fromEpochMilliseconds(
+                        clock(),
+                    )
+                }, time since last update: $timeSinceLastUpdate"
+            }
             if (this > 0) {
                 ((timeSinceLastUpdate / rate.inWholeMilliseconds) * this) * callVolumeUnit.size()
             } else {

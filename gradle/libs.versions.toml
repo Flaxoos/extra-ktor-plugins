@@ -71,7 +71,7 @@ dokka = "1.9.10"
 gradle-release = "3.0.2"
 
 # Nexus
-nexusPublish = "2.0.0-rc-1"
+nexusPublish = "2.0.0"
 
 # Miscellaneous
 krontab = "2.2.1"

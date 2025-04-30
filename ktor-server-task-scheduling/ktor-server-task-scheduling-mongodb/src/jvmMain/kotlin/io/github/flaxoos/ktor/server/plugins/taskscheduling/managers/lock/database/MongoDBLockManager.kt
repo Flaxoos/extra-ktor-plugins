@@ -61,8 +61,8 @@ public class MongoDBLockManager(
                 Filters.and(
                     Filters.eq(MongoDbTaskLock::name.name, task.name),
                     Filters.eq(MongoDbTaskLock::concurrencyIndex.name, concurrencyIndex),
+                    Filters.eq(MongoDbTaskLock::lockedAt.name, DateTime.EPOCH),
                 ),
-                Filters.ne(MongoDbTaskLock::lockedAt.name, executionTime),
             )
         val updates =
             Updates.combine(
@@ -86,6 +86,7 @@ public class MongoDBLockManager(
             Indexes.compoundIndex(
                 Indexes.ascending(MongoDbTaskLock::name.name),
                 Indexes.ascending(MongoDbTaskLock::concurrencyIndex.name),
+                Indexes.ascending(MongoDbTaskLock::lockedAt.name),
             ),
             IndexOptions().unique(true),
         )
@@ -103,6 +104,7 @@ public class MongoDBLockManager(
                     Filters.and(
                         Filters.eq(MongoDbTaskLock::name.name, task.name),
                         Filters.eq(MongoDbTaskLock::concurrencyIndex.name, taskConcurrencyIndex),
+                        Filters.eq(MongoDbTaskLock::lockedAt.name, DateTime.EPOCH),
                     ),
                 ).firstOrNull()
                 ?.let { false } ?: runCatching {
@@ -127,7 +129,32 @@ public class MongoDBLockManager(
         }
     }
 
-    protected override suspend fun releaseLockKey(key: MongoDbTaskLock) {}
+    protected override suspend fun releaseLockKey(key: MongoDbTaskLock) {
+        val query =
+            Filters.and(
+                Filters.and(
+                    Filters.eq(MongoDbTaskLock::name.name, key.name),
+                    Filters.eq(MongoDbTaskLock::concurrencyIndex.name, key.concurrencyIndex),
+                    Filters.eq(MongoDbTaskLock::lockedAt.name, key.lockedAt),
+                ),
+            )
+        val updates =
+            Updates.combine(
+                Updates.set(MongoDbTaskLock::lockedAt.name, DateTime.EPOCH),
+            )
+        val options = FindOneAndUpdateOptions().upsert(false)
+        client.startSession().use { session ->
+            session.startTransaction(transactionOptions = majorityJTransaction())
+            runCatching {
+                collection.findOneAndUpdate(query, updates, options).also {
+                    session.commitTransaction()
+                }
+            }.onFailure {
+                session.abortTransaction()
+                if (it !is MongoWriteException) throw it
+            }
+        }
+    }
 
     override fun close() {
         client.close()
@@ -143,7 +170,7 @@ public class MongoDBLockManager(
             .build()
 }
 
-public data class MongoDbTaskLock(
+public class MongoDbTaskLock(
     override val name: String,
     override val concurrencyIndex: Int,
     override var lockedAt: DateTime,

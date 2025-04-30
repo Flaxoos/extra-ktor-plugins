@@ -16,7 +16,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.LiteralOp
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertIgnore
@@ -59,12 +59,12 @@ public class JdbcLockManager(
             database,
             transactionIsolation = Connection.TRANSACTION_READ_COMMITTED,
         ) {
-            repetitionAttempts = 0
+            maxAttempts = 1
             debug = true
             taskLockTable.insertIgnore {
                 it[name] = task.name
                 it[concurrencyIndex] = taskConcurrencyIndex
-                it[lockedAt] = Instant.fromEpochMilliseconds(0)
+                it[lockedAt] = null
             }
         }.insertedCount == 1
 
@@ -84,7 +84,6 @@ public class JdbcLockManager(
                     selectClause(
                         task,
                         concurrencyIndex,
-                        taskExecutionInstant,
                     )
                 },
             ) {
@@ -103,16 +102,37 @@ public class JdbcLockManager(
             }
         }
 
-    override suspend fun releaseLockKey(key: JdbcTaskLock) {}
+    override suspend fun releaseLockKey(key: JdbcTaskLock) {
+        newSuspendedTransaction(
+            application.coroutineContext,
+            db = database,
+            transactionIsolation = Connection.TRANSACTION_READ_COMMITTED,
+        ) {
+            taskLockTable.update(
+                where = {
+                    selectClauseForRelease(
+                        key,
+                    )
+                },
+            ) {
+                it[lockedAt] = null
+            }
+        }
+    }
 
     override fun close() {}
 
     private fun selectClause(
         task: Task,
         concurrencyIndex: Int,
-        taskExecutionInstant: Instant,
     ) = (taskLockTable.name eq task.name and taskLockTable.concurrencyIndex.eq(concurrencyIndex)) and
-        lockedAt.neq(LiteralOp(KotlinInstantColumnType(), taskExecutionInstant))
+        lockedAt.isNull()
+
+    private fun selectClauseForRelease(lock: JdbcTaskLock) =
+        taskLockTable.name eq lock.name and taskLockTable.concurrencyIndex.eq(lock.concurrencyIndex) and
+            lockedAt.eq(
+                LiteralOp(KotlinInstantColumnType(), Instant.fromEpochMilliseconds(lock.lockedAt.unixMillisLong)),
+            )
 }
 
 public class JdbcTaskLock(
@@ -128,13 +148,13 @@ public abstract class ExposedTaskLockTable(
 ) : Table(tableName) {
     public abstract val name: Column<String>
     public abstract val concurrencyIndex: Column<Int>
-    public abstract val lockedAt: Column<Instant>
+    public abstract val lockedAt: Column<Instant?>
 }
 
 public object DefaultTaskLockTable : ExposedTaskLockTable("task_locks") {
     override val name: Column<String> = text("_name")
     override val concurrencyIndex: Column<Int> = integer("concurrency_index")
-    override val lockedAt: Column<Instant> = timestamp("locked_at").index()
+    override val lockedAt: Column<Instant?> = timestamp("locked_at").nullable().index()
 
     override val primaryKey: PrimaryKey = PrimaryKey(firstColumn = name, concurrencyIndex, name = "pk_task_locks")
 }

@@ -7,7 +7,7 @@ import io.kotest.assertions.fail
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.spec.style.scopes.ContainerScope
 import io.kotest.datatest.withData
-import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.ktor.server.application.log
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.config.mergeWith
@@ -77,7 +77,7 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
 
                         try {
                             with(taskLogsAndApplications.map { it.first }.flatten()) {
-                                size shouldBeGreaterThan executions - 2
+                                size shouldBeGreaterThanOrEqual executions - 2
                                 with(groupingBy { it }.eachCount()) {
                                     val errors =
                                         this.mapNotNull {

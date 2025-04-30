@@ -5,6 +5,7 @@ java = "17"
 kotlinx-serialization = "1.8.0"
 kotlinx-io = "0.7.0"
 ksp = "2.1.10-1.0.31"
+reactor = "3.7.4"
 
 # Web Framework
 ktor = "3.1.1"
@@ -49,7 +50,7 @@ detekt = "1.23.1"
 kotlinx-datetime = "0.6.2"
 
 # Functional Programming
-arrow = "1.2.0"
+arrow = "1.2.4"
 reactor = "3.7.4"
 
 # Messaging
@@ -71,7 +72,7 @@ dokka = "1.9.10"
 gradle-release = "3.0.2"
 
 # Nexus
-nexusPublish = "2.0.0-rc-1"
+nexusPublish = "2.0.0"
 
 # Miscellaneous
 krontab = "2.7.2"
@@ -85,6 +86,7 @@ arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref 
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }

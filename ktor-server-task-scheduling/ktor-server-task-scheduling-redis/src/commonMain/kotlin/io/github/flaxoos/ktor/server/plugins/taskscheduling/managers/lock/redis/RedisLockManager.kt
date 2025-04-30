@@ -14,6 +14,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.Application
 import korlibs.time.DateTime
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.jvm.JvmInline
 
 internal val logger = KotlinLogging.logger { }
@@ -28,29 +30,42 @@ public class RedisLockManager(
     private val lockExpirationMs: Long,
     private val connectionAcquisitionTimeoutMs: Long,
 ) : TaskLockManager<RedisTaskLock>() {
+    private val mutex = Mutex()
+
     override suspend fun init(tasks: List<Task>) {}
 
     override suspend fun acquireLockKey(
         task: Task,
         executionTime: DateTime,
         concurrencyIndex: Int,
-    ): RedisTaskLock? =
-        connectionPool.withConnection(connectionAcquisitionTimeoutMs) { redisConnection ->
-            logger.debug { "${application.host()}: ${executionTime.format2()}: Acquiring lock for ${task.name} - $concurrencyIndex" }
-            val key = task.toRedisLockKey(executionTime, concurrencyIndex)
-            if (redisConnection.setNx(key.value, "1", lockExpirationMs) != null) {
-                logger.debug { "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - $concurrencyIndex" }
-                return@withConnection key
+    ): RedisTaskLock? {
+        logger.debug { "${application.host()}: ${executionTime.format2()}: Acquiring lock for ${task.name} - $concurrencyIndex" }
+        val key = task.toRedisLockKey(concurrencyIndex)
+        return mutex.withLock(key) {
+            connectionPool.withConnection(connectionAcquisitionTimeoutMs) { redisConnection ->
+                if (redisConnection.setNx(key.value, executionTime.format2(), lockExpirationMs) != null) {
+                    logger.debug { "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - $concurrencyIndex" }
+                    return@withConnection key
+                } else {
+                    return@withConnection null
+                }
+            } ?: run {
+                logger.debug {
+                    "${application.host()}: ${executionTime.format2()}: Failed to acquire lock for ${task.name} - $concurrencyIndex"
+                }
+                null
             }
-            null
-        } ?: run {
-            logger.debug {
-                "${application.host()}: ${executionTime.format2()}: Failed to acquire lock for ${task.name} - $concurrencyIndex"
-            }
-            null
         }
+    }
 
-    override suspend fun releaseLockKey(key: RedisTaskLock) {}
+    override suspend fun releaseLockKey(key: RedisTaskLock) {
+        mutex.withLock(key) {
+            connectionPool.withConnection(connectionAcquisitionTimeoutMs) { redisConnection ->
+                logger.debug { "${application.host()}: Released lock for ${key.name} - ${key.concurrencyIndex}" }
+                redisConnection.del(key.value)
+            }
+        }
+    }
 
     override fun close() {
         runBlocking {
@@ -70,12 +85,10 @@ public value class RedisTaskLock internal constructor(
     public val value: String,
 ) : TaskLock {
     public companion object {
-        private const val DELIMITER = "-"
+        private const val DELIMITER = "-***-"
 
-        public fun Task.toRedisLockKey(
-            executionTime: DateTime,
-            concurrencyIndex: Int,
-        ): RedisTaskLock = RedisTaskLock("${name.replace(DELIMITER, "_")}-$concurrencyIndex at ${executionTime.format2()}")
+        public fun Task.toRedisLockKey(concurrencyIndex: Int): RedisTaskLock =
+            RedisTaskLock("${name.replace(DELIMITER, "_")}$DELIMITER$concurrencyIndex")
     }
 
     override val name: String

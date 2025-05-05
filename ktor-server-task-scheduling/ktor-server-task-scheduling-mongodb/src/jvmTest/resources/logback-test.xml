@@ -11,5 +11,5 @@
     <logger name="io.ktor" level="info"/>
     <logger name="ktor.test" level="info"/>
     <logger name="io.github.flaxoos.ktor.server.plugins" level="info"/>
-    <logger name="io.github.flaxoos.ktor.server.plugins.taskscheduling.managers" level="trace"/>
+    <logger name="io.github.flaxoos.ktor.server.plugins.taskscheduling.managers" level="info"/>
 </configuration>

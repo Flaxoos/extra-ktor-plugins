@@ -17,7 +17,6 @@ import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.findByType
@@ -30,6 +29,7 @@ import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
 import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
@@ -54,7 +54,6 @@ open class Conventions : Plugin<Project> {
                 apply(project.plugin("ktlint"))
             }
             repositories {
-                mavenLocal()
                 mavenCentral()
                 maven {
                     url = uri("https://maven.pkg.github.com/flaxoos/flax-gradle-plugins")
@@ -120,12 +119,12 @@ open class Conventions : Plugin<Project> {
             tasks.named("build") {
                 dependsOn(tasks.matching { it.name.matches(Regex("detekt(?!.*Baseline).*\\b(Main|Test)\\b\n")) })
             }
-            tasks.withType(Test::class) {
+            tasks.withType<KotlinJvmTest> {
                 useJUnitPlatform()
             }
 
             tasks.withType<Wrapper> {
-                gradleVersion = "8.3"
+                gradleVersion = "8.11"
                 distributionType = Wrapper.DistributionType.BIN
             }
             extensions.findByType(KoverReportExtension::class)?.apply {

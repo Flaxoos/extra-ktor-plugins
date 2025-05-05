@@ -6,27 +6,26 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManager
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManagerConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManagerConfiguration.TaskManagerName.Companion.toTaskManagerName
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DefaultTaskLockTable.lockedAt
-import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DefaultTaskLockTable.name
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.Task
 import io.ktor.server.application.Application
+import java.sql.Connection
 import korlibs.time.DateTime
+import kotlin.properties.Delegates
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.LiteralOp
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertIgnore
-import org.jetbrains.exposed.sql.kotlin.datetime.KotlinInstantColumnType
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
-import java.sql.Connection
-import kotlin.properties.Delegates
 
 /**
  * An implementation of [DatabaseTaskLockManager] using JDBC and Exposed as the lock store
@@ -60,7 +59,6 @@ public class JdbcLockManager(
             transactionIsolation = Connection.TRANSACTION_READ_COMMITTED,
         ) {
             maxAttempts = 1
-            debug = true
             taskLockTable.insertIgnore {
                 it[name] = task.name
                 it[concurrencyIndex] = taskConcurrencyIndex
@@ -78,16 +76,16 @@ public class JdbcLockManager(
             db = database,
             transactionIsolation = Connection.TRANSACTION_READ_COMMITTED,
         ) {
-            val taskExecutionInstant = Instant.fromEpochMilliseconds(executionTime.unixMillisLong)
             taskLockTable.update(
                 where = {
                     selectClause(
                         task,
                         concurrencyIndex,
+                        executionTime,
                     )
                 },
             ) {
-                it[lockedAt] = taskExecutionInstant
+                it[lockedAt] = executionTime.toInstant()
                 it[taskLockTable.concurrencyIndex] = concurrencyIndex
             }
         }.let {
@@ -102,37 +100,17 @@ public class JdbcLockManager(
             }
         }
 
-    override suspend fun releaseLockKey(key: JdbcTaskLock) {
-        newSuspendedTransaction(
-            application.coroutineContext,
-            db = database,
-            transactionIsolation = Connection.TRANSACTION_READ_COMMITTED,
-        ) {
-            taskLockTable.update(
-                where = {
-                    selectClauseForRelease(
-                        key,
-                    )
-                },
-            ) {
-                it[lockedAt] = null
-            }
-        }
-    }
-
     override fun close() {}
 
     private fun selectClause(
         task: Task,
         concurrencyIndex: Int,
-    ) = (taskLockTable.name eq task.name and taskLockTable.concurrencyIndex.eq(concurrencyIndex)) and
-        lockedAt.isNull()
-
-    private fun selectClauseForRelease(lock: JdbcTaskLock) =
-        taskLockTable.name eq lock.name and taskLockTable.concurrencyIndex.eq(lock.concurrencyIndex) and
-            lockedAt.eq(
-                LiteralOp(KotlinInstantColumnType(), Instant.fromEpochMilliseconds(lock.lockedAt.unixMillisLong)),
-            )
+        executionTime: DateTime,
+    ) = (
+        taskLockTable.name eq task.name and
+            taskLockTable.concurrencyIndex.eq(concurrencyIndex)
+    ) and
+        (lockedAt.isNull() or lockedAt.less(executionTime.toInstant()))
 }
 
 public class JdbcTaskLock(
@@ -160,7 +138,7 @@ public object DefaultTaskLockTable : ExposedTaskLockTable("task_locks") {
 }
 
 @TaskSchedulingDsl
-public class JdbcJobLockManagerConfiguration : DatabaseTaskLockManagerConfiguration<JdbcTaskLock>() {
+public class JdbcJobLockManagerConfiguration : DatabaseTaskLockManagerConfiguration() {
     public var database: Database by Delegates.notNull()
 
     override fun createTaskManager(application: Application): JdbcLockManager =
@@ -190,3 +168,5 @@ public fun TaskSchedulingConfiguration.jdbc(
         },
     )
 }
+
+private fun DateTime.toInstant() = Instant.fromEpochMilliseconds(unixMillisLong)

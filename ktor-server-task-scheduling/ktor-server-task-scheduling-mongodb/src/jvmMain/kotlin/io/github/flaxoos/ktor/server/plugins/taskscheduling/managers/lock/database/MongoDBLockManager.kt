@@ -21,6 +21,7 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManager
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.Task
 import io.ktor.server.application.Application
 import korlibs.time.DateTime
+import kotlin.properties.Delegates
 import kotlinx.coroutines.flow.firstOrNull
 import org.bson.BsonReader
 import org.bson.BsonWriter
@@ -28,7 +29,6 @@ import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecRegistries
-import kotlin.properties.Delegates
 
 /**
  * An implementation of [DatabaseTaskLockManager] using MongoDB as the lock store
@@ -61,7 +61,7 @@ public class MongoDBLockManager(
                 Filters.and(
                     Filters.eq(MongoDbTaskLock::name.name, task.name),
                     Filters.eq(MongoDbTaskLock::concurrencyIndex.name, concurrencyIndex),
-                    Filters.eq(MongoDbTaskLock::lockedAt.name, DateTime.EPOCH),
+                    Filters.lt(MongoDbTaskLock::lockedAt.name, executionTime),
                 ),
             )
         val updates =
@@ -126,33 +126,6 @@ public class MongoDBLockManager(
             }.onSuccess {
                 session.commitTransaction()
             }.getOrElse { false }
-        }
-    }
-
-    protected override suspend fun releaseLockKey(key: MongoDbTaskLock) {
-        val query =
-            Filters.and(
-                Filters.and(
-                    Filters.eq(MongoDbTaskLock::name.name, key.name),
-                    Filters.eq(MongoDbTaskLock::concurrencyIndex.name, key.concurrencyIndex),
-                    Filters.eq(MongoDbTaskLock::lockedAt.name, key.lockedAt),
-                ),
-            )
-        val updates =
-            Updates.combine(
-                Updates.set(MongoDbTaskLock::lockedAt.name, DateTime.EPOCH),
-            )
-        val options = FindOneAndUpdateOptions().upsert(false)
-        client.startSession().use { session ->
-            session.startTransaction(transactionOptions = majorityJTransaction())
-            runCatching {
-                collection.findOneAndUpdate(query, updates, options).also {
-                    session.commitTransaction()
-                }
-            }.onFailure {
-                session.abortTransaction()
-                if (it !is MongoWriteException) throw it
-            }
         }
     }
 
@@ -248,7 +221,7 @@ internal val codecRegistry =
     )
 
 @TaskSchedulingDsl
-public class MongoDBJobLockManagerConfiguration : DatabaseTaskLockManagerConfiguration<MongoDbTaskLock>() {
+public class MongoDBJobLockManagerConfiguration : DatabaseTaskLockManagerConfiguration() {
     public var client: MongoClient by Delegates.notNull()
     public var databaseName: String by Delegates.notNull()
 

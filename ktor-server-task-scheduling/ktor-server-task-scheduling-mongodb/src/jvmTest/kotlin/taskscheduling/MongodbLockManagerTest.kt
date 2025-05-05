@@ -24,7 +24,9 @@ class MongodbLockManagerTest : TaskSchedulingPluginTest() {
 
     init {
         context("mongodb lock manager") {
-            testTaskScheduling {
+            testTaskScheduling(
+                executionBufferMs = 1000,
+            ) {
                 mongoDb {
                     databaseName = "test"
                     client = mongoClient

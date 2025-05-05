@@ -5,12 +5,13 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.Task
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.Application
 import io.ktor.utils.io.core.Closeable
-import korlibs.time.DateFormat
+import korlibs.time.DateFormat.Companion.FORMAT2
 import korlibs.time.DateTime
+import korlibs.time.TimeFormat.Companion.DEFAULT_FORMAT
 import korlibs.time.parseLocal
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlin.jvm.JvmInline
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 
 private val logger = KotlinLogging.logger { }
 
@@ -22,9 +23,10 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
         task: Task,
         executionTime: DateTime,
     ) {
-        val runs =
-            task.concurrencyRange().map { concurrencyIndex ->
-                application.async {
+        task
+            .concurrencyRange()
+            .map { concurrencyIndex ->
+                application.launch {
                     logger.trace {
                         "${application.host()}: Attempting task execution at ${executionTime.format2()} for ${task.name} - $concurrencyIndex"
                     }
@@ -42,10 +44,7 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
                         null
                     }
                 }
-            }
-        runs.awaitAll().filterNotNull().forEach {
-            markExecuted(it)
-        }
+            }.joinAll()
     }
 
     /**
@@ -62,17 +61,14 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
         concurrencyIndex: Int,
     ): TASK_EXECUTION_TOKEN?
 
-    /**
-     * Mark this task as, provided a key was acquired
-     */
-    public abstract suspend fun markExecuted(key: TASK_EXECUTION_TOKEN)
-
     public companion object {
         public fun Application.host(): String = "Host ${environment.config.property("ktor.deployment.host").getString()}"
 
-        public fun DateTime.format2(): String = format(DateFormat.FORMAT2)
+        public fun DateTime.format2(): String = format(FORMAT2)
 
-        public fun String.format2ToDateTime(): DateTime = DateFormat.FORMAT2.parseLocal(this)
+        public fun DateTime.formatTime(): String = time.format(DEFAULT_FORMAT)
+
+        public fun String.format2ToDateTime(): DateTime = FORMAT2.parseLocal(this)
     }
 }
 
@@ -80,7 +76,7 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
  * Configuration for [TaskManager]
  */
 @TaskSchedulingDsl
-public abstract class TaskManagerConfiguration<TASK_EXECUTION_TOKEN> {
+public abstract class TaskManagerConfiguration {
     /**
      * The name of the task manager, will be used to identify the task manager when assigning tasks to it
      * if none is provided, it will be considered the default one. only one default task manager is allowed.

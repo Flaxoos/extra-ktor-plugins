@@ -21,6 +21,7 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManager
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.Task
 import io.ktor.server.application.Application
 import korlibs.time.DateTime
+import kotlin.properties.Delegates
 import kotlinx.coroutines.flow.firstOrNull
 import org.bson.BsonReader
 import org.bson.BsonWriter
@@ -28,7 +29,6 @@ import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecRegistries
-import kotlin.properties.Delegates
 
 /**
  * An implementation of [DatabaseTaskLockManager] using MongoDB as the lock store
@@ -61,8 +61,8 @@ public class MongoDBLockManager(
                 Filters.and(
                     Filters.eq(MongoDbTaskLock::name.name, task.name),
                     Filters.eq(MongoDbTaskLock::concurrencyIndex.name, concurrencyIndex),
+                    Filters.lt(MongoDbTaskLock::lockedAt.name, executionTime),
                 ),
-                Filters.ne(MongoDbTaskLock::lockedAt.name, executionTime),
             )
         val updates =
             Updates.combine(
@@ -86,6 +86,7 @@ public class MongoDBLockManager(
             Indexes.compoundIndex(
                 Indexes.ascending(MongoDbTaskLock::name.name),
                 Indexes.ascending(MongoDbTaskLock::concurrencyIndex.name),
+                Indexes.ascending(MongoDbTaskLock::lockedAt.name),
             ),
             IndexOptions().unique(true),
         )
@@ -103,6 +104,7 @@ public class MongoDBLockManager(
                     Filters.and(
                         Filters.eq(MongoDbTaskLock::name.name, task.name),
                         Filters.eq(MongoDbTaskLock::concurrencyIndex.name, taskConcurrencyIndex),
+                        Filters.eq(MongoDbTaskLock::lockedAt.name, DateTime.EPOCH),
                     ),
                 ).firstOrNull()
                 ?.let { false } ?: runCatching {
@@ -127,8 +129,6 @@ public class MongoDBLockManager(
         }
     }
 
-    protected override suspend fun releaseLockKey(key: MongoDbTaskLock) {}
-
     override fun close() {
         client.close()
     }
@@ -143,7 +143,7 @@ public class MongoDBLockManager(
             .build()
 }
 
-public data class MongoDbTaskLock(
+public class MongoDbTaskLock(
     override val name: String,
     override val concurrencyIndex: Int,
     override var lockedAt: DateTime,
@@ -221,7 +221,7 @@ internal val codecRegistry =
     )
 
 @TaskSchedulingDsl
-public class MongoDBJobLockManagerConfiguration : DatabaseTaskLockManagerConfiguration<MongoDbTaskLock>() {
+public class MongoDBJobLockManagerConfiguration : DatabaseTaskLockManagerConfiguration() {
     public var client: MongoClient by Delegates.notNull()
     public var databaseName: String by Delegates.notNull()
 

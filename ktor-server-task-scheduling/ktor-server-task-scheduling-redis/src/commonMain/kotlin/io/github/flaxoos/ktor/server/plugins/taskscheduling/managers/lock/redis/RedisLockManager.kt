@@ -13,8 +13,8 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.TaskLock
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.Application
 import korlibs.time.DateTime
-import kotlinx.coroutines.runBlocking
 import kotlin.jvm.JvmInline
+import kotlinx.coroutines.runBlocking
 
 internal val logger = KotlinLogging.logger { }
 
@@ -28,29 +28,30 @@ public class RedisLockManager(
     private val lockExpirationMs: Long,
     private val connectionAcquisitionTimeoutMs: Long,
 ) : TaskLockManager<RedisTaskLock>() {
+
     override suspend fun init(tasks: List<Task>) {}
 
     override suspend fun acquireLockKey(
         task: Task,
         executionTime: DateTime,
         concurrencyIndex: Int,
-    ): RedisTaskLock? =
-        connectionPool.withConnection(connectionAcquisitionTimeoutMs) { redisConnection ->
-            logger.debug { "${application.host()}: ${executionTime.format2()}: Acquiring lock for ${task.name} - $concurrencyIndex" }
-            val key = task.toRedisLockKey(executionTime, concurrencyIndex)
-            if (redisConnection.setNx(key.value, "1", lockExpirationMs) != null) {
+    ): RedisTaskLock? {
+        logger.debug { "${application.host()}: ${executionTime.format2()}: Acquiring lock for ${task.name} - $concurrencyIndex" }
+        val key = task.toRedisLockKey(concurrencyIndex, executionTime)
+        return connectionPool.withConnection(connectionAcquisitionTimeoutMs) { redisConnection ->
+            if (redisConnection.setNx(key.value, executionTime.format2(), lockExpirationMs) != null) {
                 logger.debug { "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - $concurrencyIndex" }
                 return@withConnection key
+            } else {
+                return@withConnection null
             }
-            null
         } ?: run {
             logger.debug {
                 "${application.host()}: ${executionTime.format2()}: Failed to acquire lock for ${task.name} - $concurrencyIndex"
             }
             null
         }
-
-    override suspend fun releaseLockKey(key: RedisTaskLock) {}
+    }
 
     override fun close() {
         runBlocking {
@@ -70,18 +71,26 @@ public value class RedisTaskLock internal constructor(
     public val value: String,
 ) : TaskLock {
     public companion object {
-        private const val DELIMITER = "-"
+        private const val DELIMITER = "-***-"
 
         public fun Task.toRedisLockKey(
-            executionTime: DateTime,
             concurrencyIndex: Int,
-        ): RedisTaskLock = RedisTaskLock("${name.replace(DELIMITER, "_")}-$concurrencyIndex at ${executionTime.format2()}")
+            executionTime: DateTime,
+        ): RedisTaskLock =
+            RedisTaskLock(
+                "${
+                    name.replace(
+                        DELIMITER,
+                        "_",
+                    )
+                }$DELIMITER$concurrencyIndex$DELIMITER${executionTime.format2()}",
+            )
     }
 
     override val name: String
-        get() = value.split(DELIMITER, limit = 2)[0]
+        get() = value.split(DELIMITER, limit = 3)[0]
     override val concurrencyIndex: Int
-        get() = value.split(DELIMITER, limit = 2)[1].toInt()
+        get() = value.split(DELIMITER, limit = 3)[1].toInt()
 }
 
 @TaskSchedulingDsl
@@ -118,7 +127,7 @@ public class RedisTaskLockManagerConfiguration(
      * The timeout for trying to get a connection to from the pool
      */
     public var connectionAcquisitionTimeoutMs: Long = 100,
-) : TaskLockManagerConfiguration<RedisTaskLock>() {
+) : TaskLockManagerConfiguration() {
     override fun createTaskManager(application: Application): RedisLockManager =
         RedisLockManager(
             name = name.toTaskManagerName(),

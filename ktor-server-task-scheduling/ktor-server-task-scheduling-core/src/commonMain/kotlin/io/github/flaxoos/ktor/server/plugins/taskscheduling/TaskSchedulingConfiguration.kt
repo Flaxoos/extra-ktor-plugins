@@ -51,7 +51,7 @@ public open class TaskSchedulingConfiguration {
         )
     }
 
-    public fun addTaskManager(taskManagerConfiguration: TaskManagerConfiguration<*>) {
+    public fun addTaskManager(taskManagerConfiguration: TaskManagerConfiguration) {
         taskManagers.add {
             taskManagerConfiguration.createTaskManager(it)
         }

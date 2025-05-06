@@ -85,5 +85,4 @@ public interface DatabaseTaskLock : TaskLock {
 }
 
 @TaskSchedulingDsl
-public abstract class DatabaseTaskLockManagerConfiguration<DB_TASK_LOCK_KEY : DatabaseTaskLock> :
-    TaskLockManagerConfiguration<DB_TASK_LOCK_KEY>()
+public abstract class DatabaseTaskLockManagerConfiguration : TaskLockManagerConfiguration()

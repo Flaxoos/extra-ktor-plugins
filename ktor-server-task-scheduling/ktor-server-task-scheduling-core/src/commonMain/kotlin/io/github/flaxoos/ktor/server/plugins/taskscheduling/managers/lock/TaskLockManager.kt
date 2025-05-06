@@ -14,10 +14,6 @@ public abstract class TaskLockManager<TASK_LOCK : TaskLock> : TaskManager<TASK_L
         concurrencyIndex: Int,
     ): TASK_LOCK? = acquireLockKey(task, executionTime, concurrencyIndex)
 
-    override suspend fun markExecuted(key: TASK_LOCK) {
-        releaseLockKey(key)
-    }
-
     /**
      * Get permission to execute the task
      */
@@ -26,12 +22,7 @@ public abstract class TaskLockManager<TASK_LOCK : TaskLock> : TaskManager<TASK_L
         executionTime: DateTime,
         concurrencyIndex: Int,
     ): TASK_LOCK?
-
-    /**
-     * Release permission to execute the task
-     */
-    protected abstract suspend fun releaseLockKey(key: TASK_LOCK)
 }
 
 @TaskSchedulingDsl
-public abstract class TaskLockManagerConfiguration<TASK_LOCK> : TaskManagerConfiguration<TASK_LOCK>()
+public abstract class TaskLockManagerConfiguration : TaskManagerConfiguration()

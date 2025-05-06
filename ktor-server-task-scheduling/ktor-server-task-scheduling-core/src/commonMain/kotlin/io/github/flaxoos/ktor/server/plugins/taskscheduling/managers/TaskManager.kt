@@ -9,9 +9,9 @@ import korlibs.time.DateFormat.Companion.FORMAT2
 import korlibs.time.DateTime
 import korlibs.time.TimeFormat.Companion.DEFAULT_FORMAT
 import korlibs.time.parseLocal
-import kotlin.jvm.JvmInline
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlin.jvm.JvmInline
 
 private val logger = KotlinLogging.logger { }
 

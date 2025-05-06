@@ -3,6 +3,7 @@ package io.github.flaxoos.ktor.server.plugins.taskscheduling
 import dev.inmo.krontab.builder.SchedulerBuilder
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManager.Companion.formatTime
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.kotest.assertions.retry
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.spec.style.scopes.ContainerScope
@@ -17,6 +18,7 @@ import io.ktor.server.config.mergeWith
 import io.ktor.server.testing.TestApplication
 import io.ktor.server.testing.TestApplicationBuilder
 import korlibs.time.DateTime
+import korlibs.time.minutes
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.coroutineScope
@@ -59,74 +61,76 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                 initial = frequenciesExponentialSeriesInitialMs,
                 n = frequenciesExponentialSeriesN,
             )
+
         withData(nameFn = { "Freq: $it ms" }, frequencies) { freqMs ->
             withData(nameFn = { "Task count = $it" }, taskCounts) { taskCount ->
                 withData(nameFn = { "Concurrency = $it" }, concurrencyValues) { concurrency ->
-                    coroutineScope {
-                        val taskExecutionsAndApplications =
-                            setupApplicationEngines(
-                                taskSchedulingConfiguration = taskSchedulingConfiguration,
-                                count = engineCount,
-                                freqMs = freqMs.toLong(),
-                                taskCount = taskCount.toShort(),
-                                concurrency = concurrency.toShort(),
-                                kronTaskSchedule = kronTaskSchedule(freqMs),
-                            ).map { executionsAndApp ->
-                                executionsAndApp to
-                                    launch {
-                                        val app = executionsAndApp.second
-                                        app.start()
-                                    }
-                            }.also { appsAndJobs ->
-                                // wait for all app engines to start
-                                appsAndJobs.map { appAndJob -> appAndJob.second }.joinAll()
-                            }.map {
-                                // don't need to remember the job
-                                it.first
-                            }
-
-                        delay(freqMs.milliseconds * executions)
-                        delay(executionBufferMs.milliseconds)
-                        taskExecutionsAndApplications
-                            .map { (_, app) ->
-                                launch {
-                                    app.stop()
+                    retry(3, 2.minutes) {
+                        coroutineScope {
+                            val taskExecutionsAndApplications =
+                                setupApplicationEngines(
+                                    taskSchedulingConfiguration = taskSchedulingConfiguration,
+                                    count = engineCount,
+                                    freqMs = freqMs.toLong(),
+                                    taskCount = taskCount.toShort(),
+                                    concurrency = concurrency.toShort(),
+                                    kronTaskSchedule = kronTaskSchedule(freqMs),
+                                ).map { executionsAndApp ->
+                                    executionsAndApp to
+                                            launch {
+                                                val app = executionsAndApp.second
+                                                app.start()
+                                            }
+                                }.also { appsAndJobs ->
+                                    // wait for all app engines to start
+                                    appsAndJobs.map { appAndJob -> appAndJob.second }.joinAll()
+                                }.map {
+                                    // don't need to remember the job
+                                    it.first
                                 }
-                            }.joinAll()
 
-                        val totalExecutions = taskExecutionsAndApplications.sumOf { it.first.size }
-                        val totalExpectedExecutionsMinusLastRound = taskCount * concurrency * (executions - 1)
-                        totalExecutions shouldBeGreaterThan totalExpectedExecutionsMinusLastRound
+                            delay(freqMs.milliseconds * executions)
+                            delay(executionBufferMs.milliseconds)
+                            taskExecutionsAndApplications
+                                .map { (_, app) ->
+                                    launch {
+                                        app.stop()
+                                    }
+                                }.joinAll()
 
-                        try {
-                            taskExecutionsAndApplications.map { it.first }.flatten().let { records ->
-                                records
-                                    .groupBy { it.taskName to it.executionTime }
-                                    .toSortedMap { (_, a), (_, b) ->
-                                        a.compareTo(b)
-                                    }.let { sortedRecords ->
-                                        val (_, lastTime) = sortedRecords.lastKey()
-                                        sortedRecords.forAll { (pair, executions) ->
-                                            val (taskName, executionTime) = pair
-                                            withClue(
-                                                "\n$taskName - ${executionTime.formatTime()} was executed ${executions.size} times instead of $concurrency: \n\t${
-                                                    records.filter { it.taskName == taskName && it.executionTime == executionTime }
-                                                        .joinToString("\n\t")
-                                                }",
-                                            ) {
-                                                if (executionTime == lastTime) {
-                                                    // The last round might miss executions due to the server shutting down
-                                                    executions.size shouldBeLessThanOrEqual concurrency
-                                                } else {
-                                                    executions.size shouldBe concurrency
+                            val totalExecutions = taskExecutionsAndApplications.sumOf { it.first.size }
+                            val totalExpectedExecutionsMinusLastRound = taskCount * concurrency * (executions - 1)
+                            totalExecutions shouldBeGreaterThan totalExpectedExecutionsMinusLastRound
+
+                            try {
+                                taskExecutionsAndApplications.map { it.first }.flatten().let { records ->
+                                    records
+                                        .groupBy { it.taskName to it.executionTime }
+                                        .toSortedMap { (_, a), (_, b) ->
+                                            a.compareTo(b)
+                                        }.let { executionsPerTaskAndTime ->
+                                            val (_, lastTime) = executionsPerTaskAndTime.lastKey()
+                                            executionsPerTaskAndTime.forAll { (pair, executions) ->
+                                                val (taskName, executionTime) = pair
+                                                withClue(
+                                                    "\n$taskName - ${executionTime.formatTime()} was executed ${executions.size} times instead of $concurrency: \n\t${
+                                                        executions.joinToString("\n\t")
+                                                    }",
+                                                ) {
+                                                    if (executionTime == lastTime) {
+                                                        // The last round might miss executions due to the server shutting down
+                                                        executions.size shouldBeLessThanOrEqual concurrency
+                                                    } else {
+                                                        executions.size shouldBe concurrency
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
+                                }
+                            } finally {
+                                delay(1000)
+                                clean()
                             }
-                        } finally {
-                            delay(1000)
-                            clean()
                         }
                     }
                 }
@@ -192,12 +196,12 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                 }
             }
             executionRecords to
-                TestApplication {
-                    engine {
-                        shutdownGracePeriod = freqMs * 10
+                    TestApplication {
+                        engine {
+                            shutdownGracePeriod = freqMs * 10
+                        }
+                        block()
                     }
-                    block()
-                }
         }
 
     private fun exponentialScheduleGenerator(

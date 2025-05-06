@@ -8,9 +8,7 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManager
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DefaultTaskLockTable.lockedAt
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.Task
 import io.ktor.server.application.Application
-import java.sql.Connection
 import korlibs.time.DateTime
-import kotlin.properties.Delegates
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Database
@@ -26,6 +24,8 @@ import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import java.sql.Connection
+import kotlin.properties.Delegates
 
 /**
  * An implementation of [DatabaseTaskLockManager] using JDBC and Exposed as the lock store

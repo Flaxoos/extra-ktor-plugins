@@ -15,8 +15,6 @@ import io.ktor.server.application.Application
 import korlibs.time.DateTime
 import kotlin.jvm.JvmInline
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 internal val logger = KotlinLogging.logger { }
 
@@ -30,7 +28,6 @@ public class RedisLockManager(
     private val lockExpirationMs: Long,
     private val connectionAcquisitionTimeoutMs: Long,
 ) : TaskLockManager<RedisTaskLock>() {
-    private val mutex = Mutex()
 
     override suspend fun init(tasks: List<Task>) {}
 
@@ -41,20 +38,18 @@ public class RedisLockManager(
     ): RedisTaskLock? {
         logger.debug { "${application.host()}: ${executionTime.format2()}: Acquiring lock for ${task.name} - $concurrencyIndex" }
         val key = task.toRedisLockKey(concurrencyIndex, executionTime)
-        return mutex.withLock(key) {
-            connectionPool.withConnection(connectionAcquisitionTimeoutMs) { redisConnection ->
-                if (redisConnection.setNx(key.value, executionTime.format2(), lockExpirationMs) != null) {
-                    logger.debug { "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - $concurrencyIndex" }
-                    return@withConnection key
-                } else {
-                    return@withConnection null
-                }
-            } ?: run {
-                logger.debug {
-                    "${application.host()}: ${executionTime.format2()}: Failed to acquire lock for ${task.name} - $concurrencyIndex"
-                }
-                null
+        return connectionPool.withConnection(connectionAcquisitionTimeoutMs) { redisConnection ->
+            if (redisConnection.setNx(key.value, executionTime.format2(), lockExpirationMs) != null) {
+                logger.debug { "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - $concurrencyIndex" }
+                return@withConnection key
+            } else {
+                return@withConnection null
             }
+        } ?: run {
+            logger.debug {
+                "${application.host()}: ${executionTime.format2()}: Failed to acquire lock for ${task.name} - $concurrencyIndex"
+            }
+            null
         }
     }
 

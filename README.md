@@ -49,7 +49,9 @@ dependencies {
 
 ## Examples:
 
-See [examples repository](https://github.com/Flaxoos/flax-ktor-plugins-examples)
+See:
+- [Example System](https://github.com/Flaxoos/ktor-webinar-real-time-event-system)
+- [Examples Repository](https://github.com/Flaxoos/flax-ktor-plugins-examples)
 
 ## Contributing
 

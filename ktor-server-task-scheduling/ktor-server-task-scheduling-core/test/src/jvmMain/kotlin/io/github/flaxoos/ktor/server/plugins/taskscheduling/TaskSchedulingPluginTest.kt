@@ -19,12 +19,12 @@ import io.ktor.server.testing.TestApplication
 import io.ktor.server.testing.TestApplicationBuilder
 import korlibs.time.DateTime
 import korlibs.time.minutes
-import kotlin.math.pow
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlin.math.pow
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("UNUSED")
 val logger = KotlinLogging.logger { }
@@ -77,10 +77,10 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                                     kronTaskSchedule = kronTaskSchedule(freqMs),
                                 ).map { executionsAndApp ->
                                     executionsAndApp to
-                                            launch {
-                                                val app = executionsAndApp.second
-                                                app.start()
-                                            }
+                                        launch {
+                                            val app = executionsAndApp.second
+                                            app.start()
+                                        }
                                 }.also { appsAndJobs ->
                                     // wait for all app engines to start
                                     appsAndJobs.map { appAndJob -> appAndJob.second }.joinAll()
@@ -196,12 +196,12 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                 }
             }
             executionRecords to
-                    TestApplication {
-                        engine {
-                            shutdownGracePeriod = freqMs * 10
-                        }
-                        block()
+                TestApplication {
+                    engine {
+                        shutdownGracePeriod = freqMs * 10
                     }
+                    block()
+                }
         }
 
     private fun exponentialScheduleGenerator(

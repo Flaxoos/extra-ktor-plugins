@@ -8,6 +8,7 @@ import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.config.SslConfigs
 import java.io.File
 import java.nio.file.Paths
+import kotlin.time.Duration.Companion.seconds
 
 class KafkaSSLIntegrationTest : BaseKafkaIntegrationTest() {
     override val additionalProducerProperties: Map<String, Any> by lazy {
@@ -30,7 +31,7 @@ class KafkaSSLIntegrationTest : BaseKafkaIntegrationTest() {
             install(
                 ContainerExtension(
                     zookeeperContainer,
-                    ContainerLifecycleMode.Project,
+                    ContainerLifecycleMode.Spec,
                     beforeStart = { generateCertificates() },
                 ),
             )
@@ -41,10 +42,10 @@ class KafkaSSLIntegrationTest : BaseKafkaIntegrationTest() {
                         sslConfig()
                         dependsOn(zooKeeper)
                     },
-                    ContainerLifecycleMode.Project,
-                    beforeStart = { zooKeeper.start() },
-                    beforeTest = {
+                    ContainerLifecycleMode.Spec,
+                    beforeStart = {
                         bootstrapServers = BOOTSTRAP_SERVERS
+                        zooKeeper.start()
                     },
                 ),
             )
@@ -54,7 +55,7 @@ class KafkaSSLIntegrationTest : BaseKafkaIntegrationTest() {
                     sslConfig()
                     dependsOn(kafka)
                 },
-                ContainerLifecycleMode.Project,
+                ContainerLifecycleMode.Spec,
                 beforeStart = {
                     kafkaContainer.start()
                 },
@@ -64,13 +65,13 @@ class KafkaSSLIntegrationTest : BaseKafkaIntegrationTest() {
             ),
         )
 
-        test("With code configuration") {
+        test("With code configuration").config(timeout = 20.seconds) {
             testKafkaApplication(waitSecondsAfterApplicationStart = 10) {
                 install(Kafka) {
                     schemaRegistryUrl = resolvedSchemaRegistryUrl
                     setupTopics()
                     common {
-                        bootstrapServers = listOf(BOOTSTRAP_SERVERS)
+                        bootstrapServers = listOf(this@KafkaSSLIntegrationTest.bootstrapServers)
                         securityProtocol = "SSL"
                     }
                     admin {

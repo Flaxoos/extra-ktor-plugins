@@ -103,7 +103,7 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
                 }
                 isConnected = true
                 break
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 logger.info(
                     "Attempt $i to connect to Kafka broker at bootstrap.servers: " +
                         "$bootstrapServers failed, retrying",

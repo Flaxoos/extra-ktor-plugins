@@ -46,3 +46,8 @@ out/
 /.kotlin
 /buildSrc/.kotlin
 **/node_modules/
+
+### Agents ###
+/CLAUDE.md
+.claude
+.junie/

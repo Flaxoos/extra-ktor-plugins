@@ -245,16 +245,6 @@ internal fun KafkaConfigPropertiesContext.withSslProperties(properties: SslPrope
         }
     }
 
-internal fun KafkaConfigPropertiesContext.withSslProperties(properties: SslPropertiesBuilder?) =
-    apply {
-        properties?.let { kafkaProperties.putAll(it.build()) }
-    }
-
-internal fun KafkaConfigPropertiesContext.withSaslProperties(properties: SaslPropertiesBuilder?) =
-    apply {
-        properties?.let { kafkaProperties.putAll(it.build()) }
-    }
-
 @KafkaDsl
 fun KafkaConsumerConfig.consumerRecordHandler(
     topicName: TopicName,
@@ -264,9 +254,9 @@ fun KafkaConsumerConfig.consumerRecordHandler(
 }
 
 @KafkaDsl
-fun KafkaConfig.common(configuration: CommonClientPropertiesBuilder.() -> Unit = { CommonClientPropertiesBuilder }) {
+fun KafkaConfig.common(configuration: CommonClientPropertiesBuilder.() -> Unit = { CommonClientPropertiesBuilder() }) {
     commonPropertiesBuilder =
-        CommonClientPropertiesBuilder.apply(configuration)
+        CommonClientPropertiesBuilder().apply(configuration)
 }
 
 @KafkaDsl
@@ -591,7 +581,7 @@ sealed class ClientPropertiesBuilder : KafkaPropertiesBuilder() {
 /**
  * Concrete implementation of [ClientPropertiesBuilder] to represent the common properties
  */
-data object CommonClientPropertiesBuilder : ClientPropertiesBuilder()
+class CommonClientPropertiesBuilder : ClientPropertiesBuilder()
 
 class AdminPropertiesBuilder : ClientPropertiesBuilder()
 

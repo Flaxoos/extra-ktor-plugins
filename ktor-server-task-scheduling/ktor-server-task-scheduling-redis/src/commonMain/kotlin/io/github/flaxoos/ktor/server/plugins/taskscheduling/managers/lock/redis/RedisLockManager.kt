@@ -13,8 +13,8 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.TaskLock
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.Application
 import korlibs.time.DateTime
-import kotlin.jvm.JvmInline
 import kotlinx.coroutines.runBlocking
+import kotlin.jvm.JvmInline
 
 internal val logger = KotlinLogging.logger { }
 
@@ -28,7 +28,6 @@ public class RedisLockManager(
     private val lockExpirationMs: Long,
     private val connectionAcquisitionTimeoutMs: Long,
 ) : TaskLockManager<RedisTaskLock>() {
-
     override suspend fun init(tasks: List<Task>) {}
 
     override suspend fun acquireLockKey(

@@ -1,14 +1,13 @@
 package io.github.flaxoos.ktor.server.plugins.kafka
 
-import io.github.flaxoos.ktor.server.plugins.kafka.KafkaGenericContainer.Companion.kafkaImage
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import org.testcontainers.containers.DockerComposeContainer
 import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.KafkaContainer
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
+import org.testcontainers.kafka.ConfluentKafkaContainer
 import org.testcontainers.utility.DockerImageName
 import org.testcontainers.utility.MountableFile
 import java.io.File
@@ -16,11 +15,14 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 private const val CONFLUENT_PLATFORM_VERSION = "7.7.1"
+private const val KAFKA_IMAGE_NAME = "confluentinc/cp-kafka"
+private const val SCHEMA_REGISTRY_IMAGE_NAME = "confluentinc/cp-schema-registry"
+private const val KAFKA_IMAGE = "$KAFKA_IMAGE_NAME:$CONFLUENT_PLATFORM_VERSION"
+private const val SCHEMA_REGISTRY_IMAGE = "$SCHEMA_REGISTRY_IMAGE_NAME:$CONFLUENT_PLATFORM_VERSION"
 private val logger: Logger = KtorSimpleLogger(BaseKafkaIntegrationTest::class.java.simpleName)
 private val kafkaNetwork = Network.builder().driver("bridge").build()
 private const val YML_FILE_PATH = "/Kafka Cluster SSL.yml"
 private val yml = object {}::class.java.getResource(YML_FILE_PATH)?.toURI() ?: error("$YML_FILE_PATH not found")
-
 internal const val LOCALHOST = "localhost"
 internal const val KAFKA_BROKER_PORT = 19092
 internal const val BOOTSTRAP_SERVERS: String = "$LOCALHOST:$KAFKA_BROKER_PORT"
@@ -28,26 +30,38 @@ internal const val SCHEMA_REGISTRY_PORT = 8081
 internal const val SCHEMA_REGISTRY_URL: String = "https://$LOCALHOST:$SCHEMA_REGISTRY_PORT"
 internal const val PASSWORD = "test_password"
 
-internal fun newKafkaContainer() = KafkaContainer(kafkaImage)
+internal fun newKafkaContainer() =
+    ConfluentKafkaContainer(
+        DockerImageName
+            .parse(KAFKA_IMAGE)
+            .asCompatibleSubstituteFor(KAFKA_IMAGE_NAME),
+    ).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT_S.seconds.toJavaDuration())
 
-internal fun KafkaContainer.config() {
-    if (System.getProperty("os.name").lowercase().contains("mac")) {
-        withCreateContainerCmdModifier { it.withPlatform("linux/amd64") }
-    }
-    withNetworkAliases("kafka")
+internal fun ConfluentKafkaContainer.config() {
     withNetwork(kafkaNetwork)
-    withEnv("KAFKA_AUTO_CREATE_TOPIC_ENABLE", "false")
+    withNetworkAliases("kafka")
+    withEnv("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "true")
     withEnv("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1")
     withEnv("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1")
+    withListener("kafka:9095")
 }
 
-internal fun SchemaRegistryContainer.config(kafka: KafkaContainer) {
-    waitingFor(Wait.forHttp("/subjects").forStatusCode(200).withStartupTimeout(120.seconds.toJavaDuration()))
+private const val CONTAINER_STARTUP_TIMEOUT_S = 30
+
+internal fun SchemaRegistryContainer.config(kafka: ConfluentKafkaContainer) {
+    waitingFor(
+        Wait
+            .forHttp("/subjects")
+            .forStatusCode(200)
+            .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT_S.seconds.toJavaDuration()),
+    )
     withExposedPorts(SCHEMA_REGISTRY_PORT)
     withNetwork(kafka.network)
+    withNetworkAliases("schema-registry")
     withEnv("SCHEMA_REGISTRY_HOST_NAME", "schema-registry")
     withEnv("SCHEMA_REGISTRY_LISTENERS", "http://0.0.0.0:$SCHEMA_REGISTRY_PORT")
-    withEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", "PLAINTEXT://${kafka.networkAliases[0]}:9092")
+    withEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", "PLAINTEXT://kafka:9095")
+    withEnv("SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL", "PLAINTEXT")
 }
 
 internal val zookeeperContainer =
@@ -125,6 +139,7 @@ internal fun SchemaRegistryContainer.sslConfig() {
     withCopyToContainer(MountableFile.forClasspathResource("/secrets"), "/etc/kafka/secrets")
 }
 
+@Suppress("unused")
 internal val dockerComposeContainer: DockerComposeContainer<*> =
     logErrors { DockerComposeContainer("kafka-ssl", File(yml)) }
 
@@ -146,28 +161,31 @@ internal abstract class FixedPortsContainer<SELF : GenericContainer<SELF>>(
         }
 }
 
-internal class SchemaRegistryContainer private constructor() :
-    FixedPortsContainer<SchemaRegistryContainer>("$schemaRegistryImage:$CONFLUENT_PLATFORM_VERSION") {
-        companion object {
-            val schemaRegistryImage: DockerImageName = DockerImageName.parse("confluentinc/cp-schema-registry")
+internal class SchemaRegistryContainer private constructor() : FixedPortsContainer<SchemaRegistryContainer>(SCHEMA_REGISTRY_IMAGE) {
+    companion object {
+        @Suppress("unused")
+        val schemaRegistryImage: DockerImageName = DockerImageName.parse(SCHEMA_REGISTRY_IMAGE)
 
-            fun new() = SchemaRegistryContainer()
-        }
+        fun new() = SchemaRegistryContainer()
     }
+}
 
-internal class KafkaGenericContainer private constructor() :
-    FixedPortsContainer<KafkaGenericContainer>("$kafkaImage:$CONFLUENT_PLATFORM_VERSION") {
-        companion object {
-            val kafkaImage: DockerImageName = DockerImageName.parse("confluentinc/cp-kafka")
+internal class KafkaGenericContainer private constructor() : FixedPortsContainer<KafkaGenericContainer>(KAFKA_IMAGE) {
+    companion object {
+        @Suppress("unused")
+        val kafkaImage: DockerImageName = DockerImageName.parse(KAFKA_IMAGE)
 
-            fun new() = KafkaGenericContainer()
-        }
+        fun new() = KafkaGenericContainer()
     }
+}
 
-internal fun KafkaContainer.withConsumeLogs() = withLogConsumer(kafkaLogConsumer)
+@Suppress("unused")
+internal fun ConfluentKafkaContainer.withConsumeLogs() = withLogConsumer(kafkaLogConsumer)
 
+@Suppress("unused")
 internal fun KafkaGenericContainer.withConsumeLogs() = withLogConsumer(kafkaLogConsumer)
 
+@Suppress("unused")
 internal fun SchemaRegistryContainer.withConsumeLogs() = withLogConsumer(schemaRegistryLogConsumer)
 
 private val kafkaLogger = KtorSimpleLogger("kafka")

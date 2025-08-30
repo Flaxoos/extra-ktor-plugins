@@ -8,9 +8,10 @@ import io.kotest.extensions.testcontainers.ContainerExtension
 import io.kotest.extensions.testcontainers.ContainerLifecycleMode
 import io.ktor.server.application.install
 import kotlinx.serialization.Serializable
+import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.CommonClientConfigs.CLIENT_ID_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG
-import org.testcontainers.containers.KafkaContainer
+import org.testcontainers.kafka.ConfluentKafkaContainer
 import kotlin.time.Duration.Companion.seconds
 
 const val CODE_CONFIGURED_CLIENT_ID = "code-configured-client-id"
@@ -19,13 +20,13 @@ const val CODE_CONFIGURED_GROUP_ID = "code-configured-group-id"
 @OptIn(ExperimentalKotest::class)
 class KafkaIntegrationTest : BaseKafkaIntegrationTest() {
     init {
-        val kafkaContainer: KafkaContainer = newKafkaContainer()
+        val kafkaContainer: ConfluentKafkaContainer = newKafkaContainer()
         val schemaRegistryContainer = SchemaRegistryContainer.new()
         val kafka =
             install(
                 ContainerExtension(
                     kafkaContainer.apply { config() },
-                    mode = ContainerLifecycleMode.Project,
+                    mode = ContainerLifecycleMode.Spec,
                     beforeTest = {
                         bootstrapServers = kafkaContainer.bootstrapServers
                     },
@@ -41,7 +42,7 @@ class KafkaIntegrationTest : BaseKafkaIntegrationTest() {
                 },
             ),
         )
-        context("should pr oduce and consume records").config(timeout = 120.seconds) {
+        context("should produce and consume records").config(timeout = 20.seconds) {
             test("With default config path") {
                 editConfigurationFile()
                 testKafkaApplication {
@@ -66,7 +67,7 @@ class KafkaIntegrationTest : BaseKafkaIntegrationTest() {
                     install(Kafka) {
                         schemaRegistryUrl = resolvedSchemaRegistryUrl
                         setupTopics()
-                        common { bootstrapServers = listOf(kafka.bootstrapServers) }
+                        common { bootstrapServers = listOf(this@KafkaIntegrationTest.bootstrapServers) }
                         admin { clientId = CODE_CONFIGURED_CLIENT_ID }
                         producer { clientId = CODE_CONFIGURED_CLIENT_ID }
                         consumer {
@@ -84,7 +85,7 @@ class KafkaIntegrationTest : BaseKafkaIntegrationTest() {
                         setupTopics()
                         common {
                             additional {
-                                (listOf(kafka.bootstrapServers))
+                                CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG(this@KafkaIntegrationTest.bootstrapServers)
                             }
                         }
                         admin {

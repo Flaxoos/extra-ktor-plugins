@@ -52,7 +52,7 @@ kotlinx-datetime = "0.6.2"
 arrow = "1.2.4"
 
 # Messaging
-kafka = "3.5.1"
+kafka = "4.0.0"
 confluent = "7.7.1"
 avro4k = "0.41.0"
 avro = "1.12.0"

@@ -113,9 +113,10 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                                             executionsPerTaskAndTime.forAll { (pair, executions) ->
                                                 val (taskName, executionTime) = pair
                                                 withClue(
-                                                    "\n$taskName - ${executionTime.formatTime()} was executed ${executions.size} times instead of $concurrency: \n\t${
-                                                        executions.joinToString("\n\t")
-                                                    }",
+                                                    "\n$taskName - ${executionTime.formatTime()} was executed ${executions.size} " +
+                                                        "times instead of $concurrency: \n\t${
+                                                            executions.joinToString("\n\t")
+                                                        }",
                                                 ) {
                                                     if (executionTime == lastTime) {
                                                         // The last round might miss executions due to the server shutting down

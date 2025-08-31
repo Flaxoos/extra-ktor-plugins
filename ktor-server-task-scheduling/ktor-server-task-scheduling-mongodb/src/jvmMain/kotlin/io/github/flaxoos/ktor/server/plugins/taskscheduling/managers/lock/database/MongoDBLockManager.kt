@@ -21,7 +21,6 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManager
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.Task
 import io.ktor.server.application.Application
 import korlibs.time.DateTime
-import kotlin.properties.Delegates
 import kotlinx.coroutines.flow.firstOrNull
 import org.bson.BsonReader
 import org.bson.BsonWriter
@@ -29,6 +28,7 @@ import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecRegistries
+import kotlin.properties.Delegates
 
 /**
  * An implementation of [DatabaseTaskLockManager] using MongoDB as the lock store

@@ -28,6 +28,7 @@ plugins {
 
 // set version based on conventional commit history
 scmVersion {
+    unshallowRepoOnCI.set(true)
     tag {
         prefix.set("v")
         versionSeparator.set("")

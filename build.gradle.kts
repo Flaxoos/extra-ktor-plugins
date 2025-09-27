@@ -7,6 +7,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 import org.gradle.api.tasks.testing.logging.TestLogging
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
+import pl.allegro.tech.build.axion.release.domain.VersionConfig
 import ru.vyarus.gradle.plugin.python.PythonExtension
 
 plugins {
@@ -21,7 +22,120 @@ plugins {
             .get()
             .pluginId,
     )
-    id("ru.vyarus.mkdocs-build") version "3.0.0"
+    alias(libs.plugins.mkdocs.build)
+    alias(libs.plugins.axion.release)
+}
+
+// set version based on conventional commit history
+scmVersion {
+    tag {
+        prefix.set("v")
+        versionSeparator.set("")
+    }
+
+    // Use predefined version creator that handles SNAPSHOT automatically
+    versionCreator("simple")
+
+    // Custom version incrementer based on conventional commits
+    versionIncrementer { context ->
+        val git =
+            org.eclipse.jgit.api.Git
+                .open(project.rootDir)
+        try {
+            val lastTagDesc =
+                try {
+                    git.describe().setTags(true).call()
+                } catch (_: Exception) {
+                    null
+                }
+            val lastTagName = lastTagDesc?.substringBefore("-")
+            val repo = git.repository
+            val head = repo.resolve("HEAD")
+            val lastTagCommit = lastTagName?.let { repo.resolve("refs/tags/$it^{commit}") }
+
+            val commits =
+                if (lastTagCommit != null && head != null) {
+                    git
+                        .log()
+                        .addRange(lastTagCommit, head)
+                        .call()
+                        .toList()
+                } else {
+                    // If no tag exists yet, use all commits but guard against empty repo
+                    if (head != null) {
+                        git
+                            .log()
+                            .add(head)
+                            .call()
+                            .toList()
+                    } else {
+                        emptyList()
+                    }
+                }
+
+            var hasMajor = false
+            var hasMinor = false
+            var hasPatch = false
+
+            val typeRegex = Regex("""^(?<type>\w+)(\([^)]*\))?(?<bang>!)?:\s""", RegexOption.IGNORE_CASE)
+            val breakingFooter = Regex("""(?im)^BREAKING[ -]CHANGE:""")
+
+            for (commit in commits) {
+                val full = commit.fullMessage.trim()
+                val subject = full.lineSequence().firstOrNull().orEmpty()
+                val m = typeRegex.find(subject)
+                val type =
+                    m
+                        ?.groups
+                        ?.get("type")
+                        ?.value
+                        ?.lowercase()
+                val bang = m?.groups?.get("bang") != null
+                val breaking = bang || breakingFooter.containsMatchIn(full)
+
+                when {
+                    breaking -> hasMajor = true
+                    type == "feat" -> hasMinor = true
+                    type in
+                        setOf(
+                            "fix",
+                            "perf",
+                            "refactor",
+                            "revert",
+                            "docs",
+                            "build",
+                            "chore",
+                            "test",
+                            "style",
+                            "ci",
+                            "task",
+                        )
+                    -> hasPatch = true
+                }
+            }
+
+            val v = context.currentVersion
+            if (commits.isEmpty()) {
+                // No commits since last tag → no bump (leave as-is)
+                return@versionIncrementer v
+            }
+
+            when {
+                hasMajor -> if (v.majorVersion() == 0L) v.nextMinorVersion() else v.nextMajorVersion()
+                hasMinor -> v.nextMinorVersion()
+                hasPatch -> v.nextPatchVersion()
+                else -> v.nextPatchVersion() // commits present, but no signal → patch
+            }
+        } finally {
+            git.close()
+        }
+    }
+}
+version = scmVersion.version
+
+allprojects {
+    group = "io.github.flaxoos"
+    version = rootProject.version
 }
 
 jreleaser {
@@ -112,11 +226,6 @@ tasks.jreleaserAssemble {
             sp.tasks.matching { it.name == "publishAllPublicationsToLocalStagingRepository" }
         },
     )
-}
-
-allprojects {
-    group = "io.github.flaxoos"
-    version = project.property("version") as String
 }
 
 subprojects {

@@ -1,0 +1,72 @@
+name: Conventional Commits
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  conventional-commits:
+    runs-on: ubuntu-latest
+    name: Validate Conventional Commits
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          # Required for axion-release to read git history
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Validate PR title follows conventional commits
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+          requireScope: false
+          disallowScopes: |
+            release
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            doesn't start with an uppercase character.
+          wip: true
+          validateSingleCommit: false
+
+      - name: Validate individual commit messages
+        run: |
+          # Get all commits in this PR
+          git log --format="%H %s" origin/${{ github.base_ref }}..HEAD > commits.txt
+
+          # Check each commit message
+          while IFS= read -r line; do
+            commit_hash=$(echo "$line" | cut -d' ' -f1)
+            commit_msg=$(echo "$line" | cut -d' ' -f2-)
+
+            echo "Checking commit: $commit_hash"
+            echo "Message: $commit_msg"
+
+            # Validate conventional commit format
+            if ! echo "$commit_msg" | grep -E '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?: .+$'; then
+              echo "❌ Commit $commit_hash does not follow conventional commits format:"
+              echo "   Message: $commit_msg"
+              echo "   Expected: type(scope): description"
+              echo "   Example: feat(auth): add user login functionality"
+              exit 1
+            fi
+
+            echo "✅ Commit $commit_hash follows conventional commits"
+          done < commits.txt
+
+          echo "🎉 All commits follow conventional commits format!"

@@ -72,6 +72,8 @@ gradle-release = "3.0.2"
 # Publishing
 nexusPublish = "2.0.0"
 jreleaser = "1.20.0"
+axion-release = "1.20.1"
+mkdocs-build = "3.0.0"
 
 # Miscellaneous
 krontab = "2.7.2"
@@ -232,5 +234,7 @@ kmock = { id = "tech.antibytes.kmock.kmock-gradle", version.ref = "kmock" }
 # Github
 gradle-release = { id = "net.researchgate.release", version.ref = "gradle-release" }
 
-# Nexus
+# Publishing and Release
 jreleaser = { id = "org.jreleaser", version.ref = "jreleaser" }
+axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
+mkdocs-build = { id = "ru.vyarus.mkdocs-build", version.ref = "mkdocs-build" }

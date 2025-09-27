@@ -22,6 +22,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for axion-release to read git history
+
+      - name: Determine version and create release
+        run: |
+          CURRENT_VERSION=$(./gradlew -q currentVersion)
+          echo "Current version: $CURRENT_VERSION"
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "📋 Manual trigger - creating new release"
+            ./gradlew markNextVersion
+          else
+            echo "🏷️ Tag trigger - version already determined by tag"
+          fi
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -68,10 +82,6 @@ jobs:
 
           # Use the built-in GitHub token for GitHub release
           echo "JRELEASER_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
-
-      # Build the project & publish Gradle publications (if you have a local repo configured)
-      - name: Build
-        run: ./gradlew --no-daemon clean build
 
       # sanity checks before the real release
       - name: JReleaser dry run checks

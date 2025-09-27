@@ -13,5 +13,5 @@ outputs:
     description: 'Modified projects, comma separated'
 
 runs:
-  using: node16
+  using: node20
   main: dist/index.js

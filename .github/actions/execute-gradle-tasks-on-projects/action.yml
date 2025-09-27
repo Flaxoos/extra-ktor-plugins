@@ -19,5 +19,5 @@ outputs:
     description: 'Output from Gradle'
 
 runs:
-  using: node16
+  using: node20
   main: dist/index.js

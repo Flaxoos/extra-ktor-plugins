@@ -24,17 +24,28 @@ function isShallowRepo(): boolean {
 }
 
 function ensureHistoryAndTags(): void {
-    if (isShallowRepo()) {
-        core.info('Shallow repo detected → fetching unshallow + tags');
-        // If remote is missing (e.g., local testing), this may fail; let it throw to surface the problem.
-        sh('git fetch --unshallow --tags --force');
+    // Detect shallow/non-shallow
+    let isShallow: boolean;
+    try {
+        const out = execSync('git rev-parse --is-shallow-repository', { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+        isShallow = out === 'true';
+    } catch {
+        // If the command isn't supported (very old git), assume not shallow
+        isShallow = false;
+    }
+
+    core.info(`Repo shallow: ${isShallow}`);
+
+    if (isShallow) {
+        // Shallow checkout → unshallow and fetch tags
+        core.info('Fetching to unshallow repository and include tags…');
+        execSync('git fetch --unshallow --tags --force', { encoding: 'utf-8' });
     } else {
-        core.info('Complete repo detected → fetching tags/pruning');
-        // Keep tags up to date even on full clones
-        sh('git fetch --tags --force --prune');
+        // Already complete → just refresh tags and prune
+        core.info('Repository already complete; fetching tags and pruning…');
+        execSync('git fetch --tags --force --prune', { encoding: 'utf-8' });
     }
 }
-
 /**
  * Determine a sensible base for diff:
  * - On pull_request events: origin/<base_branch>

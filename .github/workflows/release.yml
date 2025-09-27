@@ -29,13 +29,21 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Cache Gradle
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       # Build & stage all subprojects into root/build/staging-deploy
       - name: Build & publish to local staging dir
         run: |
-          ./gradlew --no-daemon clean build publishAllPublicationsToLocalStagingRepository
+          ./gradlew --no-daemon build publishAllPublicationsToLocalStagingRepository
 
       # Map secrets -> JReleaser env vars
       - name: Export JReleaser env vars

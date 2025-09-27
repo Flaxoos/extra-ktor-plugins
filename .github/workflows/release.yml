@@ -1,0 +1,86 @@
+name: Release And Publish
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Build & stage all subprojects into root/build/staging-deploy
+      - name: Build & publish to local staging dir
+        run: |
+          ./gradlew --no-daemon clean build publishAllPublicationsToLocalStagingRepository
+
+      # Map secrets -> JReleaser env vars
+      - name: Export JReleaser env vars
+        shell: bash
+        run: |
+          # Maven Central (Publisher API) creds
+          echo "JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_APP_USERNAME=${{ secrets.MC_USERNAME }}" >> $GITHUB_ENV
+          echo "JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_APP_PASSWORD=${{ secrets.MC_PASSWORD }}" >> $GITHUB_ENV
+
+          # GPG passphrase
+          echo "JRELEASER_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}" >> $GITHUB_ENV
+
+          # Armored public key (preserve newlines)
+          echo "JRELEASER_GPG_PUBLIC_KEY<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.GPG_PUBLIC_KEY }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Armored secret key (preserve newlines)
+          echo "JRELEASER_GPG_SECRET_KEY<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.GPG_SECRET_KEY }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Use the built-in GitHub token for GitHub release
+          echo "JRELEASER_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+
+      # Build the project & publish Gradle publications (if you have a local repo configured)
+      - name: Build
+        run: ./gradlew --no-daemon clean build
+
+      # sanity checks before the real release
+      - name: JReleaser dry run checks
+        run: ./gradlew --no-daemon jreleaserConfig jreleaserAssemble jreleaserChangelog
+
+      # Deploy to Maven Central (Publisher API) and create GitHub Release
+      # Use `jreleaserDeploy` if you ONLY want Central without creating a GH release.
+      - name: JReleaser full release
+        run: ./gradlew --no-daemon jreleaserFullRelease
+
+      # (Optional) Upload JReleaser output for debugging/audit
+      - name: Upload JReleaser output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jreleaser-output
+          path: |
+            build/jreleaser
+            out/jreleaser
+          if-no-files-found: ignore

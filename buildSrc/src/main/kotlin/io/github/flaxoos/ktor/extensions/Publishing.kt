@@ -1,10 +1,8 @@
 package io.github.flaxoos.ktor.extensions
 
-import java.util.Base64
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
@@ -12,8 +10,6 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withType
-import org.gradle.plugins.signing.Sign
-import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
 
 private const val DOKKA = "dokka"
@@ -21,7 +17,6 @@ private const val DOKKA_JAR_TASK_NAME = "${DOKKA}Jar"
 
 fun Project.configurePublishing() {
     registerDokkaJarTask()
-    configureSigning()
     configureMavenPublications()
 }
 
@@ -32,20 +27,17 @@ fun Project.registerDokkaJarTask() =
         from(dokkaHtml.get().outputDirectory)
     }
 
-fun Project.configureSigning() {
-    tasks.withType<AbstractPublishToMaven>().configureEach {
-        val signingTasks = tasks.withType<Sign>()
-        mustRunAfter(signingTasks)
-    }
-    the<SigningExtension>().apply {
-        useInMemoryPgpKeys(Base64.getDecoder().decode(signingKeyArmorBase64).decodeToString(), signingPassword)
-        sign(the<PublishingExtension>().publications)
-    }
-}
-
 fun Project.configureMavenPublications() {
+    val stagingDir = rootProject.layout.buildDirectory.dir("staging-deploy")
+
     afterEvaluate {
         the<PublishingExtension>().apply {
+            repositories {
+                maven {
+                    name = "localStaging"
+                    url = stagingDir.get().asFile.toURI()
+                }
+            }
             publications.withType<MavenPublication> {
                 artifact(tasks.dokkaJar)
                 pom {
@@ -67,7 +59,7 @@ fun Project.configureMavenPublications() {
                     licenses {
                         license {
                             name.set("The Apache License, Version 2.0")
-                            url.set("https://opensource.org/license/mit/")
+                            url.set("https://opensource.org/license/apache-2-0")
                         }
                     }
 

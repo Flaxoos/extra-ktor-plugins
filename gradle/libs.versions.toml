@@ -52,7 +52,7 @@ kotlinx-datetime = "0.6.2"
 arrow = "1.2.4"
 
 # Messaging
-kafka = "3.5.1"
+kafka = "4.0.0"
 confluent = "7.7.1"
 avro4k = "0.41.0"
 avro = "1.12.0"
@@ -69,8 +69,9 @@ dokka = "1.9.10"
 # Github
 gradle-release = "3.0.2"
 
-# Nexus
+# Publishing
 nexusPublish = "2.0.0"
+jreleaser = "1.20.0"
 
 # Miscellaneous
 krontab = "2.7.2"
@@ -187,7 +188,7 @@ android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref 
 
 # Github
 gradle-release-gradlePlugin = { module = "net.researchgate:gradle-release", version.ref = "gradle-release" }
-
+jreleaser-gradlePlugin = { module = "org.jreleaser:org.jreleaser.gradle.plugin", version.ref = "jreleaser" }
 # Miscellaneous
 krontab = { module = "dev.inmo:krontab", version.ref = "krontab" }
 uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
@@ -232,4 +233,4 @@ kmock = { id = "tech.antibytes.kmock.kmock-gradle", version.ref = "kmock" }
 gradle-release = { id = "net.researchgate.release", version.ref = "gradle-release" }
 
 # Nexus
-nexusPublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPublish" }
+jreleaser = { id = "org.jreleaser", version.ref = "jreleaser" }

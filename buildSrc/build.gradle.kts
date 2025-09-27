@@ -39,6 +39,7 @@ dependencies {
     implementation(libs.dokka.gradlePlugin)
     implementation(libs.detekt.gradlePlugin)
     implementation(libs.gradle.release.gradlePlugin)
+    implementation(libs.jreleaser.gradlePlugin)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.mockk)
@@ -49,8 +50,8 @@ tasks.withType<Test>().configureEach {
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions {
-        freeCompilerArgs = freeCompilerArgs + "-Xcontext-receivers"
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-receivers")
     }
 }
 

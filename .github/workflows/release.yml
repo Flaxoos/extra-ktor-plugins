@@ -1,7 +1,23 @@
 name: Release And Publish
 
 on:
+  # Automatic trigger from build-main workflow
+  workflow_run:
+    workflows: ["Build Main"]
+    types: [completed]
+    branches: [main]
+
+  # Manual trigger for production releases
   workflow_dispatch:
+    inputs:
+      releaseType:
+        description: 'Release type'
+        required: true
+        default: 'release'
+        type: choice
+        options: ['release', 'snapshot']
+
+  # Support existing tag-based releases
   push:
     tags:
       - "v*"
@@ -18,10 +34,70 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Only run if build-main succeeded OR manual/tag trigger
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+
+    env:
+      # GitHub Packages credentials required by buildSrc/Conventions.kt
+      GPR_USER: ${{ vars.GPR_USER }}
+      GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
+
+      # Maven Central credentials for build system (mcUsername/mcPassword properties)
+      MC_USERNAME: ${{ secrets.MC_USERNAME }}
+      MC_PASSWORD: ${{ secrets.MC_PASSWORD }}
+
+      # JReleaser credentials (single-line values)
+      JRELEASER_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          # Required for axion-release to read git history
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine Release Context
+        id: release-context
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            echo "📸 Automatic snapshot after successful build"
+            echo "release_type=snapshot" >> $GITHUB_OUTPUT
+            echo "trigger_source=automatic" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "👤 Manual release triggered"
+            echo "release_type=${{ github.event.inputs.releaseType }}" >> $GITHUB_OUTPUT
+            echo "trigger_source=manual" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "🏷️ Tag push triggered"
+            echo "release_type=release" >> $GITHUB_OUTPUT
+            echo "trigger_source=tag" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Version
+        id: version
+        run: |
+          RELEASE_TYPE="${{ steps.release-context.outputs.release_type }}"
+
+          if [[ "$RELEASE_TYPE" == "snapshot" ]]; then
+            echo "🔄 Creating snapshot version"
+            # Use snapshot mode
+            VERSION=$(./gradlew -q currentVersion -Prelease.mode=snapshot)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "is_snapshot=true" >> $GITHUB_OUTPUT
+          else
+            echo "🚀 Creating release version"
+            # Use release mode
+            VERSION=$(./gradlew -q currentVersion -Prelease.mode=release)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "is_snapshot=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Final version: $VERSION"
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -29,25 +105,26 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Cache Gradle
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       # Build & stage all subprojects into root/build/staging-deploy
       - name: Build & publish to local staging dir
         run: |
-          ./gradlew --no-daemon clean build publishAllPublicationsToLocalStagingRepository
+          ./gradlew --no-daemon build publishAllPublicationsToLocalStagingRepository -Prelease.mode=${{ steps.release-context.outputs.release_type }}
 
-      # Map secrets -> JReleaser env vars
-      - name: Export JReleaser env vars
+      # Export multiline GPG keys (single-line vars are set at job level)
+      - name: Export GPG keys
         shell: bash
         run: |
-          # Maven Central (Publisher API) creds
-          echo "JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_APP_USERNAME=${{ secrets.MC_USERNAME }}" >> $GITHUB_ENV
-          echo "JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_APP_PASSWORD=${{ secrets.MC_PASSWORD }}" >> $GITHUB_ENV
-
-          # GPG passphrase
-          echo "JRELEASER_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}" >> $GITHUB_ENV
-
           # Armored public key (preserve newlines)
           echo "JRELEASER_GPG_PUBLIC_KEY<<EOF" >> $GITHUB_ENV
           echo "${{ secrets.GPG_PUBLIC_KEY }}" >> $GITHUB_ENV
@@ -58,21 +135,20 @@ jobs:
           echo "${{ secrets.GPG_SECRET_KEY }}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-          # Use the built-in GitHub token for GitHub release
-          echo "JRELEASER_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
-
-      # Build the project & publish Gradle publications (if you have a local repo configured)
-      - name: Build
-        run: ./gradlew --no-daemon clean build
-
       # sanity checks before the real release
       - name: JReleaser dry run checks
-        run: ./gradlew --no-daemon jreleaserConfig jreleaserAssemble jreleaserChangelog
+        run: ./gradlew --no-daemon jreleaserConfig jreleaserAssemble jreleaserChangelog -Prelease.mode=${{ steps.release-context.outputs.release_type }}
 
       # Deploy to Maven Central (Publisher API) and create GitHub Release
-      # Use `jreleaserDeploy` if you ONLY want Central without creating a GH release.
-      - name: JReleaser full release
-        run: ./gradlew --no-daemon jreleaserFullRelease
+      - name: JReleaser Configuration
+        run: |
+          if [[ "${{ steps.version.outputs.is_snapshot }}" == "true" ]]; then
+            echo "📦 Publishing snapshot to Maven Central staging"
+            ./gradlew --no-daemon jreleaserDeploy -Prelease.mode=snapshot
+          else
+            echo "🎉 Full release to Maven Central and GitHub"
+            ./gradlew --no-daemon jreleaserFullRelease -Prelease.mode=release
+          fi
 
       # (Optional) Upload JReleaser output for debugging/audit
       - name: Upload JReleaser output

@@ -74,9 +74,6 @@ gradlePlugin {
     }
 }
 
-private val Project.gprWriteToken
-    get() = findProperty("gpr.write.key") as String? ?: System.getenv("GPR_WRITE_TOKEN")
-
 private val Project.gprReadToken
     get() = findProperty("gpr.read.key") as String? ?: System.getenv("GPR_READ_TOKEN")
 

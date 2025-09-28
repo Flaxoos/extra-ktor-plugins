@@ -1,4 +1,7 @@
 import com.gradle.enterprise.gradleplugin.GradleEnterpriseExtension
+import io.github.flaxoos.ktor.extensions.jreleaserGpgPassphrase
+import io.github.flaxoos.ktor.extensions.jreleaserGpgPublicKey
+import io.github.flaxoos.ktor.extensions.jreleaserGpgSecretKey
 import io.github.flaxoos.ktor.extensions.mcPassword
 import io.github.flaxoos.ktor.extensions.mcUsername
 import org.eclipse.jgit.api.Git
@@ -8,10 +11,9 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 import org.gradle.api.tasks.testing.logging.TestLogging
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
-import org.gradle.internal.impldep.org.joda.time.Instant
-import pl.allegro.tech.build.axion.release.domain.VersionConfig
+import org.jreleaser.gradle.plugin.dsl.deploy.maven.MavenCentralMavenDeployer
 import ru.vyarus.gradle.plugin.python.PythonExtension
-import java.time.Instant.*
+import java.time.Instant.ofEpochSecond
 
 plugins {
     base
@@ -39,6 +41,22 @@ scmVersion {
 
     // Use predefined version creator that handles SNAPSHOT automatically
     versionCreator("simple")
+
+    // Custom snapshot creator that respects release.mode property
+    snapshotCreator { version, position ->
+        val releaseMode = project.findProperty("release.mode")?.toString()
+        when (releaseMode) {
+            "release" -> "" // No suffix for production releases
+            "snapshot", null -> "-SNAPSHOT" // Default to snapshot
+            else -> "-SNAPSHOT"
+        }
+    }
+
+    // For local development and workflow control, disable tag creation unless explicitly requested
+    // This prevents markNextVersion from creating unwanted tags
+    checks {
+        uncommittedChanges.set(false)
+    }
 
     // Custom version incrementer based on conventional commits
     versionIncrementer { context ->
@@ -108,7 +126,12 @@ scmVersion {
             logger.quiet("[VersionIncrementer] Found ${commits.size} commits since last tag")
             if (commits.isNotEmpty()) {
                 logger.quiet(
-                    "[VersionIncrementer] Commit range: ${commits.last().name.substring(0, 7)}..${commits.first().name.substring(0, 7)}",
+                    "[VersionIncrementer] Commit range: ${
+                        commits.last().name.substring(
+                            0,
+                            7,
+                        )
+                    }..${commits.first().name.substring(0, 7)}",
                 )
             }
 
@@ -162,6 +185,7 @@ scmVersion {
                         hasPatch = true
                         logger.quiet("[VersionIncrementer]   → Triggers PATCH version bump ($type)")
                     }
+
                     else -> {
                         logger.quiet("[VersionIncrementer]   → No version impact")
                     }
@@ -185,16 +209,19 @@ scmVersion {
                         )
                         next
                     }
+
                     hasMinor -> {
                         val next = v.nextMinorVersion()
                         logger.quiet("[VersionIncrementer] MINOR version bump: $v → $next")
                         next
                     }
+
                     hasPatch -> {
                         val next = v.nextPatchVersion()
                         logger.quiet("[VersionIncrementer] PATCH version bump: $v → $next")
                         next
                     }
+
                     else -> {
                         val next = v.nextPatchVersion()
                         logger.quiet(
@@ -245,29 +272,36 @@ jreleaser {
     signing {
         active.set(org.jreleaser.model.Active.ALWAYS)
         armored.set(true)
+        passphrase.set(jreleaserGpgPassphrase)
+        secretKey.set(jreleaserGpgSecretKey)
+        publicKey.set(jreleaserGpgPublicKey)
+
     }
     // Deploy to Maven Central
     deploy {
         maven {
             mavenCentral {
-                create("flaxoos-extra-ktor-plugins") {
-                    active.set(org.jreleaser.model.Active.ALWAYS)
-                    url.set("https://central.sonatype.com/api/v1/publisher")
-                    stagingRepository(
-                        layout.buildDirectory
-                            .dir("staging-deploy")
-                            .get()
-                            .asFile.absolutePath,
-                    )
+                create(
+                    "flaxoos-extra-ktor-plugins",
+                    closureOf<MavenCentralMavenDeployer> {
+                        active.set(org.jreleaser.model.Active.ALWAYS)
+                        url.set("https://central.sonatype.com/api/v1/publisher")
+                        stagingRepository(
+                            layout.buildDirectory
+                                .dir("staging-deploy")
+                                .get()
+                                .asFile.absolutePath,
+                        )
 
-                    username.set(mcUsername)
-                    password.set(mcPassword)
+                        username.set(mcUsername)
+                        password.set(mcPassword)
 
-                    connectTimeout.set(20)
-                    readTimeout.set(60)
-                    retryDelay.set(5)
-                    maxRetries.set(3)
-                }
+                        connectTimeout.set(20)
+                        readTimeout.set(60)
+                        retryDelay.set(5)
+                        maxRetries.set(3)
+                    },
+                )
             }
         }
     }

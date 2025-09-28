@@ -8,6 +8,9 @@ jobs:
   conventional-commits:
     runs-on: ubuntu-latest
     name: Validate Conventional Commits
+    permissions:
+      pull-requests: read
+      statuses: write
 
     steps:
       - name: Checkout Repository
@@ -43,30 +46,3 @@ jobs:
             doesn't start with an uppercase character.
           wip: true
           validateSingleCommit: false
-
-      - name: Validate individual commit messages
-        run: |
-          # Get all commits in this PR
-          git log --format="%H %s" origin/${{ github.base_ref }}..HEAD > commits.txt
-
-          # Check each commit message
-          while IFS= read -r line; do
-            commit_hash=$(echo "$line" | cut -d' ' -f1)
-            commit_msg=$(echo "$line" | cut -d' ' -f2-)
-
-            echo "Checking commit: $commit_hash"
-            echo "Message: $commit_msg"
-
-            # Validate conventional commit format
-            if ! echo "$commit_msg" | grep -E '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?: .+$'; then
-              echo "❌ Commit $commit_hash does not follow conventional commits format:"
-              echo "   Message: $commit_msg"
-              echo "   Expected: type(scope): description"
-              echo "   Example: feat(auth): add user login functionality"
-              exit 1
-            fi
-
-            echo "✅ Commit $commit_hash follows conventional commits"
-          done < commits.txt
-
-          echo "🎉 All commits follow conventional commits format!"

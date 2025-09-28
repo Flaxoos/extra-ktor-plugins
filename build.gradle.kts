@@ -1,6 +1,7 @@
 import com.gradle.enterprise.gradleplugin.GradleEnterpriseExtension
 import io.github.flaxoos.ktor.extensions.mcPassword
 import io.github.flaxoos.ktor.extensions.mcUsername
+import org.eclipse.jgit.api.Git
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
@@ -41,9 +42,7 @@ scmVersion {
 
     // Custom version incrementer based on conventional commits
     versionIncrementer { context ->
-        val git =
-            org.eclipse.jgit.api.Git
-                .open(project.rootDir)
+        val git = Git.open(project.rootDir)
         try {
             val lastTagDesc =
                 try {
@@ -52,25 +51,25 @@ scmVersion {
                     null
                 }
             val lastTagName = lastTagDesc?.substringBefore("-")
-            logger.info("Git describe result: $lastTagDesc")
-            logger.info("Last tag name: $lastTagName")
+            logger.quiet("[VersionIncrementer] Git describe result: $lastTagDesc")
+            logger.quiet("[VersionIncrementer] Last tag name: $lastTagName")
 
             // Check if we have any tags at all
             val allTags = git.tagList().call()
-            logger.info("Total tags in repository: ${allTags.size}")
+            logger.quiet("[VersionIncrementer] Total tags in repository: ${allTags.size}")
             if (allTags.isNotEmpty()) {
-                logger.info("Available tags: ${allTags.map { it.name.substringAfterLast("/") }}")
+                logger.quiet("[VersionIncrementer] Available tags: ${allTags.map { it.name.substringAfterLast("/") }}")
             }
             val repo = git.repository
             val head = repo.resolve("HEAD")
             val lastTagCommit = lastTagName?.let { repo.resolve("refs/tags/$it^{commit}") }
 
-            logger.info("HEAD commit: $head")
-            logger.info("Last tag commit: $lastTagCommit")
+            logger.quiet("[VersionIncrementer] HEAD commit: $head")
+            logger.quiet("[VersionIncrementer] Last tag commit: $lastTagCommit")
 
             val commits =
                 if (lastTagCommit != null && head != null) {
-                    logger.info("Getting commits between tag $lastTagName and HEAD")
+                    logger.quiet("[VersionIncrementer] Getting commits between tag $lastTagName and HEAD")
                     git
                         .log()
                         .addRange(lastTagCommit, head)
@@ -79,7 +78,7 @@ scmVersion {
                 } else if (allTags.isEmpty()) {
                     // If no tags exist at all, this is likely the first release
                     // Only look at commits since project started being versioned conventionally
-                    logger.info("No tags found - treating as first release, analyzing recent commits only")
+                    logger.quiet("[VersionIncrementer] No tags found - treating as first release, analyzing recent commits only")
                     if (head != null) {
                         git
                             .log()
@@ -88,12 +87,12 @@ scmVersion {
                             .call()
                             .toList()
                     } else {
-                        logger.info("No HEAD found, repository appears empty")
+                        logger.quiet("[VersionIncrementer] No HEAD found, repository appears empty")
                         emptyList()
                     }
                 } else {
                     // Tags exist but we couldn't resolve the last one
-                    logger.info("Tags exist but couldn't resolve last tag, getting all commits from HEAD")
+                    logger.quiet("[VersionIncrementer] Tags exist but couldn't resolve last tag, getting all commits from HEAD")
                     if (head != null) {
                         git
                             .log()
@@ -101,14 +100,16 @@ scmVersion {
                             .call()
                             .toList()
                     } else {
-                        logger.info("No HEAD found, repository appears empty")
+                        logger.quiet("[VersionIncrementer] No HEAD found, repository appears empty")
                         emptyList()
                     }
                 }
 
-            logger.info("Found ${commits.size} commits since last tag")
+            logger.quiet("[VersionIncrementer] Found ${commits.size} commits since last tag")
             if (commits.isNotEmpty()) {
-                logger.info("Commit range: ${commits.last().name.substring(0, 7)}..${commits.first().name.substring(0, 7)}")
+                logger.quiet(
+                    "[VersionIncrementer] Commit range: ${commits.last().name.substring(0, 7)}..${commits.first().name.substring(0, 7)}",
+                )
             }
 
             var hasMajor = false
@@ -131,17 +132,17 @@ scmVersion {
                 val bang = m?.groups?.get("bang") != null
                 val breaking = bang || breakingFooter.containsMatchIn(full)
 
-                logger.info("Analyzing commit: [${ofEpochSecond(commit.commitTime.toLong())}] $subject")
-                logger.info("  Type: $type, Breaking: $breaking")
+                logger.quiet("[VersionIncrementer] Analyzing commit: [${ofEpochSecond(commit.commitTime.toLong())}] $subject")
+                logger.quiet("[VersionIncrementer]   Type: $type, Breaking: $breaking")
 
                 when {
                     breaking -> {
                         hasMajor = true
-                        logger.info("  → Triggers MAJOR version bump (breaking change)")
+                        logger.quiet("[VersionIncrementer]   → Triggers MAJOR version bump (breaking change)")
                     }
                     type == "feat" -> {
                         hasMinor = true
-                        logger.info("  → Triggers MINOR version bump (new feature)")
+                        logger.quiet("[VersionIncrementer]   → Triggers MINOR version bump (new feature)")
                     }
                     type in
                         setOf(
@@ -159,42 +160,46 @@ scmVersion {
                         )
                     -> {
                         hasPatch = true
-                        logger.info("  → Triggers PATCH version bump ($type)")
+                        logger.quiet("[VersionIncrementer]   → Triggers PATCH version bump ($type)")
                     }
                     else -> {
-                        logger.info("  → No version impact")
+                        logger.quiet("[VersionIncrementer]   → No version impact")
                     }
                 }
             }
 
             val v = context.currentVersion
             if (commits.isEmpty()) {
-                logger.info("No commits since last tag → keeping version $v")
+                logger.quiet("[VersionIncrementer] No commits since last tag → keeping version $v")
                 return@versionIncrementer v
             }
 
-            logger.info("Version bump analysis: major=$hasMajor, minor=$hasMinor, patch=$hasPatch")
+            logger.quiet("[VersionIncrementer] Version bump analysis: major=$hasMajor, minor=$hasMinor, patch=$hasPatch")
 
             val newVersion =
                 when {
                     hasMajor -> {
                         val next = if (v.majorVersion() == 0L) v.nextMinorVersion() else v.nextMajorVersion()
-                        logger.info("MAJOR version bump: $v → $next (0.x special handling: ${v.majorVersion() == 0L})")
+                        logger.quiet(
+                            "[VersionIncrementer] MAJOR version bump: $v → $next (0.x special handling: ${v.majorVersion() == 0L})",
+                        )
                         next
                     }
                     hasMinor -> {
                         val next = v.nextMinorVersion()
-                        logger.info("MINOR version bump: $v → $next")
+                        logger.quiet("[VersionIncrementer] MINOR version bump: $v → $next")
                         next
                     }
                     hasPatch -> {
                         val next = v.nextPatchVersion()
-                        logger.info("PATCH version bump: $v → $next")
+                        logger.quiet("[VersionIncrementer] PATCH version bump: $v → $next")
                         next
                     }
                     else -> {
                         val next = v.nextPatchVersion()
-                        logger.info("Default PATCH version bump (commits present but no conventional signal): $v → $next")
+                        logger.quiet(
+                            "[VersionIncrementer] Default PATCH version bump (commits present but no conventional signal): $v → $next",
+                        )
                         next
                     }
                 }

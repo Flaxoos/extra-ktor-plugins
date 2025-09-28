@@ -7,8 +7,10 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 import org.gradle.api.tasks.testing.logging.TestLogging
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
+import org.gradle.internal.impldep.org.joda.time.Instant
 import pl.allegro.tech.build.axion.release.domain.VersionConfig
 import ru.vyarus.gradle.plugin.python.PythonExtension
+import java.time.Instant.*
 
 plugins {
     base
@@ -50,19 +52,48 @@ scmVersion {
                     null
                 }
             val lastTagName = lastTagDesc?.substringBefore("-")
+            logger.info("Git describe result: $lastTagDesc")
+            logger.info("Last tag name: $lastTagName")
+
+            // Check if we have any tags at all
+            val allTags = git.tagList().call()
+            logger.info("Total tags in repository: ${allTags.size}")
+            if (allTags.isNotEmpty()) {
+                logger.info("Available tags: ${allTags.map { it.name.substringAfterLast("/") }}")
+            }
             val repo = git.repository
             val head = repo.resolve("HEAD")
             val lastTagCommit = lastTagName?.let { repo.resolve("refs/tags/$it^{commit}") }
 
+            logger.info("HEAD commit: $head")
+            logger.info("Last tag commit: $lastTagCommit")
+
             val commits =
                 if (lastTagCommit != null && head != null) {
+                    logger.info("Getting commits between tag $lastTagName and HEAD")
                     git
                         .log()
                         .addRange(lastTagCommit, head)
                         .call()
                         .toList()
+                } else if (allTags.isEmpty()) {
+                    // If no tags exist at all, this is likely the first release
+                    // Only look at commits since project started being versioned conventionally
+                    logger.info("No tags found - treating as first release, analyzing recent commits only")
+                    if (head != null) {
+                        git
+                            .log()
+                            .add(head)
+                            .setMaxCount(10) // Only look at last 10 commits for first release
+                            .call()
+                            .toList()
+                    } else {
+                        logger.info("No HEAD found, repository appears empty")
+                        emptyList()
+                    }
                 } else {
-                    // If no tag exists yet, use all commits but guard against empty repo
+                    // Tags exist but we couldn't resolve the last one
+                    logger.info("Tags exist but couldn't resolve last tag, getting all commits from HEAD")
                     if (head != null) {
                         git
                             .log()
@@ -70,9 +101,15 @@ scmVersion {
                             .call()
                             .toList()
                     } else {
+                        logger.info("No HEAD found, repository appears empty")
                         emptyList()
                     }
                 }
+
+            logger.info("Found ${commits.size} commits since last tag")
+            if (commits.isNotEmpty()) {
+                logger.info("Commit range: ${commits.last().name.substring(0, 7)}..${commits.first().name.substring(0, 7)}")
+            }
 
             var hasMajor = false
             var hasMinor = false
@@ -94,9 +131,18 @@ scmVersion {
                 val bang = m?.groups?.get("bang") != null
                 val breaking = bang || breakingFooter.containsMatchIn(full)
 
+                logger.info("Analyzing commit: [${ofEpochSecond(commit.commitTime.toLong())}] $subject")
+                logger.info("  Type: $type, Breaking: $breaking")
+
                 when {
-                    breaking -> hasMajor = true
-                    type == "feat" -> hasMinor = true
+                    breaking -> {
+                        hasMajor = true
+                        logger.info("  → Triggers MAJOR version bump (breaking change)")
+                    }
+                    type == "feat" -> {
+                        hasMinor = true
+                        logger.info("  → Triggers MINOR version bump (new feature)")
+                    }
                     type in
                         setOf(
                             "fix",
@@ -111,22 +157,49 @@ scmVersion {
                             "ci",
                             "task",
                         )
-                    -> hasPatch = true
+                    -> {
+                        hasPatch = true
+                        logger.info("  → Triggers PATCH version bump ($type)")
+                    }
+                    else -> {
+                        logger.info("  → No version impact")
+                    }
                 }
             }
 
             val v = context.currentVersion
             if (commits.isEmpty()) {
-                // No commits since last tag → no bump (leave as-is)
+                logger.info("No commits since last tag → keeping version $v")
                 return@versionIncrementer v
             }
 
-            when {
-                hasMajor -> if (v.majorVersion() == 0L) v.nextMinorVersion() else v.nextMajorVersion()
-                hasMinor -> v.nextMinorVersion()
-                hasPatch -> v.nextPatchVersion()
-                else -> v.nextPatchVersion() // commits present, but no signal → patch
-            }
+            logger.info("Version bump analysis: major=$hasMajor, minor=$hasMinor, patch=$hasPatch")
+
+            val newVersion =
+                when {
+                    hasMajor -> {
+                        val next = if (v.majorVersion() == 0L) v.nextMinorVersion() else v.nextMajorVersion()
+                        logger.info("MAJOR version bump: $v → $next (0.x special handling: ${v.majorVersion() == 0L})")
+                        next
+                    }
+                    hasMinor -> {
+                        val next = v.nextMinorVersion()
+                        logger.info("MINOR version bump: $v → $next")
+                        next
+                    }
+                    hasPatch -> {
+                        val next = v.nextPatchVersion()
+                        logger.info("PATCH version bump: $v → $next")
+                        next
+                    }
+                    else -> {
+                        val next = v.nextPatchVersion()
+                        logger.info("Default PATCH version bump (commits present but no conventional signal): $v → $next")
+                        next
+                    }
+                }
+
+            newVersion
         } finally {
             git.close()
         }

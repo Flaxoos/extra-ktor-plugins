@@ -53,7 +53,6 @@ jobs:
         env:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
-          GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
 
   deploy-docs:
     needs: build-main

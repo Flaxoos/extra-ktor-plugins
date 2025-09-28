@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, edited, synchronize]
 
+permissions:
+  pull-requests: read
+  contents: read
+
 jobs:
   conventional-commits:
     runs-on: ubuntu-latest

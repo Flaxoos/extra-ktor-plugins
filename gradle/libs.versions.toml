@@ -236,3 +236,5 @@ gradle-release = { id = "net.researchgate.release", version.ref = "gradle-releas
 
 # Nexus
 jreleaser = { id = "org.jreleaser", version.ref = "jreleaser" }
+axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
+mkdocs-build = { id = "ru.vyarus.mkdocs-build", version.ref = "mkdocs-build" }

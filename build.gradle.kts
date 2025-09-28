@@ -163,12 +163,10 @@ scmVersion {
                         hasMajor = true
                         logger.quiet("[VersionIncrementer]   → Triggers MAJOR version bump (breaking change)")
                     }
-
                     type == "feat" -> {
                         hasMinor = true
                         logger.quiet("[VersionIncrementer]   → Triggers MINOR version bump (new feature)")
                     }
-
                     type in
                         setOf(
                             "fix",
@@ -277,6 +275,7 @@ jreleaser {
         passphrase.set(jreleaserGpgPassphrase)
         secretKey.set(jreleaserGpgSecretKey)
         publicKey.set(jreleaserGpgPublicKey)
+
     }
     // Deploy to Maven Central
     deploy {

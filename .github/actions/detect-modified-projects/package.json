@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@actions/core": "^1.2.6",
+    "@actions/exec": "^1.1.1",
     "@actions/github": "^5.1.1",
     "child_process": "^1.0.2"
   },

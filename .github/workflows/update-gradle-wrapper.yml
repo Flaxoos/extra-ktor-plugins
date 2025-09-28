@@ -2,8 +2,8 @@ name: Update Gradle Wrapper
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * *"
+#  schedule:
+#    - cron: "0 0 * * *" disabled for now, very noisey
 
 jobs:
   update-gradle-wrapper:

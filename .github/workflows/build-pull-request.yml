@@ -12,6 +12,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          # Required for axion-release to read git history
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -35,3 +39,4 @@ jobs:
         env:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
+          GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}

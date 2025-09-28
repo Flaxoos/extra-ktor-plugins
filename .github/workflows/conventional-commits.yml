@@ -10,6 +10,7 @@ jobs:
     name: Validate Conventional Commits
     permissions:
       pull-requests: read
+      statuses: write
 
     steps:
       - name: Checkout Repository

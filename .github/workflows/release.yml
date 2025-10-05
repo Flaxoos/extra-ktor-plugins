@@ -3,9 +3,9 @@ name: Release And Publish
 on:
   # Automatic trigger from build-main workflow
   workflow_run:
-    workflows: ["Build Main"]
-    types: [completed]
-    branches: [main]
+    workflows: [ "Build Main" ]
+    types: [ completed ]
+    branches: [ main ]
 
   # Manual trigger for production releases
   workflow_dispatch:
@@ -15,7 +15,7 @@ on:
         required: true
         default: 'release'
         type: choice
-        options: ['release', 'snapshot']
+        options: [ 'release', 'snapshot' ]
 
   # Support existing tag-based releases
   push:

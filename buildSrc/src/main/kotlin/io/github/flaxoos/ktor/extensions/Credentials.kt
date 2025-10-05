@@ -5,14 +5,6 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 
 context(Project)
-fun MavenArtifactRepository.gprWriteCredentials() {
-    credentials {
-        username = gprUser
-        password = gprWriteToken
-    }
-}
-
-context(Project)
 fun MavenArtifactRepository.gprReadCredentials() {
     credentials {
         username = gprUser
@@ -20,16 +12,12 @@ fun MavenArtifactRepository.gprReadCredentials() {
     }
 }
 
-context(Project)
-fun MavenArtifactRepository.mcCredentials() {
-    credentials {
-        username = mcUsername
-        password = mcPassword
-    }
-}
-
-val Project.gprWriteToken: String by ProjectPropertyDelegate.projectOrSystemEnv()
 val Project.gprReadToken: String by ProjectPropertyDelegate.projectOrSystemEnv()
 val Project.gprUser: String by ProjectPropertyDelegate.projectOrSystemEnv()
+
 val Project.mcUsername: String by ProjectPropertyDelegate.projectOrSystemEnv()
 val Project.mcPassword: String by ProjectPropertyDelegate.projectOrSystemEnv()
+
+val Project.jreleaserGpgPassphrase: String by ProjectPropertyDelegate.projectOrSystemEnv()
+val Project.jreleaserGpgSecretKey: String by ProjectPropertyDelegate.projectOrSystemEnv()
+val Project.jreleaserGpgPublicKey: String by ProjectPropertyDelegate.projectOrSystemEnv()

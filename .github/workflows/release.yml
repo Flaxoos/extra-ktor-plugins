@@ -80,24 +80,39 @@ jobs:
 
       - name: Generate Version
         id: version
+        shell: bash
         run: |
+          set -euo pipefail
+
           RELEASE_TYPE="${{ steps.release-context.outputs.release_type }}"
+          echo "Release type: $RELEASE_TYPE"
 
           if [[ "$RELEASE_TYPE" == "snapshot" ]]; then
             echo "🔄 Creating snapshot version"
-            # Use snapshot mode
-            VERSION=$(./gradlew -q currentVersion -Prelease.mode=snapshot)
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "is_snapshot=true" >> $GITHUB_OUTPUT
+            RAW_VERSION="$(./gradlew -q currentVersion -Prelease.mode=snapshot)"
+            IS_SNAPSHOT=true
           else
             echo "🚀 Creating release version"
-            # Use release mode
-            VERSION=$(./gradlew -q currentVersion -Prelease.mode=release)
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "is_snapshot=false" >> $GITHUB_OUTPUT
+            RAW_VERSION="$(./gradlew -q currentVersion -Prelease.mode=release)"
+            IS_SNAPSHOT=false
           fi
 
+          # Extract the actual version if Gradle prints "Project version: X"
+          VERSION="$(echo "$RAW_VERSION" | sed -E 's/^[Pp]roject version:[[:space:]]*//')"
+          # Strip CR just in case
+          VERSION="${VERSION//$'\r'/}"
+
           echo "Final version: $VERSION"
+
+          # Escape characters per GitHub docs
+          SAFE_VERSION="${VERSION//'%'/'%25'}"
+          SAFE_VERSION="${SAFE_VERSION//$'\n'/'%0A'}"
+          SAFE_VERSION="${SAFE_VERSION//$'\r'/'%0D'}"
+
+          {
+            echo "version=$SAFE_VERSION"
+            echo "is_snapshot=$IS_SNAPSHOT"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Setup Java
         uses: actions/setup-java@v4

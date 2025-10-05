@@ -6,6 +6,7 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManager
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManagerConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManagerConfiguration.TaskManagerName
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManagerConfiguration.TaskManagerName.Companion.toTaskManagerName
+import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.inmemory.InMemoryLockManagerConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.Task
 import io.ktor.server.application.Application
 import korlibs.time.DateTime
@@ -54,6 +55,16 @@ public open class TaskSchedulingConfiguration {
     public fun addTaskManager(taskManagerConfiguration: TaskManagerConfiguration) {
         taskManagers.add {
             taskManagerConfiguration.createTaskManager(it)
+        }
+    }
+
+    /**
+     * Ensure a default task manager is available if none were configured.
+     * This is called internally by the plugin.
+     */
+    internal fun ensureDefaultTaskManager() {
+        if (taskManagers.isEmpty()) {
+            addTaskManager(InMemoryLockManagerConfiguration())
         }
     }
 }

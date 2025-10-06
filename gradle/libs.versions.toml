@@ -14,7 +14,7 @@ ktor = "3.1.1"
 android = "8.1.0"
 
 # Database
-h2 = "2.3.232"
+h2 = "2.4.240"
 postgres = "42.7.5"
 exposed = "0.60.0"
 mongodb = "5.3.1"

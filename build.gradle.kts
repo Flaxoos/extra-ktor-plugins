@@ -272,10 +272,9 @@ jreleaser {
     signing {
         active.set(org.jreleaser.model.Active.ALWAYS)
         armored.set(true)
-        passphrase.set(jreleaserGpgPassphrase)
-        secretKey.set(jreleaserGpgSecretKey)
         publicKey.set(jreleaserGpgPublicKey)
-
+        secretKey.set(jreleaserGpgSecretKey)
+        passphrase.set(jreleaserGpgPassphrase)
     }
     // Deploy to Maven Central
     deploy {

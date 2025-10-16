@@ -7,7 +7,7 @@ import io.ktor.client.statement.request
 import io.ktor.util.AttributeKey
 import io.ktor.util.collections.ConcurrentMap
 
-internal val CIRCUIT_BREAKER_NAME_GLOBAL = CircuitBreakerName("KTOR_GLOBAL_RATE_LIMITER")
+internal val CIRCUIT_BREAKER_NAME_GLOBAL = CircuitBreakerName("KTOR_GLOBAL_CIRCUIT_BREAKER")
 
 internal val CircuitBreakerInstancesRegistryKey =
     AttributeKey<ConcurrentMap<CircuitBreakerName, CircuitBreaker>>("CircuitBreakerInstancesRegistryKey")

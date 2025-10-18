@@ -316,6 +316,7 @@ jreleaser {
                         active = SNAPSHOT
                         snapshotUrl = // for ossrh "https://s01.oss.sonatype.org/content/repositories/snapshots/"
                             "https://central.sonatype.com/repository/maven-snapshots/"
+                        applyMavenCentralRules = false // Disable validation for .klib artifacts
                         snapshotSupported = true
                         closeRepository = true
                         releaseRepository = true

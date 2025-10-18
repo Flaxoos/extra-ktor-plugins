@@ -4,6 +4,8 @@ import io.github.flaxoos.ktor.extensions.jreleaserGpgPublicKey
 import io.github.flaxoos.ktor.extensions.jreleaserGpgSecretKey
 import io.github.flaxoos.ktor.extensions.mcPassword
 import io.github.flaxoos.ktor.extensions.mcUsername
+import io.github.flaxoos.ktor.extensions.ossrhPassword
+import io.github.flaxoos.ktor.extensions.ossrhUsername
 import org.eclipse.jgit.api.Git
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
@@ -314,16 +316,20 @@ jreleaser {
                     "snapshot-deploy",
                     closureOf<Nexus2MavenDeployer> {
                         active = SNAPSHOT
-                        snapshotUrl = // for ossrh "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-                            "https://central.sonatype.com/repository/maven-snapshots/"
-                        applyMavenCentralRules = false // Disable validation for .klib artifacts
                         snapshotSupported = true
                         closeRepository = true
                         releaseRepository = true
                         stagingRepository(stagingPath)
 
-                        username = mcUsername // for ossrh ossrhUsername
-                        password = mcPassword // for ossrh ossrhPassword
+                        // maven central snapshots
+                        // snapshotUrl = "https://central.sonatype.com/repository/maven-snapshots/"
+                        // username = mcUsername
+                        // password = mcPassword
+
+                        // ossrh snapshots
+                        snapshotUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                        username = ossrhUsername
+                        password = ossrhPassword
                     },
                 )
             }

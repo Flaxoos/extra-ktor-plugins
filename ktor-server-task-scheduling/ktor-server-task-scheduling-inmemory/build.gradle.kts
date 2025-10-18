@@ -1,32 +1,24 @@
 import io.github.flaxoos.ktor.commonMainDependencies
+import io.github.flaxoos.ktor.extensions.targetJvm
 import io.github.flaxoos.ktor.extensions.targetNative
 import io.github.flaxoos.ktor.jvmTestDependencies
 
 plugins {
     id("ktor-server-plugin-conventions")
-    kotlin("plugin.serialization") version
-        libs.versions.kotlin
-            .asProvider()
-            .get()
 }
 
 kotlin {
     explicitApi()
+    targetJvm(project)
     targetNative()
     sourceSets {
         commonMainDependencies {
-            api(libs.krontab)
+            api(projects.common)
+            api(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore)
         }
         jvmTestDependencies {
             implementation(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore.test)
-        }
-    }
-}
-
-koverReport {
-    defaults {
-        verify {
-            onCheck = false
+            implementation(libs.microutils.logging)
         }
     }
 }

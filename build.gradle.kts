@@ -249,7 +249,6 @@ allprojects {
     group = "io.github.flaxoos"
     version = rootProject.version
 }
-
 // see: https://jreleaser.org/guide/latest/examples/maven/maven-central.html#_portal_publisher_api
 jreleaser {
     // Configure the project
@@ -283,7 +282,14 @@ jreleaser {
         passphrase = jreleaserGpgPassphrase
     }
     deploy {
-        val stagingDir = "target/staging-deploy"
+        val stagingPath =
+            layout.buildDirectory
+                .dir("staging-deploy")
+                .get()
+                .asFile
+                .apply { mkdirs() }
+                .absolutePath
+
         maven {
             mavenCentral {
                 create(
@@ -291,7 +297,7 @@ jreleaser {
                     closureOf<MavenCentralMavenDeployer> {
                         active = RELEASE
                         url = "https://central.sonatype.com/api/v1/publisher"
-                        stagingRepository(stagingDir)
+                        stagingRepository(stagingPath)
 
                         username = mcUsername
                         password = mcPassword
@@ -308,15 +314,15 @@ jreleaser {
                     "snapshot-deploy",
                     closureOf<Nexus2MavenDeployer> {
                         active = SNAPSHOT
-                        snapshotUrl = "https://central.sonatype.com/repository/maven-snapshots/"
-                        applyMavenCentralRules = true
+                        snapshotUrl = // for ossrh "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                            "https://central.sonatype.com/repository/maven-snapshots/"
                         snapshotSupported = true
                         closeRepository = true
                         releaseRepository = true
-                        stagingRepository(stagingDir)
+                        stagingRepository(stagingPath)
 
-                        username = mcUsername
-                        password = mcPassword
+                        username = mcUsername // for ossrh ossrhUsername
+                        password = mcPassword // for ossrh ossrhPassword
                     },
                 )
             }

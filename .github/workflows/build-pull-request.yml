@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-pull-request:
-    name: Build and Publish Pull Request
+    name: Build Pull Request
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:

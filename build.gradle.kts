@@ -314,15 +314,15 @@ jreleaser {
                     "snapshot-deploy",
                     closureOf<Nexus2MavenDeployer> {
                         active = SNAPSHOT
-                        snapshotUrl = "https://central.sonatype.com/repository/maven-snapshots/"
-                        applyMavenCentralRules = true
+                        snapshotUrl = // for ossrh "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                            "https://central.sonatype.com/repository/maven-snapshots/"
                         snapshotSupported = true
                         closeRepository = true
                         releaseRepository = true
                         stagingRepository(stagingPath)
 
-                        username = mcUsername
-                        password = mcPassword
+                        username = mcUsername // for ossrh ossrhUsername
+                        password = mcPassword // for ossrh ossrhPassword
                     },
                 )
             }

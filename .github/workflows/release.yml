@@ -125,6 +125,17 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Download built jars from Build Main
+        uses: actions/download-artifact@v4
+        with:
+          # We uploaded as: jars-${{ matrix.project_prefix }}-${{ github.sha }}
+          pattern: jars-*-${{ github.sha }}
+          merge-multiple: true
+          path: downloaded-jars/
+
+      - name: List downloaded jars
+        run: ls -R downloaded-jars
+
       # Build & stage all subprojects into root/build/staging-deploy
       - name: Build & publish to local staging dir
         run: |

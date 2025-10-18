@@ -43,14 +43,6 @@ jobs:
           project_prefixes: ${{ matrix.project_prefix }}
           required_projects: ${{ matrix.project_prefix == 'ktor-server' && 'ktor-server-kafka,ktor-server-rate-limiting' || 'ktor-client-circuit-breaker' }}
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Execute gradle tasks on ${{ steps.detect-modified-subprojects.outputs.modified_projects == '' && 'root' || steps.detect-modified-subprojects.outputs.modified_projects }}
         id: execute-gradle-tasks-on-projects
         uses: ./.github/actions/execute-gradle-tasks-on-projects
@@ -61,6 +53,15 @@ jobs:
           GPR_USER: ${{ vars.GPR_USER }}
           GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
+
+      - name: Upload built jars (${{ matrix.project_prefix }})
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jars-${{ matrix.project_prefix }}-${{ github.sha }}
+          path: |
+            **/build/libs/*.jar
+          if-no-files-found: ignore
 
   deploy-docs:
     needs: build-main

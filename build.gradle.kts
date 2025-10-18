@@ -12,6 +12,10 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 import org.gradle.api.tasks.testing.logging.TestLogging
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import org.jreleaser.gradle.plugin.dsl.deploy.maven.MavenCentralMavenDeployer
+import org.jreleaser.gradle.plugin.dsl.deploy.maven.Nexus2MavenDeployer
+import org.jreleaser.model.Active.ALWAYS
+import org.jreleaser.model.Active.RELEASE
+import org.jreleaser.model.Active.SNAPSHOT
 import ru.vyarus.gradle.plugin.python.PythonExtension
 import java.time.Instant.ofEpochSecond
 
@@ -163,10 +167,12 @@ scmVersion {
                         hasMajor = true
                         logger.quiet("[VersionIncrementer]   → Triggers MAJOR version bump (breaking change)")
                     }
+
                     type == "feat" -> {
                         hasMinor = true
                         logger.quiet("[VersionIncrementer]   → Triggers MINOR version bump (new feature)")
                     }
+
                     type in
                         setOf(
                             "fix",
@@ -244,61 +250,78 @@ allprojects {
     version = rootProject.version
 }
 
+// see: https://jreleaser.org/guide/latest/examples/maven/maven-central.html#_portal_publisher_api
 jreleaser {
     // Configure the project
     project {
-        name.set("${rootProject.name}: ${project.name}")
-        description.set(
-            "This project provides a suite of feature-rich, efficient, and highly customizable plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform.",
-        )
-        longDescription.set(
-            "A comprehensive collection of Ktor plugins including rate limiting, Kafka integration, circuit breaker patterns, and distributed task scheduling. Built with Kotlin Multiplatform support for JVM, Native, and JS platforms.",
-        )
-        authors.add("Ido Flax")
-        license.set("Apache-2.0")
-        copyright.set("Copyright (c) 2023 Ido Flax")
+        name = "${rootProject.name}: ${project.name}"
+        description =
+            "This project provides a suite of feature-rich, efficient, and highly customizable plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
+
+        longDescription =
+            "A comprehensive collection of Ktor plugins including rate limiting, Kafka integration, circuit breaker patterns, and distributed task scheduling. Built with Kotlin Multiplatform support for JVM, Native, and JS platforms."
+
+        license = "Apache-2.0"
+        copyright = "Copyright (c) 2023 Ido Flax"
         authors.add("Ido Flax")
         maintainers.add("Ido Flax")
         links {
-            homepage.set("https://github.com/Flaxoos/extra-ktor-plugins")
-            documentation.set("https://flaxoos.github.io/extra-ktor-plugins/")
-            license.set("https://opensource.org/license/apache-2-0")
-            donation.set("https://github.com/sponsors/Flaxoos")
-            contact.set("Kotlin Slack - Ido Flax. idoflax@gmail.com")
+            homepage = "https://github.com/Flaxoos/extra-ktor-plugins"
+            documentation = "https://flaxoos.github.io/extra-ktor-plugins/"
+            license = "https://opensource.org/license/apache-2-0"
+            donation = "https://github.com/sponsors/Flaxoos"
+            contact = "Kotlin Slack - Ido Flax. idoflax@gmail.com"
         }
-        inceptionYear.set("2023")
+        inceptionYear = "2023"
     }
     // Sign the release
     signing {
-        active.set(org.jreleaser.model.Active.ALWAYS)
-        armored.set(true)
-        publicKey.set(jreleaserGpgPublicKey)
-        secretKey.set(jreleaserGpgSecretKey)
-        passphrase.set(jreleaserGpgPassphrase)
+        active = ALWAYS
+        armored = true
+        publicKey = jreleaserGpgPublicKey
+        secretKey = jreleaserGpgSecretKey
+        passphrase = jreleaserGpgPassphrase
     }
-    // Deploy to Maven Central
     deploy {
+        val stagingDir =
+            layout.buildDirectory
+                .dir("staging-deploy")
+                .get()
+                .asFile
+        if (!stagingDir.exists()) stagingDir.mkdirs()
         maven {
             mavenCentral {
                 create(
-                    "flaxoos-extra-ktor-plugins",
+                    "release-deploy",
                     closureOf<MavenCentralMavenDeployer> {
-                        active.set(org.jreleaser.model.Active.ALWAYS)
-                        url.set("https://central.sonatype.com/api/v1/publisher")
-                        stagingRepository(
-                            layout.buildDirectory
-                                .dir("staging-deploy")
-                                .get()
-                                .asFile.absolutePath,
-                        )
+                        active = RELEASE
+                        url = "https://central.sonatype.com/api/v1/publisher"
+                        stagingRepository(stagingDir.absolutePath)
 
-                        username.set(mcUsername)
-                        password.set(mcPassword)
+                        username = mcUsername
+                        password = mcPassword
 
-                        connectTimeout.set(20)
-                        readTimeout.set(60)
-                        retryDelay.set(5)
-                        maxRetries.set(3)
+                        connectTimeout = 20
+                        readTimeout = 60
+                        retryDelay = 5
+                        maxRetries = 3
+                    },
+                )
+            }
+            nexus2 {
+                create(
+                    "snapshot-deploy",
+                    closureOf<Nexus2MavenDeployer> {
+                        active = SNAPSHOT
+                        snapshotUrl = "https://central.sonatype.com/repository/maven-snapshots/"
+                        applyMavenCentralRules = true
+                        snapshotSupported = true
+                        closeRepository = true
+                        releaseRepository = true
+                        stagingRepository(stagingDir.absolutePath)
+
+                        username = mcUsername
+                        password = mcPassword
                     },
                 )
             }
@@ -307,14 +330,14 @@ jreleaser {
     // Create a release in GitHub
     release {
         github {
-            enabled.set(true)
-            repoOwner.set("Flaxoos")
-            name.set("extra-ktor-plugins")
-            tagName.set("v{{projectVersion}}")
-            releaseName.set("v{{projectVersion}}")
-            overwrite.set(true)
+            enabled = true
+            repoOwner = "Flaxoos"
+            name = "extra-ktor-plugins"
+            tagName = "v{{projectVersion}}"
+            releaseName = "v{{projectVersion}}"
+            overwrite = true
             update {
-                enabled.set(true)
+                enabled = true
             }
             changelog {
                 enabled.set(true)

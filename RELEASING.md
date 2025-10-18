@@ -5,11 +5,11 @@ This document explains how to create releases for the extra-ktor-plugins project
 ## Quick Start - How to Release
 
 ### 🔄 Automatic Snapshots
-**No action needed!** Snapshots are created automatically:
+**No action needed!** Snapshots are built and staged locally:
 - Push commits to `main` branch
 - Wait for `build-main.yml` to succeed
 - `release.yml` automatically triggers and creates a snapshot (e.g., `2.3.0-SNAPSHOT`)
-- Artifacts published to Maven Central staging repository
+- Artifacts are staged locally but **not published to Maven Central**
 
 ### 🚀 Production Release
 1. Go to **Actions** tab in GitHub
@@ -25,6 +25,16 @@ This document explains how to create releases for the extra-ktor-plugins project
 
 ### 📦 Manual Snapshot (Optional)
 Same as production release, but select **"snapshot"** from the dropdown.
+
+### Snapshot vs Release Details
+
+The `release.yml` workflow decides whether to perform a snapshot or a release based on the type of trigger and the `release.mode` property:
+
+- **Automatic triggers** (e.g., after successful `build-main.yml`) default to `release.mode=snapshot`, producing snapshot versions.
+- **Manual triggers** allow selection between `snapshot` and `release` modes.
+- The `release.mode` property controls version suffixes and deployment behavior:
+    - `snapshot` mode appends `-SNAPSHOT` and stages artifacts locally without publishing to Maven Central.
+    - `release` mode produces clean versions and publishes artifacts to Maven Central with GitHub release creation.
 
 ---
 
@@ -101,6 +111,7 @@ snapshotCreator { version, position ->
 - Publishes to Maven Central staging repository
 - No GitHub release created
 - No tags created
+- Snapshots are released to ossrh repository (maven central doesn't support snapshots)
 
 **Release Mode (`jreleaserFullRelease`):**
 - Publishes to Maven Central (production)
@@ -108,6 +119,19 @@ snapshotCreator { version, position ->
 - Generates release tag
 
 **Configuration:** Located in `build.gradle.kts` under `jreleaser` block
+
+##### Snapshot Publishing (optional)
+
+To enable snapshot publishing with JReleaser, you can add a snapshot deployer in Gradle configuration:
+
+```kotlin
+jreleaser {
+    snapshot {
+        active = org.jreleaser.model.Active.SNAPSHOT
+        // configure snapshot deployer details here
+    }
+}
+```
 
 #### 4. **Build Main Workflow** (`.github/workflows/build-main.yml`)
 **Role:** Quality gate for automatic snapshots
@@ -155,7 +179,7 @@ snapshotCreator { version, position ->
 
 ### Conventional Commits Integration
 
-The system relies on conventional commit messages for version calculation:
+The system relies on conventional commit messages for version calculation and now includes merge commits in the changelog generation using the settings `skipMergeCommits=false` and `includeUncategorized=true`. Non-conventional commit subjects such as merge commits will appear under the "Uncategorized" section of the changelog, while CI-related commits are filtered out to keep the changelog relevant and clean.
 
 | Commit Type | Version Impact | Example |
 |-------------|----------------|---------|

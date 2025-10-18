@@ -33,6 +33,9 @@ jobs:
           java-version: 17
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Detect modified subprojects
         uses: ./.github/actions/detect-modified-projects
         id: detect-modified-subprojects

@@ -283,12 +283,7 @@ jreleaser {
         passphrase = jreleaserGpgPassphrase
     }
     deploy {
-        val stagingDir =
-            layout.buildDirectory
-                .dir("staging-deploy")
-                .get()
-                .asFile
-        if (!stagingDir.exists()) stagingDir.mkdirs()
+        val stagingDir = "target/staging-deploy"
         maven {
             mavenCentral {
                 create(
@@ -296,7 +291,7 @@ jreleaser {
                     closureOf<MavenCentralMavenDeployer> {
                         active = RELEASE
                         url = "https://central.sonatype.com/api/v1/publisher"
-                        stagingRepository(stagingDir.absolutePath)
+                        stagingRepository(stagingDir)
 
                         username = mcUsername
                         password = mcPassword
@@ -318,7 +313,7 @@ jreleaser {
                         snapshotSupported = true
                         closeRepository = true
                         releaseRepository = true
-                        stagingRepository(stagingDir.absolutePath)
+                        stagingRepository(stagingDir)
 
                         username = mcUsername
                         password = mcPassword

@@ -2,7 +2,7 @@ name: Conventional Commits
 
 on:
   pull_request:
-    types: [opened, edited, synchronize]
+    types: [opened, edited, synchronize, reopened]
 
 jobs:
   conventional-commits:
@@ -13,13 +13,6 @@ jobs:
       statuses: write
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          # Required for axion-release to read git history
-          fetch-depth: 0
-          fetch-tags: true
-
       - name: Validate PR title follows conventional commits
         uses: amannn/action-semantic-pull-request@v5
         env:

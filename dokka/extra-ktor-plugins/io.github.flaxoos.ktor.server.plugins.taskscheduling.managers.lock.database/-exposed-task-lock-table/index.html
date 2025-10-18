@@ -1,0 +1,889 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A suite of feature-rich, efficient, and customizable plugins for Ktor Server or Client.">
+      
+      
+      
+        <link rel="canonical" href="https://github.com/Flaxoos/extra-ktor-plugins/dokka/extra-ktor-plugins/io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database/-exposed-task-lock-table/">
+      
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.6">
+    
+    
+      
+        <title>ExposedTaskLockTable - Extra Ktor Plugins Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.558e4712.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.2505c338.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#exposedtasklocktable" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="Extra Ktor Plugins Documentation" class="md-header__button md-logo" aria-label="Extra Ktor Plugins Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Extra Ktor Plugins Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ExposedTaskLockTable
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            </label>
+          
+        
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Flaxoos/extra-ktor-plugins" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Extra Ktor Plugins
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="Extra Ktor Plugins Documentation" class="md-nav__button md-logo" aria-label="Extra Ktor Plugins Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Extra Ktor Plugins Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Flaxoos/extra-ktor-plugins" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Extra Ktor Plugins
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about/Motivation/" class="md-nav__link">
+        Motivation
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../guide/installation/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4" tabindex="0" aria-expanded="false">
+          Server Plugins
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Server Plugins" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Server Plugins
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ktor-server-kafka/" class="md-nav__link">
+        Kafka
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ktor-server-rate-limiting/" class="md-nav__link">
+        Rate Limiting
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ktor-server-task-scheduling/" class="md-nav__link">
+        Task Scheduling
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ktor-server-rate-limiting/" class="md-nav__link">
+        Rate Limiting
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5" tabindex="0" aria-expanded="false">
+          Client Plugins
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Client Plugins" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Client Plugins
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ktor-client-circuit-breaker/" class="md-nav__link">
+        Circuit Breaker
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../" class="md-nav__link">
+        API Docs
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#constructors" class="md-nav__link">
+    Constructors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    Properties
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions" class="md-nav__link">
+    Functions
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+
+<p>//<a href="../../../">extra-ktor-plugins</a>/<a href="../">io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database</a>/<a href="./">ExposedTaskLockTable</a></p>
+<h1 id="exposedtasklocktable">ExposedTaskLockTable</h1>
+<p>[jvm]\
+abstract class <a href="./">ExposedTaskLockTable</a>(
+tableName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>) : Table</p>
+<h2 id="constructors">Constructors</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="-exposed-task-lock-table/">ExposedTaskLockTable</a></td>
+<td>[jvm]<br>constructor(tableName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="properties">Properties</h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="./#-119017270%2FProperties%2F1975120172">autoIncColumn</a></td>
+<td>[jvm]<br>val <a href="./#-119017270%2FProperties%2F1975120172">autoIncColumn</a>: Column&lt;*&gt;?</td>
+</tr>
+<tr>
+<td><a href="./#-527477422%2FProperties%2F1975120172">columns</a></td>
+<td>[jvm]<br>open override val <a href="./#-527477422%2FProperties%2F1975120172">columns</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;Column&lt;*&gt;&gt;</td>
+</tr>
+<tr>
+<td><a href="concurrency-index/">concurrencyIndex</a></td>
+<td>[jvm]<br>abstract val <a href="concurrency-index/">concurrencyIndex</a>: Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-98631389%2FProperties%2F1975120172">ddl</a></td>
+<td>[jvm]<br>val <a href="./#-98631389%2FProperties%2F1975120172">ddl</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1767535600%2FProperties%2F1975120172">fields</a></td>
+<td>[jvm]<br>open override val <a href="./#1767535600%2FProperties%2F1975120172">fields</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;Expression&lt;*&gt;&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1277801049%2FProperties%2F1975120172">foreignKeys</a></td>
+<td>[jvm]<br>val <a href="./#-1277801049%2FProperties%2F1975120172">foreignKeys</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;ForeignKeyConstraint&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1684006712%2FProperties%2F1975120172">indices</a></td>
+<td>[jvm]<br>val <a href="./#-1684006712%2FProperties%2F1975120172">indices</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;Index&gt;</td>
+</tr>
+<tr>
+<td><a href="locked-at/">lockedAt</a></td>
+<td>[jvm]<br>abstract val <a href="locked-at/">lockedAt</a>: Column&lt;Instant&gt;</td>
+</tr>
+<tr>
+<td><a href="name/">name</a></td>
+<td>[jvm]<br>abstract val <a href="name/">name</a>: Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-479487666%2FProperties%2F1975120172">primaryKey</a></td>
+<td>[jvm]<br>open val <a href="./#-479487666%2FProperties%2F1975120172">primaryKey</a>: Table.PrimaryKey?</td>
+</tr>
+<tr>
+<td><a href="./#-1960918000%2FProperties%2F1975120172">realFields</a></td>
+<td>[jvm]<br>open val <a href="./#-1960918000%2FProperties%2F1975120172">realFields</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;Expression&lt;*&gt;&gt;</td>
+</tr>
+<tr>
+<td><a href="./#441115999%2FProperties%2F1975120172">schemaName</a></td>
+<td>[jvm]<br>val <a href="./#441115999%2FProperties%2F1975120172">schemaName</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?</td>
+</tr>
+<tr>
+<td><a href="./#1676246222%2FProperties%2F1975120172">source</a></td>
+<td>[jvm]<br>open override val <a href="./#1676246222%2FProperties%2F1975120172">source</a>: ColumnSet</td>
+</tr>
+<tr>
+<td><a href="./#886371510%2FProperties%2F1975120172">tableName</a></td>
+<td>[jvm]<br>open val <a href="./#886371510%2FProperties%2F1975120172">tableName</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="functions">Functions</h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="./#1908081876%2FExtensions%2F1975120172">autoGenerate</a></td>
+<td>[jvm]<br>fun Column&lt;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/UUID.md">UUID</a>&gt;.<a href="./#1908081876%2FExtensions%2F1975120172">autoGenerate</a>(): Column&lt;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/UUID.md">UUID</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1325297933%2FExtensions%2F1975120172">autoinc</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#1325297933%2FExtensions%2F1975120172">N</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#1325297933%2FExtensions%2F1975120172">N</a>&gt;&gt; Column&lt;EntityID&lt;<a href="./#1325297933%2FExtensions%2F1975120172">N</a>&gt;&gt;.<a href="./#1325297933%2FExtensions%2F1975120172">autoinc</a>(idSeqName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;EntityID&lt;<a href="./#1325297933%2FExtensions%2F1975120172">N</a>&gt;&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1732389443%2FExtensions%2F1975120172">autoIncrement</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#1732389443%2FExtensions%2F1975120172">N</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.md">Any</a>&gt; Column&lt;<a href="./#1732389443%2FExtensions%2F1975120172">N</a>&gt;.<a href="./#1732389443%2FExtensions%2F1975120172">autoIncrement</a>(idSeqName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;<a href="./#1732389443%2FExtensions%2F1975120172">N</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1058154362%2FFunctions%2F1975120172">binary</a></td>
+<td>[jvm]<br>fun <a href="./#1058154362%2FFunctions%2F1975120172">binary</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.md">ByteArray</a>&gt;<br>fun <a href="./#547677603%2FFunctions%2F1975120172">binary</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, length: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.md">ByteArray</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#62882454%2FFunctions%2F1975120172">blob</a></td>
+<td>[jvm]<br>fun <a href="./#62882454%2FFunctions%2F1975120172">blob</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;ExposedBlob&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-2086032349%2FFunctions%2F1975120172">bool</a></td>
+<td>[jvm]<br>fun <a href="./#-2086032349%2FFunctions%2F1975120172">bool</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#913984449%2FFunctions%2F1975120172">byte</a></td>
+<td>[jvm]<br>fun <a href="./#913984449%2FFunctions%2F1975120172">byte</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte/index.md">Byte</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1525656689%2FFunctions%2F1975120172">char</a></td>
+<td>[jvm]<br>fun <a href="./#-1525656689%2FFunctions%2F1975120172">char</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-char/index.md">Char</a>&gt;<br>fun <a href="./#1285168752%2FFunctions%2F1975120172">char</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, length: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a>, collate: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1203492787%2FFunctions%2F1975120172">check</a></td>
+<td>[jvm]<br>fun <a href="./#1203492787%2FFunctions%2F1975120172">check</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, op: SqlExpressionBuilder.() -&gt; Op&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>&gt;)</td>
+</tr>
+<tr>
+<td><a href="./#-467711850%2FExtensions%2F1975120172">check</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#-467711850%2FExtensions%2F1975120172">T</a>&gt; Column&lt;<a href="./#-467711850%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#-467711850%2FExtensions%2F1975120172">check</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, op: SqlExpressionBuilder.(Column&lt;<a href="./#-467711850%2FExtensions%2F1975120172">T</a>&gt;) -&gt; Op&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>&gt;): Column&lt;<a href="./#-467711850%2FExtensions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1445495208%2FExtensions%2F1975120172">clientDefault</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#1445495208%2FExtensions%2F1975120172">T</a>&gt; Column&lt;<a href="./#1445495208%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#1445495208%2FExtensions%2F1975120172">clientDefault</a>(defaultValue: () -&gt; <a href="./#1445495208%2FExtensions%2F1975120172">T</a>): Column&lt;<a href="./#1445495208%2FExtensions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1499019292%2FFunctions%2F1975120172">createStatement</a></td>
+<td>[jvm]<br>open override fun <a href="./#1499019292%2FFunctions%2F1975120172">createStatement</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-134578527%2FFunctions%2F1975120172">crossJoin</a></td>
+<td>[jvm]<br>open infix override fun <a href="./#-134578527%2FFunctions%2F1975120172">crossJoin</a>(otherTable: ColumnSet): Join</td>
+</tr>
+<tr>
+<td><a href="./#67934265%2FFunctions%2F1975120172">customEnumeration</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#67934265%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.md">Enum</a>&lt;<a href="./#67934265%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#67934265%2FFunctions%2F1975120172">customEnumeration</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, sql: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?, fromDb: (<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.md">Any</a>) -&gt; <a href="./#67934265%2FFunctions%2F1975120172">T</a>, toDb: (<a href="./#67934265%2FFunctions%2F1975120172">T</a>) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.md">Any</a>): Column&lt;<a href="./#67934265%2FFunctions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1946041873%2FExtensions%2F1975120172">databaseGenerated</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#-1946041873%2FExtensions%2F1975120172">T</a>&gt; Column&lt;<a href="./#-1946041873%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#-1946041873%2FExtensions%2F1975120172">databaseGenerated</a>(): Column&lt;<a href="./#-1946041873%2FExtensions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#650705094%2FFunctions%2F1975120172">decimal</a></td>
+<td>[jvm]<br>fun <a href="./#650705094%2FFunctions%2F1975120172">decimal</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, precision: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a>, scale: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a>): Column&lt;<a href="https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.md">BigDecimal</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1554466462%2FExtensions%2F1975120172">default</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#-1554466462%2FExtensions%2F1975120172">T</a>&gt; Column&lt;<a href="./#-1554466462%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#-1554466462%2FExtensions%2F1975120172">default</a>(defaultValue: <a href="./#-1554466462%2FExtensions%2F1975120172">T</a>): Column&lt;<a href="./#-1554466462%2FExtensions%2F1975120172">T</a>&gt;<br>fun &lt;<a href="./#-1018229975%2FExtensions%2F1975120172">T</a>&gt; CompositeColumn&lt;<a href="./#-1018229975%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#-1018229975%2FExtensions%2F1975120172">default</a>(defaultValue: <a href="./#-1018229975%2FExtensions%2F1975120172">T</a>): CompositeColumn&lt;<a href="./#-1018229975%2FExtensions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1090095358%2FExtensions%2F1975120172">defaultExpression</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#-1090095358%2FExtensions%2F1975120172">T</a>&gt; Column&lt;<a href="./#-1090095358%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#-1090095358%2FExtensions%2F1975120172">defaultExpression</a>(defaultValue: Expression&lt;<a href="./#-1090095358%2FExtensions%2F1975120172">T</a>&gt;): Column&lt;<a href="./#-1090095358%2FExtensions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#304080744%2FFunctions%2F1975120172">describe</a></td>
+<td>[jvm]<br>open override fun <a href="./#304080744%2FFunctions%2F1975120172">describe</a>(s: Transaction, queryBuilder: QueryBuilder)</td>
+</tr>
+<tr>
+<td><a href="./#638663498%2FFunctions%2F1975120172">double</a></td>
+<td>[jvm]<br>fun <a href="./#638663498%2FFunctions%2F1975120172">double</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-double/index.md">Double</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1545038385%2FFunctions%2F1975120172">dropStatement</a></td>
+<td>[jvm]<br>open override fun <a href="./#-1545038385%2FFunctions%2F1975120172">dropStatement</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1176101151%2FFunctions%2F1975120172">entityId</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#-1176101151%2FFunctions%2F1975120172">ID</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#-1176101151%2FFunctions%2F1975120172">ID</a>&gt;&gt; <a href="./#-1176101151%2FFunctions%2F1975120172">entityId</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, table: IdTable&lt;<a href="./#-1176101151%2FFunctions%2F1975120172">ID</a>&gt;): Column&lt;EntityID&lt;<a href="./#-1176101151%2FFunctions%2F1975120172">ID</a>&gt;&gt;<br>fun &lt;<a href="./#1579776871%2FFunctions%2F1975120172">ID</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#1579776871%2FFunctions%2F1975120172">ID</a>&gt;&gt; <a href="./#1579776871%2FFunctions%2F1975120172">entityId</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, originalColumn: Column&lt;<a href="./#1579776871%2FFunctions%2F1975120172">ID</a>&gt;): Column&lt;EntityID&lt;<a href="./#1579776871%2FFunctions%2F1975120172">ID</a>&gt;&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1298102606%2FExtensions%2F1975120172">entityId</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#1298102606%2FExtensions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#1298102606%2FExtensions%2F1975120172">T</a>&gt;&gt; Column&lt;<a href="./#1298102606%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#1298102606%2FExtensions%2F1975120172">entityId</a>(): Column&lt;EntityID&lt;<a href="./#1298102606%2FExtensions%2F1975120172">T</a>&gt;&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1375150884%2FFunctions%2F1975120172">enumeration</a></td>
+<td>[jvm]<br>inline fun &lt;<a href="./#-1375150884%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.md">Enum</a>&lt;<a href="./#-1375150884%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#-1375150884%2FFunctions%2F1975120172">enumeration</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="./#-1375150884%2FFunctions%2F1975120172">T</a>&gt;<br>fun &lt;<a href="./#310280626%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.md">Enum</a>&lt;<a href="./#310280626%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#310280626%2FFunctions%2F1975120172">enumeration</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, klass: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.md">KClass</a>&lt;<a href="./#310280626%2FFunctions%2F1975120172">T</a>&gt;): Column&lt;<a href="./#310280626%2FFunctions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-2069184673%2FFunctions%2F1975120172">enumerationByName</a></td>
+<td>[jvm]<br>inline fun &lt;<a href="./#-2069184673%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.md">Enum</a>&lt;<a href="./#-2069184673%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#-2069184673%2FFunctions%2F1975120172">enumerationByName</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, length: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a>): Column&lt;<a href="./#-2069184673%2FFunctions%2F1975120172">T</a>&gt;<br>fun &lt;<a href="./#967420533%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.md">Enum</a>&lt;<a href="./#967420533%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#967420533%2FFunctions%2F1975120172">enumerationByName</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, length: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a>, klass: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.md">KClass</a>&lt;<a href="./#967420533%2FFunctions%2F1975120172">T</a>&gt;): Column&lt;<a href="./#967420533%2FFunctions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1257999178%2FFunctions%2F1975120172">equals</a></td>
+<td>[jvm]<br>open operator override fun <a href="./#-1257999178%2FFunctions%2F1975120172">equals</a>(other: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.md">Any</a>?): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a></td>
+</tr>
+<tr>
+<td><a href="./#-1280710735%2FFunctions%2F1975120172">float</a></td>
+<td>[jvm]<br>fun <a href="./#-1280710735%2FFunctions%2F1975120172">float</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-float/index.md">Float</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#753676639%2FFunctions%2F1975120172">foreignKey</a></td>
+<td>[jvm]<br>fun <a href="./#753676639%2FFunctions%2F1975120172">foreignKey</a>(vararg references: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.md">Pair</a>&lt;Column&lt;<em>&gt;, Column&lt;</em>&gt;&gt;, onUpdate: ReferenceOption?, onDelete: ReferenceOption?, name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?)<br>fun <a href="./#-1550008214%2FFunctions%2F1975120172">foreignKey</a>(vararg from: Column&lt;*&gt;, target: Table.PrimaryKey, onUpdate: ReferenceOption?, onDelete: ReferenceOption?, name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?)</td>
+</tr>
+<tr>
+<td><a href="./#-1482579372%2FFunctions%2F1975120172">fullJoin</a></td>
+<td>[jvm]<br>open infix override fun <a href="./#-1482579372%2FFunctions%2F1975120172">fullJoin</a>(otherTable: ColumnSet): Join</td>
+</tr>
+<tr>
+<td><a href="./#-822775952%2FFunctions%2F1975120172">hashCode</a></td>
+<td>[jvm]<br>open override fun <a href="./#-822775952%2FFunctions%2F1975120172">hashCode</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a></td>
+</tr>
+<tr>
+<td><a href="./#977532225%2FFunctions%2F1975120172">index</a></td>
+<td>[jvm]<br>fun <a href="./#977532225%2FFunctions%2F1975120172">index</a>(isUnique: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>, vararg columns: Column&lt;<em>&gt;)<br>fun <a href="./#-89973378%2FFunctions%2F1975120172">index</a>(customIndexName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?, isUnique: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>, vararg columns: Column&lt;</em>&gt;, functions: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;ExpressionWithColumnType&lt;*&gt;&gt;?, indexType: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?, filterCondition: FilterCondition)</td>
+</tr>
+<tr>
+<td><a href="./#-1206961544%2FExtensions%2F1975120172">index</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#-1206961544%2FExtensions%2F1975120172">T</a>&gt; Column&lt;<a href="./#-1206961544%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#-1206961544%2FExtensions%2F1975120172">index</a>(customIndexName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?, isUnique: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>): Column&lt;<a href="./#-1206961544%2FExtensions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#907117751%2FFunctions%2F1975120172">innerJoin</a></td>
+<td>[jvm]<br>open infix override fun <a href="./#907117751%2FFunctions%2F1975120172">innerJoin</a>(otherTable: ColumnSet): Join</td>
+</tr>
+<tr>
+<td><a href="./#-1079359085%2FFunctions%2F1975120172">integer</a></td>
+<td>[jvm]<br>fun <a href="./#-1079359085%2FFunctions%2F1975120172">integer</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-759475769%2FFunctions%2F1975120172">join</a></td>
+<td>[jvm]<br>open override fun <a href="./#-759475769%2FFunctions%2F1975120172">join</a>(otherTable: ColumnSet, joinType: JoinType, onColumn: Expression&lt;<em>&gt;?, otherColumn: Expression&lt;</em>&gt;?, additionalConstraint: SqlExpressionBuilder.() -&gt; Op&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>&gt;?): Join</td>
+</tr>
+<tr>
+<td><a href="./#-831337277%2FFunctions%2F1975120172">largeText</a></td>
+<td>[jvm]<br>fun <a href="./#-831337277%2FFunctions%2F1975120172">largeText</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, collate: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?, eagerLoading: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-2030280756%2FFunctions%2F1975120172">leftJoin</a></td>
+<td>[jvm]<br>open infix override fun <a href="./#-2030280756%2FFunctions%2F1975120172">leftJoin</a>(otherTable: ColumnSet): Join</td>
+</tr>
+<tr>
+<td><a href="./#-1988429259%2FFunctions%2F1975120172">long</a></td>
+<td>[jvm]<br>fun <a href="./#-1988429259%2FFunctions%2F1975120172">long</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.md">Long</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-326748191%2FFunctions%2F1975120172">mediumText</a></td>
+<td>[jvm]<br>fun <a href="./#-326748191%2FFunctions%2F1975120172">mediumText</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, collate: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?, eagerLoading: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1323802714%2FFunctions%2F1975120172">modifyStatement</a></td>
+<td>[jvm]<br>open override fun <a href="./#1323802714%2FFunctions%2F1975120172">modifyStatement</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#496714128%2FFunctions%2F1975120172">nameInDatabaseCase</a></td>
+<td>[jvm]<br>fun <a href="./#496714128%2FFunctions%2F1975120172">nameInDatabaseCase</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a></td>
+</tr>
+<tr>
+<td><a href="./#207155279%2FFunctions%2F1975120172">nameInDatabaseCaseUnquoted</a></td>
+<td>[jvm]<br>fun <a href="./#207155279%2FFunctions%2F1975120172">nameInDatabaseCaseUnquoted</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a></td>
+</tr>
+<tr>
+<td><a href="./#1935788434%2FExtensions%2F1975120172">nullable</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#1935788434%2FExtensions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.md">Any</a>, <a href="./#1935788434%2FExtensions%2F1975120172">C</a> : CompositeColumn&lt;<a href="./#1935788434%2FExtensions%2F1975120172">T</a>&gt;&gt; <a href="./#1935788434%2FExtensions%2F1975120172">C</a>.<a href="./#1935788434%2FExtensions%2F1975120172">nullable</a>(): CompositeColumn&lt;<a href="./#1935788434%2FExtensions%2F1975120172">T</a>?&gt;<br>fun &lt;<a href="./#1445138239%2FExtensions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.md">Any</a>&gt; Column&lt;<a href="./#1445138239%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#1445138239%2FExtensions%2F1975120172">nullable</a>(): Column&lt;<a href="./#1445138239%2FExtensions%2F1975120172">T</a>?&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-930485673%2FFunctions%2F1975120172">optReference</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#-930485673%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#-930485673%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#-930485673%2FFunctions%2F1975120172">optReference</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, foreign: IdTable&lt;<a href="./#-930485673%2FFunctions%2F1975120172">T</a>&gt;, onDelete: ReferenceOption?, onUpdate: ReferenceOption?, fkName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;EntityID&lt;<a href="./#-930485673%2FFunctions%2F1975120172">T</a>&gt;?&gt;<br>fun &lt;<a href="./#478693009%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#478693009%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#478693009%2FFunctions%2F1975120172">optReference</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, refColumn: Column&lt;<a href="./#478693009%2FFunctions%2F1975120172">T</a>&gt;, onDelete: ReferenceOption?, onUpdate: ReferenceOption?, fkName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;<a href="./#478693009%2FFunctions%2F1975120172">T</a>?&gt;<br>fun &lt;<a href="./#37241246%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#37241246%2FFunctions%2F1975120172">T</a>&gt;, <a href="./#37241246%2FFunctions%2F1975120172">E</a> : EntityID&lt;<a href="./#37241246%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#37241246%2FFunctions%2F1975120172">optReference</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, refColumn: Column&lt;<a href="./#37241246%2FFunctions%2F1975120172">E</a>&gt;, onDelete: ReferenceOption?, onUpdate: ReferenceOption?, fkName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;<a href="./#37241246%2FFunctions%2F1975120172">E</a>?&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1107315878%2FFunctions%2F1975120172">reference</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#1107315878%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#1107315878%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#1107315878%2FFunctions%2F1975120172">reference</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, foreign: IdTable&lt;<a href="./#1107315878%2FFunctions%2F1975120172">T</a>&gt;, onDelete: ReferenceOption?, onUpdate: ReferenceOption?, fkName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;EntityID&lt;<a href="./#1107315878%2FFunctions%2F1975120172">T</a>&gt;&gt;<br>fun &lt;<a href="./#1148332128%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#1148332128%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#1148332128%2FFunctions%2F1975120172">reference</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, refColumn: Column&lt;<a href="./#1148332128%2FFunctions%2F1975120172">T</a>&gt;, onDelete: ReferenceOption?, onUpdate: ReferenceOption?, fkName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;<a href="./#1148332128%2FFunctions%2F1975120172">T</a>&gt;<br>fun &lt;<a href="./#-439391507%2FFunctions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#-439391507%2FFunctions%2F1975120172">T</a>&gt;, <a href="./#-439391507%2FFunctions%2F1975120172">E</a> : EntityID&lt;<a href="./#-439391507%2FFunctions%2F1975120172">T</a>&gt;&gt; <a href="./#-439391507%2FFunctions%2F1975120172">reference</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, refColumn: Column&lt;<a href="./#-439391507%2FFunctions%2F1975120172">E</a>&gt;, onDelete: ReferenceOption?, onUpdate: ReferenceOption?, fkName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;<a href="./#-439391507%2FFunctions%2F1975120172">E</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1648963011%2FExtensions%2F1975120172">references</a></td>
+<td>[jvm]<br>infix fun &lt;<a href="./#1648963011%2FExtensions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#1648963011%2FExtensions%2F1975120172">T</a>&gt;, <a href="./#1648963011%2FExtensions%2F1975120172">S</a> : <a href="./#1648963011%2FExtensions%2F1975120172">T</a>, <a href="./#1648963011%2FExtensions%2F1975120172">C</a> : Column&lt;<a href="./#1648963011%2FExtensions%2F1975120172">S</a>&gt;&gt; <a href="./#1648963011%2FExtensions%2F1975120172">C</a>.<a href="./#1648963011%2FExtensions%2F1975120172">references</a>(ref: Column&lt;<a href="./#1648963011%2FExtensions%2F1975120172">T</a>&gt;): <a href="./#1648963011%2FExtensions%2F1975120172">C</a><br>fun &lt;<a href="./#125179067%2FExtensions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#125179067%2FExtensions%2F1975120172">T</a>&gt;, <a href="./#125179067%2FExtensions%2F1975120172">S</a> : <a href="./#125179067%2FExtensions%2F1975120172">T</a>, <a href="./#125179067%2FExtensions%2F1975120172">C</a> : Column&lt;<a href="./#125179067%2FExtensions%2F1975120172">S</a>&gt;&gt; <a href="./#125179067%2FExtensions%2F1975120172">C</a>.<a href="./#125179067%2FExtensions%2F1975120172">references</a>(ref: Column&lt;<a href="./#125179067%2FExtensions%2F1975120172">T</a>&gt;, onDelete: ReferenceOption?, onUpdate: ReferenceOption?, fkName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): <a href="./#125179067%2FExtensions%2F1975120172">C</a><br>fun &lt;<a href="./#1785396338%2FExtensions%2F1975120172">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.md">Comparable</a>&lt;<a href="./#1785396338%2FExtensions%2F1975120172">T</a>&gt;, <a href="./#1785396338%2FExtensions%2F1975120172">S</a> : <a href="./#1785396338%2FExtensions%2F1975120172">T</a>, <a href="./#1785396338%2FExtensions%2F1975120172">C</a> : Column&lt;<a href="./#1785396338%2FExtensions%2F1975120172">S</a>&gt;&gt; <a href="./#1785396338%2FExtensions%2F1975120172">C</a>.<a href="./#1785396338%2FExtensions%2F1975120172">references</a>(ref: Column&lt;EntityID&lt;<a href="./#1785396338%2FExtensions%2F1975120172">T</a>&gt;&gt;, onDelete: ReferenceOption?, onUpdate: ReferenceOption?, fkName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): <a href="./#1785396338%2FExtensions%2F1975120172">C</a></td>
+</tr>
+<tr>
+<td><a href="./#-1341512564%2FFunctions%2F1975120172">registerColumn</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#-1341512564%2FFunctions%2F1975120172">T</a>&gt; <a href="./#-1341512564%2FFunctions%2F1975120172">registerColumn</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, type: IColumnType): Column&lt;<a href="./#-1341512564%2FFunctions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1191287290%2FFunctions%2F1975120172">registerCompositeColumn</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#1191287290%2FFunctions%2F1975120172">R</a>, <a href="./#1191287290%2FFunctions%2F1975120172">T</a> : CompositeColumn&lt;<a href="./#1191287290%2FFunctions%2F1975120172">R</a>&gt;&gt; <a href="./#1191287290%2FFunctions%2F1975120172">registerCompositeColumn</a>(column: <a href="./#1191287290%2FFunctions%2F1975120172">T</a>): <a href="./#1191287290%2FFunctions%2F1975120172">T</a></td>
+</tr>
+<tr>
+<td><a href="./#270889164%2FFunctions%2F1975120172">replaceColumn</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#270889164%2FFunctions%2F1975120172">TColumn</a> : Column&lt;<em>&gt;&gt; <a href="./#270889164%2FFunctions%2F1975120172">replaceColumn</a>(oldColumn: Column&lt;</em>&gt;, newColumn: <a href="./#270889164%2FFunctions%2F1975120172">TColumn</a>): <a href="./#270889164%2FFunctions%2F1975120172">TColumn</a></td>
+</tr>
+<tr>
+<td><a href="./#2072823933%2FFunctions%2F1975120172">rightJoin</a></td>
+<td>[jvm]<br>open infix override fun <a href="./#2072823933%2FFunctions%2F1975120172">rightJoin</a>(otherTable: ColumnSet): Join</td>
+</tr>
+<tr>
+<td><a href="./#56930769%2FFunctions%2F1975120172">short</a></td>
+<td>[jvm]<br>fun <a href="./#56930769%2FFunctions%2F1975120172">short</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.md">Short</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1462474289%2FFunctions%2F1975120172">slice</a></td>
+<td>[jvm]<br>fun <a href="./#1462474289%2FFunctions%2F1975120172">slice</a>(columns: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;Expression&lt;<em>&gt;&gt;): FieldSet<br>fun <a href="./#-1167701894%2FFunctions%2F1975120172">slice</a>(column: Expression&lt;</em>&gt;, vararg columns: Expression&lt;*&gt;): FieldSet</td>
+</tr>
+<tr>
+<td><a href="./#-60221748%2FFunctions%2F1975120172">text</a></td>
+<td>[jvm]<br>fun <a href="./#-60221748%2FFunctions%2F1975120172">text</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, collate: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?, eagerLoading: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.md">Boolean</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#116876178%2FFunctions%2F1975120172">ubyte</a></td>
+<td>[jvm]<br>fun <a href="./#116876178%2FFunctions%2F1975120172">ubyte</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-u-byte/index.md">UByte</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-857680862%2FFunctions%2F1975120172">uinteger</a></td>
+<td>[jvm]<br>fun <a href="./#-857680862%2FFunctions%2F1975120172">uinteger</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-u-int/index.md">UInt</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1509429766%2FFunctions%2F1975120172">ulong</a></td>
+<td>[jvm]<br>fun <a href="./#1509429766%2FFunctions%2F1975120172">ulong</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-u-long/index.md">ULong</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#-1434313059%2FFunctions%2F1975120172">uniqueIndex</a></td>
+<td>[jvm]<br>fun <a href="./#-1434313059%2FFunctions%2F1975120172">uniqueIndex</a>(vararg columns: Column&lt;<em>&gt;, filterCondition: FilterCondition)<br>fun <a href="./#252970649%2FFunctions%2F1975120172">uniqueIndex</a>(customIndexName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?, vararg columns: Column&lt;</em>&gt;, functions: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.md">List</a>&lt;ExpressionWithColumnType&lt;*&gt;&gt;?, filterCondition: FilterCondition)</td>
+</tr>
+<tr>
+<td><a href="./#-17665861%2FExtensions%2F1975120172">uniqueIndex</a></td>
+<td>[jvm]<br>fun &lt;<a href="./#-17665861%2FExtensions%2F1975120172">T</a>&gt; Column&lt;<a href="./#-17665861%2FExtensions%2F1975120172">T</a>&gt;.<a href="./#-17665861%2FExtensions%2F1975120172">uniqueIndex</a>(customIndexName: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;<a href="./#-17665861%2FExtensions%2F1975120172">T</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1116378144%2FFunctions%2F1975120172">ushort</a></td>
+<td>[jvm]<br>fun <a href="./#1116378144%2FFunctions%2F1975120172">ushort</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-u-short/index.md">UShort</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#154288180%2FFunctions%2F1975120172">uuid</a></td>
+<td>[jvm]<br>fun <a href="./#154288180%2FFunctions%2F1975120172">uuid</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>): Column&lt;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/UUID.md">UUID</a>&gt;</td>
+</tr>
+<tr>
+<td><a href="./#1923632435%2FFunctions%2F1975120172">varchar</a></td>
+<td>[jvm]<br>fun <a href="./#1923632435%2FFunctions%2F1975120172">varchar</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>, length: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.md">Int</a>, collate: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>?): Column&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.md">String</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2023 Ido Flax
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.sections"], "search": "../../../../assets/javascripts/workers/search.e5c33ebb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.51d95adb.min.js"></script>
+      
+    
+  </body>
+</html>

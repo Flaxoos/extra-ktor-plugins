@@ -3,9 +3,9 @@ name: Release And Publish
 on:
   # Automatic trigger from build-main workflow
   workflow_run:
-    workflows: ["Build Main"]
-    types: [completed]
-    branches: [main]
+    workflows: [ "Build Main" ]
+    types: [ completed ]
+    branches: [ main ]
 
   # Manual trigger for production releases
   workflow_dispatch:
@@ -15,7 +15,7 @@ on:
         required: true
         default: 'release'
         type: choice
-        options: ['release', 'snapshot']
+        options: [ 'release', 'snapshot' ]
 
   # Support existing tag-based releases
   push:
@@ -49,7 +49,9 @@ jobs:
       MC_USERNAME: ${{ secrets.MC_USERNAME }}
       MC_PASSWORD: ${{ secrets.MC_PASSWORD }}
 
-      # JReleaser credentials (single-line values)
+      # JReleaser credentials
+      JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.GPG_PUBLIC_KEY }}
+      JRELEASER_GPG_SECRET_KEY: ${{ secrets.GPG_SECRET_KEY }}
       JRELEASER_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -120,14 +122,6 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
@@ -136,34 +130,28 @@ jobs:
         run: |
           ./gradlew --no-daemon build publishAllPublicationsToLocalStagingRepository -Prelease.mode=${{ steps.release-context.outputs.release_type }}
 
-      # Export multiline GPG keys (single-line vars are set at job level)
-      - name: Export GPG keys
-        shell: bash
-        run: |
-          ./gradlew --no-daemon build publishAllPublicationsToLocalStagingRepository
-
-      # Map secrets -> JReleaser env vars
-      - name: Export JReleaser env vars
-        shell: bash
-        run: |
-          # Maven Central (Publisher API) creds
-          echo "JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_APP_USERNAME=${{ secrets.MC_USERNAME }}" >> $GITHUB_ENV
-          echo "JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_APP_PASSWORD=${{ secrets.MC_PASSWORD }}" >> $GITHUB_ENV
-
-          # GPG passphrase
-          echo "JRELEASER_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}" >> $GITHUB_ENV
-
-
       # sanity checks before the real release
       - name: JReleaser dry run checks
-        run: ./gradlew --no-daemon jreleaserConfig jreleaserAssemble jreleaserChangelog -Prelease.mode=${{ steps.release-context.outputs.release_type }}
+        run: |
+          if [[ "${{ steps.release-context.outputs.release_type }}" == "snapshot" ]]; then
+            echo "🧪 JReleaser dry run (snapshot, signing disabled)"
+            ./gradlew --no-daemon jreleaserConfig jreleaserAssemble jreleaserChangelog \
+              -Prelease.mode=snapshot \
+              -Pjreleaser.signing.active=NEVER
+          else
+            echo "🧪 JReleaser dry run (release)"
+            ./gradlew --no-daemon jreleaserConfig jreleaserAssemble jreleaserChangelog \
+              -Prelease.mode=release
+          fi
 
       # Deploy to Maven Central (Publisher API) and create GitHub Release
       - name: JReleaser Configuration
         run: |
           if [[ "${{ steps.version.outputs.is_snapshot }}" == "true" ]]; then
-            echo "📦 Publishing snapshot to Maven Central staging"
-            ./gradlew --no-daemon jreleaserDeploy -Prelease.mode=snapshot
+            echo "📦 Publishing snapshot to Maven Central staging (signing disabled)"
+            ./gradlew --no-daemon jreleaserDeploy \
+              -Prelease.mode=snapshot \
+              -Pjreleaser.signing.active=NEVER
           else
             echo "🎉 Full release to Maven Central and GitHub"
             ./gradlew --no-daemon jreleaserFullRelease -Prelease.mode=release

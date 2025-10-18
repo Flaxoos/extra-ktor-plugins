@@ -17,7 +17,8 @@ val Project.gprUser: String by ProjectPropertyDelegate.projectOrSystemEnv()
 
 val Project.mcUsername: String by ProjectPropertyDelegate.projectOrSystemEnv()
 val Project.mcPassword: String by ProjectPropertyDelegate.projectOrSystemEnv()
-
-val Project.jreleaserGpgPassphrase: String by ProjectPropertyDelegate.projectOrSystemEnv()
-val Project.jreleaserGpgSecretKey: String by ProjectPropertyDelegate.projectOrSystemEnv()
+val Project.ossrhUsername: String by ProjectPropertyDelegate.projectOrSystemEnv()
+val Project.ossrhPassword: String by ProjectPropertyDelegate.projectOrSystemEnv()
 val Project.jreleaserGpgPublicKey: String by ProjectPropertyDelegate.projectOrSystemEnv()
+val Project.jreleaserGpgSecretKey: String by ProjectPropertyDelegate.projectOrSystemEnv()
+val Project.jreleaserGpgPassphrase: String by ProjectPropertyDelegate.projectOrSystemEnv()

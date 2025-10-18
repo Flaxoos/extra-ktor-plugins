@@ -335,15 +335,12 @@ jreleaser {
                 enabled = true
             }
             changelog {
-                enabled.set(true)
-                formatted.set(org.jreleaser.model.Active.ALWAYS)
-                preset.set("conventional-commits")
+                enabled = true
+                formatted = ALWAYS
+                skipMergeCommits = false
+                preset = "conventional-commits"
                 contributors {
-                    enabled.set(false)
-                }
-                hide {
-                    categories.add("merge")
-                    contributors.add("GitHub")
+                    enabled = false
                 }
             }
         }

@@ -1,38 +1,26 @@
-package io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database
+package util
 
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.TaskSchedulingConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.TaskSchedulingDsl
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManager.Companion.format2
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManagerConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManagerConfiguration.TaskManagerName.Companion.toTaskManagerName
-import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DefaultTaskLockTable.lockedAt
+import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DatabaseTaskLock
+import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DatabaseTaskLockManager
+import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DatabaseTaskLockManagerConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.Task
-import io.ktor.server.application.Application
+import io.ktor.server.application.*
 import korlibs.time.DateTime
-import kotlinx.datetime.Instant
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.insertIgnore
-import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
-import java.sql.Connection
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.datetime.timestamp
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.insertIgnore
+import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
+import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.properties.Delegates
+import kotlin.time.Instant
 
-/**
- * An implementation of [DatabaseTaskLockManager] using JDBC and Exposed as the lock store
- * The manager will take care of generating the lock table using the [SchemaUtils] and the [DefaultTaskLockTable].
- * the schema utils should handle the case where the table already exists. TODO: test this
- * Alternatively, you can use implement the [ExposedTaskLockTable] yourself and provide it instead
- */
 public class JdbcLockManager(
     override val name: TaskManagerConfiguration.TaskManagerName,
     override val application: Application,
@@ -46,17 +34,16 @@ public class JdbcLockManager(
     private val taskLockTable: ExposedTaskLockTable = DefaultTaskLockTable,
 ) : DatabaseTaskLockManager<JdbcTaskLock>() {
     override suspend fun initTaskLockTable() {
-        transaction { SchemaUtils.create(taskLockTable) }
+        suspendTransaction { SchemaUtils.create(taskLockTable) }
     }
 
     override suspend fun insertTaskLock(
         task: Task,
         taskConcurrencyIndex: Int,
     ): Boolean =
-        newSuspendedTransaction(
-            application.coroutineContext,
+        suspendTransaction(
             database,
-            transactionIsolation = Connection.TRANSACTION_READ_COMMITTED,
+            transactionIsolation = java.sql.Connection.TRANSACTION_READ_COMMITTED,
         ) {
             maxAttempts = 1
             taskLockTable.insertIgnore {
@@ -71,10 +58,9 @@ public class JdbcLockManager(
         concurrencyIndex: Int,
         executionTime: DateTime,
     ): JdbcTaskLock? =
-        newSuspendedTransaction(
-            application.coroutineContext,
+        suspendTransaction(
             db = database,
-            transactionIsolation = Connection.TRANSACTION_READ_COMMITTED,
+            transactionIsolation = java.sql.Connection.TRANSACTION_READ_COMMITTED,
         ) {
             taskLockTable.update(
                 where = {
@@ -107,10 +93,9 @@ public class JdbcLockManager(
         concurrencyIndex: Int,
         executionTime: DateTime,
     ) = (
-        taskLockTable.name eq task.name and
-            taskLockTable.concurrencyIndex.eq(concurrencyIndex)
-    ) and
-        (lockedAt.isNull() or lockedAt.less(executionTime.toInstant()))
+            taskLockTable.name eq task.name and
+                    taskLockTable.concurrencyIndex.eq(concurrencyIndex)
+            ) and (taskLockTable.lockedAt.isNull() or taskLockTable.lockedAt.less(executionTime.toInstant()))
 }
 
 public class JdbcTaskLock(

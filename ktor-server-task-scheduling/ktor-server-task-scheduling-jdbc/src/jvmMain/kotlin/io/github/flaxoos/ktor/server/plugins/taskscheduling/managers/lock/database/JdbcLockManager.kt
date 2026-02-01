@@ -1,17 +1,22 @@
-package util
+@file:OptIn(ExperimentalTime::class)
+
+package io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database
 
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.TaskSchedulingConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.TaskSchedulingDsl
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManager.Companion.format2
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManagerConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.TaskManagerConfiguration.TaskManagerName.Companion.toTaskManagerName
-import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DatabaseTaskLock
-import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DatabaseTaskLockManager
-import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DatabaseTaskLockManagerConfiguration
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.tasks.Task
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
 import korlibs.time.DateTime
-import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.Column
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
@@ -19,6 +24,7 @@ import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.properties.Delegates
+import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 public class JdbcLockManager(
@@ -93,9 +99,9 @@ public class JdbcLockManager(
         concurrencyIndex: Int,
         executionTime: DateTime,
     ) = (
-            taskLockTable.name eq task.name and
-                    taskLockTable.concurrencyIndex.eq(concurrencyIndex)
-            ) and (taskLockTable.lockedAt.isNull() or taskLockTable.lockedAt.less(executionTime.toInstant()))
+        taskLockTable.name eq task.name and
+            taskLockTable.concurrencyIndex.eq(concurrencyIndex)
+    ) and (taskLockTable.lockedAt.isNull() or taskLockTable.lockedAt.less(executionTime.toInstant()))
 }
 
 public class JdbcTaskLock(

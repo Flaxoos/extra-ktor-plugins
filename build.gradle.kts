@@ -52,8 +52,12 @@ scmVersion {
     snapshotCreator { version, position ->
         val releaseMode = project.findProperty("release.mode")?.toString()
         when (releaseMode) {
-            "release" -> "" // No suffix for production releases
-            "snapshot", null -> "-SNAPSHOT" // Default to snapshot
+            "release" -> ""
+
+            // No suffix for production releases
+            "snapshot", null -> "-SNAPSHOT"
+
+            // Default to snapshot
             else -> "-SNAPSHOT"
         }
     }
@@ -322,14 +326,14 @@ jreleaser {
                         stagingRepository(stagingPath)
 
                         // maven central snapshots
-                        // snapshotUrl = "https://central.sonatype.com/repository/maven-snapshots/"
-                        // username = mcUsername
-                        // password = mcPassword
+                        snapshotUrl = "https://central.sonatype.com/repository/maven-snapshots/"
+                        username = mcUsername
+                        password = mcPassword
 
                         // ossrh snapshots
-                        snapshotUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-                        username = ossrhUsername
-                        password = ossrhPassword
+                        // snapshotUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                        // username = ossrhUsername
+                        // password = ossrhPassword
                     },
                 )
             }

@@ -55,7 +55,7 @@ jobs:
           GPR_WRITE_TOKEN: ${{ secrets.GPR_WRITE_TOKEN }}
 
       - name: Upload built jars (${{ matrix.project_prefix }})
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: jars-${{ matrix.project_prefix }}-${{ github.sha }}

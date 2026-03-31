@@ -304,6 +304,7 @@ jreleaser {
                         active = RELEASE
                         url = "https://central.sonatype.com/api/v1/publisher"
                         stagingRepository(stagingPath)
+                        applyMavenCentralRules.set(false)
 
                         username = mcUsername
                         password = mcPassword

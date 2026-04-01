@@ -385,6 +385,7 @@ gradle.projectsEvaluated {
                 jar.set(false)
                 sourceJar.set(false)
                 javadocJar.set(false)
+                verifyPom.set(false)
             }
         }
     }

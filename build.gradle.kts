@@ -260,7 +260,7 @@ allprojects {
 jreleaser {
     // Configure the project
     project {
-        name = "${rootProject.name}: ${project.name}"
+        name = "${rootProject.name} - ${project.name}"
         description =
             "This project provides a suite of feature-rich, efficient, and highly customizable plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
 

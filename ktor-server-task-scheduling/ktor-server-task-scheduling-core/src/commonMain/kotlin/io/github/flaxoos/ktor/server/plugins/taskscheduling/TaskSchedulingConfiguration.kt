@@ -38,7 +38,7 @@ public open class TaskSchedulingConfiguration {
         taskConfiguration: TaskConfiguration.() -> Unit,
     ) {
         tasks.getOrPut(taskManagerName.toTaskManagerName()) { mutableListOf() }.add(
-            TaskConfiguration().apply(taskConfiguration).also { checkNotNull(it.kronSchedule) }.let {
+            TaskConfiguration().apply(taskConfiguration).let {
                 Task(
                     name = it.name,
                     dispatcher = it.dispatcher,
@@ -78,7 +78,8 @@ public class TaskConfiguration {
     public var concurrency: Int = 1
 
     /**
-     * What dispatcher should be used to execute the task, if none is provided, the application's dispatcher will be used
+     * What dispatcher should be used to execute the task, if none is provided, the application's dispatcher will be
+     * used
      */
     public var dispatcher: CoroutineDispatcher? = null
 

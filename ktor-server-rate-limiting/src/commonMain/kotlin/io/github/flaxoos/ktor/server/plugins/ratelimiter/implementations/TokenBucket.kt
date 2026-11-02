@@ -60,7 +60,8 @@ class TokenBucket(
                 exceededBy = callSize,
                 message =
                     "Insufficient tokens to accept call. tokens: $currentVolume, " +
-                        "measured in ${callVolumeUnit::class.simpleName?.lowercase()} of size ${callVolumeUnit.size}. " +
+                        "measured in ${callVolumeUnit::class.simpleName?.lowercase()} of size " +
+                        "${callVolumeUnit.size}. " +
                         "call size: $callSize",
             )
         }

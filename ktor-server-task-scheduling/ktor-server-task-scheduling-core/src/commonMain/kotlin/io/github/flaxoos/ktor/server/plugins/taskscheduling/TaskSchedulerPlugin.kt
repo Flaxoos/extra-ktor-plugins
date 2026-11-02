@@ -58,7 +58,10 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.initializeTaskManagers(ta
                         tasks.toList()
                     }
             }
-                ?: error("Configuration verification did not check for missing task managers assigned to tasks, this is a bug")
+                ?: error(
+                    "Configuration verification did not check for missing task managers assigned to tasks, this is a " +
+                        "bug",
+                )
         }.toMap()
 
 private fun PluginBuilder<TaskSchedulingConfiguration>.checkTaskMangerAssignments(taskManagers: List<TaskManager<*>>) {
@@ -86,7 +89,8 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.checkUniqueTaskNames() {
             .eachCount(),
     ) {
         require(all { it.value == 1 }) {
-            "Bad configuration: Task names must be unique, but the following tasks names are repeated: ${this.keys.joinToString()}"
+            "Bad configuration: Task names must be unique, but the following tasks names are repeated: " +
+                "${this.keys.joinToString()}"
         }
     }
 }

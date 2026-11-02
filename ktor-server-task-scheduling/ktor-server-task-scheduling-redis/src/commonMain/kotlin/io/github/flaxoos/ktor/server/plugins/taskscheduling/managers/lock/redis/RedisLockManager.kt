@@ -28,25 +28,31 @@ public class RedisLockManager(
     private val lockExpirationMs: Long,
     private val connectionAcquisitionTimeoutMs: Long,
 ) : TaskLockManager<RedisTaskLock>() {
-    override suspend fun init(tasks: List<Task>) {}
+    override suspend fun init(tasks: List<Task>): Unit = Unit
 
     override suspend fun acquireLockKey(
         task: Task,
         executionTime: DateTime,
         concurrencyIndex: Int,
     ): RedisTaskLock? {
-        logger.debug { "${application.host()}: ${executionTime.format2()}: Acquiring lock for ${task.name} - $concurrencyIndex" }
+        logger.debug {
+            "${application.host()}: ${executionTime.format2()}: Acquiring lock for ${task.name} - $concurrencyIndex"
+        }
         val key = task.toRedisLockKey(concurrencyIndex, executionTime)
         return connectionPool.withConnection(connectionAcquisitionTimeoutMs) { redisConnection ->
             if (redisConnection.setNx(key.value, executionTime.format2(), lockExpirationMs) != null) {
-                logger.debug { "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - $concurrencyIndex" }
+                logger.debug {
+                    "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - " +
+                        "$concurrencyIndex"
+                }
                 return@withConnection key
             } else {
                 return@withConnection null
             }
         } ?: run {
             logger.debug {
-                "${application.host()}: ${executionTime.format2()}: Failed to acquire lock for ${task.name} - $concurrencyIndex"
+                "${application.host()}: ${executionTime.format2()}: Failed to acquire lock for ${task.name} - " +
+                    "$concurrencyIndex"
             }
             null
         }
@@ -93,40 +99,47 @@ public value class RedisTaskLock internal constructor(
 }
 
 @TaskSchedulingDsl
-public class RedisTaskLockManagerConfiguration(
+public class RedisTaskLockManagerConfiguration : TaskLockManagerConfiguration() {
     /**
      * The redis host
      */
-    public var host: String = "undefined",
+    public var host: String = "undefined"
+
     /**
      * The redis port
      */
-    public var port: Int = 0,
+    public var port: Int = 0
+
     /**
      * The redis username
      */
-    public var username: String? = null,
+    public var username: String? = null
+
     /**
      * The redis password
      */
-    public var password: String? = null,
+    public var password: String? = null
+
     /**
      * For how long the lock should be valid, effectively, the pxMilliseconds for the setNx command
      */
-    public var lockExpirationMs: Long = 100,
+    public var lockExpirationMs: Long = 100
+
     /**
      * How many connections should the pool have initially
      */
-    public var connectionPoolInitialSize: Int = 10,
+    public var connectionPoolInitialSize: Int = 10
+
     /**
      * The maximum number of connections in the pool
      */
-    public var connectionPoolMaxSize: Int = connectionPoolInitialSize,
+    public var connectionPoolMaxSize: Int = connectionPoolInitialSize
+
     /**
      * The timeout for trying to get a connection to from the pool
      */
-    public var connectionAcquisitionTimeoutMs: Long = 100,
-) : TaskLockManagerConfiguration() {
+    public var connectionAcquisitionTimeoutMs: Long = 100
+
     override fun createTaskManager(application: Application): RedisLockManager =
         RedisLockManager(
             name = name.toTaskManagerName(),

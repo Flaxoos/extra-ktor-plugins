@@ -137,7 +137,8 @@ sealed class Bucket(
                 currentVolume
             } else {
                 log.trace {
-                    "${call.id()}: Volume not updated due to exceeding volume: currentVolume: $currentVolume, updatedVolume: $updatedVolume, diff: $diff, max: ${capacity * callVolumeUnit.size}"
+                    "${call.id()}: Volume not updated due to exceeding volume: currentVolume: $currentVolume, " +
+                        "updatedVolume: $updatedVolume, diff: $diff, max: ${capacity * callVolumeUnit.size}"
                 }
                 null
             }

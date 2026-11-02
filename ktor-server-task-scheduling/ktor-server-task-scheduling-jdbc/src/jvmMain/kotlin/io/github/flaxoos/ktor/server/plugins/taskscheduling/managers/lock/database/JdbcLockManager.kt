@@ -92,7 +92,7 @@ public class JdbcLockManager(
             }
         }
 
-    override fun close() {}
+    override fun close(): Unit = Unit
 
     private fun selectClause(
         task: Task,

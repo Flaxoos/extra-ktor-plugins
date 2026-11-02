@@ -19,7 +19,7 @@ class RedisLockManagerPluginTest : TaskSchedulingPluginTest() {
             waitingFor(Wait.forListeningPort()).withStartupTimeout(1.minutes.toJavaDuration())
         }
 
-    override suspend fun clean() {}
+    override suspend fun clean() = Unit
 
     init {
         context("redis lock manager") {

@@ -53,6 +53,7 @@ internal const val GROUP_ID_PLACEHOLDER = "GROUP_ID"
 internal const val CLIENT_ID_PLACEHOLDER = "CLIENT_ID"
 private const val SCHEMA_REGISTRY_URL_PLACEHOLDER = "SCHEMA_REGISTRY_URL"
 
+@Suppress("AbstractClassCanBeConcreteClass")
 abstract class BaseKafkaIntegrationTest : FunSpec() {
     open val additionalProducerProperties: Map<String, Any> = emptyMap()
 
@@ -236,8 +237,8 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
         val expectedRecords = mutableListOf<TestRecord>()
         repeat(invocations * testTopics.size) {
             expectedRecords.add(
-                recordChannel.receive().also {
-                    logger.info("Received record: {}", it)
+                recordChannel.receive().also { record ->
+                    logger.info("Received record: {}", record)
                 },
             )
         }
@@ -268,7 +269,9 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
                                 TestRecord(topicIdCounters[topic]?.inc() ?: error("topic not counted"), topic.value)
                             val genericRecord = testRecord.toRecord()
                             val record = ProducerRecord(topic.value, "testKey", genericRecord)
-                            with(call.application.kafkaProducer.shouldNotBeNull()) { send(record).get(100, TimeUnit.MILLISECONDS) }
+                            with(
+                                call.application.kafkaProducer.shouldNotBeNull(),
+                            ) { send(record).get(100, TimeUnit.MILLISECONDS) }
                             logger.debug("Produced record: {}", record)
                             call.respond(testRecord)
                         }
@@ -290,7 +293,8 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
                                 .get("$resolvedSchemaRegistryUrl/subjects/${call.queryParameters["subject"]}/versions")
 
                         logger.info(
-                            "${schemaRegistryResponse.status} response from checking subject version: ${call.queryParameters["subject"]}",
+                            "${schemaRegistryResponse.status} response from checking subject version: " +
+                                "${call.queryParameters["subject"]}",
                         )
                         schemaRegistryResponse.status shouldBe OK
                         shouldNotThrowAny {

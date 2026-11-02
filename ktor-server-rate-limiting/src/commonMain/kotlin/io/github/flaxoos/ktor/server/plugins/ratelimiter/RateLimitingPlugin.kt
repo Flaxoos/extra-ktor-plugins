@@ -30,61 +30,41 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
 
     if (pluginConfig.rateLimiterConfiguration.callVolumeUnit is CallVolumeUnit.Bytes) {
         this.application.install(DoubleReceive) {
-            this@applyNewRateLimiter.application.log.info("Installing double receive plugin because call volume unit is bytes")
+            this@applyNewRateLimiter.application.log.info(
+                "Installing double receive plugin because call volume unit is bytes",
+            )
             this.cacheRawRequest = true
         }
     }
 
     on(AuthenticationChecked) { call ->
         with(pluginConfig) {
-            if (excludePaths.any {
-                    call.request
-                        .path()
-                        .trimStart { c -> c == '/' }
-                        .matches(it)
-                }
-            ) {
+            if (isExcluded(call)) {
                 return@with
             }
 
             val caller = call.extractCaller()
             application.log.debug("Handling call by ${caller.toIdentifier()}")
 
-            if (caller.remoteHost in blackListedHosts ||
-                caller.principal in blackListedPrincipals ||
-                caller.userAgent in blackListedAgents
-            ) {
+            val blackListedBy = blackListedBy(caller)
+            if (blackListedBy.isNotEmpty()) {
                 application.log.debug(
-                    "User ${caller.toIdentifier()} is blacklisted by ${
-                        listOfNotNull(
-                            if (caller.remoteHost in blackListedHosts) "host" else null,
-                            if (caller.principal in blackListedPrincipals) "principal" else null,
-                            if (caller.userAgent in blackListedAgents) "user agent" else null,
-                        ).joinToString(",")
-                    }",
+                    "User ${caller.toIdentifier()} is blacklisted by ${blackListedBy.joinToString(",")}",
                 )
                 blackListedCallerCallHandler(call)
                 return@with
             }
-            if (caller.remoteHost in whiteListedHosts ||
-                caller.principal in whiteListedPrincipals ||
-                caller.userAgent in whiteListedAgents
-            ) {
+            val whiteListedBy = whiteListedBy(caller)
+            if (whiteListedBy.isNotEmpty()) {
                 application.log.debug(
-                    "User ${caller.toIdentifier()} is whitelisted by ${
-                        listOfNotNull(
-                            if (caller.remoteHost in whiteListedHosts) "host" else null,
-                            if (caller.principal in whiteListedPrincipals) "principal" else null,
-                            if (caller.userAgent in whiteListedAgents) "user agent" else null,
-                        ).joinToString(",")
-                    }",
+                    "User ${caller.toIdentifier()} is whitelisted by ${whiteListedBy.joinToString(",")}",
                 )
                 return@with
             }
 
             val provider =
                 rateLimitersLock.withLock {
-                    rateLimiters.getOrPut(call.extractCaller()) {
+                    rateLimiters.getOrPut(caller) {
                         application.log.debug("Putting new rate limiter for ${caller.toIdentifier()}")
                         rateLimiterConfiguration.provideRateLimiter(application = application).invoke()
                     }
@@ -108,6 +88,25 @@ private fun PluginBuilder<RateLimitingConfiguration>.applyNewRateLimiter() {
     }
 }
 
+private fun RateLimitingConfiguration.isExcluded(call: ApplicationCall): Boolean {
+    val path = call.request.path().trimStart { c -> c == '/' }
+    return excludePaths.any { path.matches(it) }
+}
+
+private fun RateLimitingConfiguration.blackListedBy(caller: Caller): List<String> =
+    listOfNotNull(
+        "host".takeIf { caller.remoteHost in blackListedHosts },
+        "principal".takeIf { caller.principal in blackListedPrincipals },
+        "user agent".takeIf { caller.userAgent in blackListedAgents },
+    )
+
+private fun RateLimitingConfiguration.whiteListedBy(caller: Caller): List<String> =
+    listOfNotNull(
+        "host".takeIf { caller.remoteHost in whiteListedHosts },
+        "principal".takeIf { caller.principal in whiteListedPrincipals },
+        "user agent".takeIf { caller.userAgent in whiteListedAgents },
+    )
+
 private fun RateLimiterResponse.debugDetails(caller: Caller) =
     "call from $caller ${if (this is RateLimiterResponse.LimitedBy) "" else "not"} limited ${
         if (this is RateLimiterResponse.LimitedBy) {
@@ -124,7 +123,8 @@ private fun ApplicationCall.extractCaller(): Caller {
         this.principal<Any>().also {
             if (it == null) {
                 application.log.debug(
-                    "No authenticated principal found in call, identification is based on http headers X-Forwarded-For and User-Agent",
+                    "No authenticated principal found in call, identification is based on http headers " +
+                        "X-Forwarded-For and User-Agent",
                 )
             }
         }
@@ -136,7 +136,7 @@ private data class Caller(
     val userAgent: String?,
     val principal: Any?,
 ) {
-    fun toIdentifier() = "$remoteHost|${userAgent ?: ""}|${principal ?: ""}"
+    fun toIdentifier() = "$remoteHost|${userAgent.orEmpty()}|${principal ?: ""}"
 
     override fun toString() = toIdentifier()
 }

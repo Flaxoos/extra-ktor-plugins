@@ -13,7 +13,8 @@ private val logger = KotlinLogging.logger {}
 /**
  * An abstract implementation of [TaskLockManager] using a database as the lock store
  */
-public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLock> : TaskLockManager<DB_TASK_LOCK_KEY>() {
+public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLock> :
+    TaskLockManager<DB_TASK_LOCK_KEY>() {
     final override suspend fun init(tasks: List<Task>) {
         logger.debug { "Initializing ${this::class.simpleName} for ${tasks.size} tasks" }
         initTaskLockTable()
@@ -42,17 +43,20 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
             updateTaskLock(task, concurrencyIndex, executionTime).also {
                 if (it == null) {
                     logger.debug {
-                        "${application.host()}: ${executionTime.format2()}: Could not acquire lock for ${task.name} - $concurrencyIndex"
+                        "${application.host()}: ${executionTime.format2()}: Could not acquire lock for ${task.name} " +
+                            "- $concurrencyIndex"
                     }
                 } else {
                     logger.debug {
-                        "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - $concurrencyIndex"
+                        "${application.host()}: ${executionTime.format2()}: Acquired lock for ${task.name} - " +
+                            "$concurrencyIndex"
                     }
                 }
             }
         }.onFailure {
             logger.warn {
-                "${application.host()}: ${executionTime.format2()}: Failed acquiring lock for ${task.name} - $concurrencyIndex: ${it.message}"
+                "${application.host()}: ${executionTime.format2()}: Failed acquiring lock for ${task.name} - " +
+                    "$concurrencyIndex: ${it.message}"
             }
         }.getOrNull()
 
@@ -71,7 +75,8 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
 
     /**
      * Try to update the task lock entry in the database, where the key is the combination of task name and concurrency
-     * index and execution time different from the given execution time, returning the updated entry or null if none was updated
+     * index and execution time different from the given execution time, returning the updated entry or null if none was
+     * updated
      */
     public abstract suspend fun updateTaskLock(
         task: Task,

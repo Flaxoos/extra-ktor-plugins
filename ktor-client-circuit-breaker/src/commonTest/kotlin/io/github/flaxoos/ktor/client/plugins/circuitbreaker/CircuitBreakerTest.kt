@@ -151,13 +151,17 @@ class CircuitBreakerTest : FunSpec() {
                     givenErrorResponse()
                     repeat(case.failureThreshold + 1) { getWithCircuitBreaker(case.name) }
 
-                    shouldThrow<CircuitBreakerException> { getWithCircuitBreaker(case.name) }.retryAfter shouldBe case.resetInterval
+                    shouldThrow<CircuitBreakerException> { getWithCircuitBreaker(case.name) }.retryAfter shouldBe
+                        case.resetInterval
                     delay(case.resetInterval / 2)
-                    shouldThrow<CircuitBreakerException> { getWithCircuitBreaker(case.name) }.retryAfter shouldBe case.resetInterval / 2
+                    shouldThrow<CircuitBreakerException> { getWithCircuitBreaker(case.name) }.retryAfter shouldBe
+                        case.resetInterval / 2
                 }
             }
 
-            context("should let one test call through after reset interval elapsed and switch to open again when it fails") {
+            context(
+                "should let one test call through after reset interval elapsed and switch to open again when it fails",
+            ) {
                 withData(Global, Specific) { case ->
                     initClient()
 
@@ -219,7 +223,10 @@ class CircuitBreakerTest : FunSpec() {
                 }
             }
 
-            context("should switch to closed after failure threshold exceeded and resetInterval period passed and action works again") {
+            context(
+                "should switch to closed after failure threshold exceeded and resetInterval period passed and action " +
+                    "works again",
+            ) {
                 withData(Global, Specific) { case ->
 
                     initClient()
@@ -362,5 +369,8 @@ class CircuitBreakerTest : FunSpec() {
 
     private val customOk = HttpStatusCode(300, "It's ok!")
 
-    private suspend fun getWithCircuitBreaker(name: CircuitBreakerName) = client.requestWithCircuitBreaker(name = name) {}.status
+    private suspend fun getWithCircuitBreaker(name: CircuitBreakerName) =
+        client
+            .requestWithCircuitBreaker(name = name) {
+            }.status
 }

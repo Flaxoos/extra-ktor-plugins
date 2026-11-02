@@ -113,7 +113,7 @@ open class Conventions : Plugin<Project> {
             }
 
             tasks.named("build") {
-                dependsOn(tasks.matching { it.name.matches(Regex("detekt(?!.*Baseline).*\\b(Main|Test)\\b\n")) })
+                dependsOn(tasks.matching { it.name.matches(Regex("detekt(Main|Test)\\w+")) })
             }
             tasks.withType<KotlinJvmTest> {
                 useJUnitPlatform()

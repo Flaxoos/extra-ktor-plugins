@@ -7,7 +7,7 @@ import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.ConsumerAttributeK
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.ProducerAttributeKey
 import io.github.flaxoos.ktor.server.plugins.kafka.Attributes.SchemaRegistryClientKey
 import io.github.flaxoos.ktor.server.plugins.kafka.Defaults.DEFAULT_CONFIG_PATH
-import io.github.flaxoos.ktor.server.plugins.kafka.components.CoroutineScopedAdminClient.Companion.CoroutineScopedAdminClient
+import io.github.flaxoos.ktor.server.plugins.kafka.components.CoroutineScopedAdminClient
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createConsumer
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createKafkaAdminClient
 import io.github.flaxoos.ktor.server.plugins.kafka.components.createKafkaTopics
@@ -24,12 +24,14 @@ import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.util.AttributeKey
 import io.ktor.utils.io.CancellationException
+import io.ktor.utils.io.KtorDsl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
+@KafkaDsl
 object FileConfig {
     /**
      * Plugin for setting up a kafka client, configured in application config file
@@ -122,58 +124,70 @@ fun Application.installKafka(config: KafkaConfig.() -> Unit) {
 @Suppress("SwallowedException", "TooGenericExceptionCaught", "ReturnCount")
 private fun <T : AbstractKafkaConfig> PluginBuilder<T>.setupKafka(pluginConfig: T) {
     application.log.info("Setting up kafka clients")
-    pluginConfig.schemaRegistryUrl?.let {
-        if (pluginConfig.schemas.isNotEmpty()) {
-            val schemaRegistryClient =
-                createSchemaRegistryClient(
-                    it,
-                    pluginConfig.schemaRegistrationTimeoutMs,
-                    pluginConfig.schemaRegistryClientProvider,
-                )
-            with(application) { schemaRegistryClient.registerSchemas(this, pluginConfig.schemas) }.also {
-                application.attributes.put(SchemaRegistryClientKey, schemaRegistryClient)
+    registerSchemas(pluginConfig)
+    pluginConfig.adminProperties
+        ?.let { adminProperties ->
+            try {
+                adminProperties.createKafkaAdminClient()
+            } catch (e: Exception) {
+                failCreatingClient("admin client", adminProperties, e)
+                return
+            }
+        }?.also {
+            application.attributes.put(AdminClientAttributeKey, it)
+            application.log.info("Kafka admin setup finished")
+            runBlocking(Dispatchers.IO) {
+                CoroutineScopedAdminClient(it, this).createKafkaTopics(topicBuilders = pluginConfig.topics) {
+                    application.log.info("Created Topic: $first")
+                }
             }
         }
-    }
-    try {
-        pluginConfig.adminProperties?.createKafkaAdminClient()
-    } catch (e: Exception) {
-        failCreatingClient("admin client", pluginConfig.adminProperties!!, e)
-        return
-    }?.also {
-        application.attributes.put(AdminClientAttributeKey, it)
-        application.log.info("Kafka admin setup finished")
-        runBlocking(Dispatchers.IO) {
-            CoroutineScopedAdminClient(it).createKafkaTopics(topicBuilders = pluginConfig.topics) {
-                application.log.info("Created Topic: $first")
+    pluginConfig.producerProperties
+        ?.let { producerProperties ->
+            try {
+                producerProperties.createProducer()
+            } catch (e: Exception) {
+                failCreatingClient("producer", producerProperties, e)
+                return
             }
+        }?.also {
+            application.attributes.put(ProducerAttributeKey, it)
+            application.log.info("Kafka producer setup finished")
         }
-    }
-    try {
-        pluginConfig.producerProperties?.createProducer()
-    } catch (e: Exception) {
-        failCreatingClient("producer", pluginConfig.producerProperties!!, e)
-        return
-    }?.also {
-        application.attributes.put(ProducerAttributeKey, it)
-        application.log.info("Kafka producer setup finished")
-    }
 
     pluginConfig.consumerConfig?.let {
-        try {
-            pluginConfig.consumerProperties?.createConsumer()
-        } catch (e: Exception) {
-            failCreatingClient("consumer", pluginConfig.consumerProperties!!, e)
-            return
-        }?.also { consumer ->
-            application.attributes.put(ConsumerAttributeKey, consumer)
-            application.attributes.put(ConsumerShouldRun, true)
-            application.log.info("Kafka consumer setup finished")
-        }
+        pluginConfig.consumerProperties
+            ?.let { consumerProperties ->
+                try {
+                    consumerProperties.createConsumer()
+                } catch (e: Exception) {
+                    failCreatingClient("consumer", consumerProperties, e)
+                    return
+                }
+            }?.also { consumer ->
+                application.attributes.put(ConsumerAttributeKey, consumer)
+                application.attributes.put(ConsumerShouldRun, true)
+                application.log.info("Kafka consumer setup finished")
+            }
     }
 
     onStart()
     onStop()
+}
+
+private fun <T : AbstractKafkaConfig> PluginBuilder<T>.registerSchemas(pluginConfig: T) {
+    val schemaRegistryUrl = pluginConfig.schemaRegistryUrl
+    if (schemaRegistryUrl == null || pluginConfig.schemas.isEmpty()) {
+        return
+    }
+    val schemaRegistryClient =
+        createSchemaRegistryClient(
+            schemaRegistryUrl,
+            pluginConfig.schemaRegistrationTimeoutMs,
+            pluginConfig.schemaRegistryClientProvider,
+        )
+    with(application) { schemaRegistryClient.registerSchemas(this, pluginConfig.schemas) }
+    application.attributes.put(SchemaRegistryClientKey, schemaRegistryClient)
 }
 
 private fun <T : AbstractKafkaConfig> PluginBuilder<T>.failCreatingClient(

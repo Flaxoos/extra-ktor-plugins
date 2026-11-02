@@ -23,6 +23,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import java.util.Collections.synchronizedList
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -41,25 +42,13 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
     protected abstract suspend fun clean()
 
     suspend fun FunSpecContainerScope.testTaskScheduling(
-        engineCount: Int = ENGINE_COUNT,
-        executions: Int = EXECUTIONS,
         executionBufferMs: Int = DEFAULT_EXECUTION_BUFFER_MS,
-        frequenciesExponentialSeriesInitialMs: Short = FREQUENCIES_EXPONENTIAL_SERIES_INITIAL_MS,
-        frequenciesExponentialSeriesN: Short = FREQUENCIES_EXPONENTIAL_SERIES_N,
         taskSchedulingConfiguration: TaskSchedulingConfiguration.(TaskFreqMs) -> Unit,
     ) {
-        fun kronTaskSchedule(taskFrequencyMs: Int): SchedulerBuilder.() -> Unit =
-            {
-                milliseconds {
-                    from(0) every taskFrequencyMs
-                    this.last
-                }
-            }
-
         val frequencies =
             exponentialScheduleGenerator(
-                initial = frequenciesExponentialSeriesInitialMs,
-                n = frequenciesExponentialSeriesN,
+                initial = FREQUENCIES_EXPONENTIAL_SERIES_INITIAL_MS,
+                n = FREQUENCIES_EXPONENTIAL_SERIES_N,
             )
 
         withData(nameFn = { "Freq: $it ms" }, frequencies) { freqMs ->
@@ -70,11 +59,10 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                             val taskExecutionsAndApplications =
                                 setupApplicationEngines(
                                     taskSchedulingConfiguration = taskSchedulingConfiguration,
-                                    count = engineCount,
+                                    count = ENGINE_COUNT,
                                     freqMs = freqMs.toLong(),
                                     taskCount = taskCount.toShort(),
                                     concurrency = concurrency.toShort(),
-                                    kronTaskSchedule = kronTaskSchedule(freqMs),
                                 ).map { executionsAndApp ->
                                     executionsAndApp to
                                         launch {
@@ -89,7 +77,7 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                                     it.first
                                 }
 
-                            delay(freqMs.milliseconds * executions)
+                            delay(freqMs.milliseconds * EXECUTIONS)
                             delay(executionBufferMs.milliseconds)
                             taskExecutionsAndApplications
                                 .map { (_, app) ->
@@ -98,42 +86,47 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                                     }
                                 }.joinAll()
 
-                            val totalExecutions = taskExecutionsAndApplications.sumOf { it.first.size }
-                            val totalExpectedExecutionsMinusLastRound = taskCount * concurrency * (executions - 1)
-                            totalExecutions shouldBeGreaterThan totalExpectedExecutionsMinusLastRound
-
                             try {
-                                taskExecutionsAndApplications.map { it.first }.flatten().let { records ->
-                                    records
-                                        .groupBy { it.taskName to it.executionTime }
-                                        .toSortedMap { (_, a), (_, b) ->
-                                            a.compareTo(b)
-                                        }.let { executionsPerTaskAndTime ->
-                                            val (_, lastTime) = executionsPerTaskAndTime.lastKey()
-                                            executionsPerTaskAndTime.forAll { (pair, executions) ->
-                                                val (taskName, executionTime) = pair
-                                                withClue(
-                                                    "\n$taskName - ${executionTime.formatTime()} was executed ${executions.size} " +
-                                                        "times instead of $concurrency: \n\t${
-                                                            executions.joinToString("\n\t")
-                                                        }",
-                                                ) {
-                                                    if (executionTime == lastTime) {
-                                                        // The last round might miss executions due to the server shutting down
-                                                        executions.size shouldBeLessThanOrEqual concurrency
-                                                    } else {
-                                                        executions.size shouldBe concurrency
-                                                    }
-                                                }
-                                            }
-                                        }
-                                }
+                                assertExecutions(
+                                    records = taskExecutionsAndApplications.flatMap { it.first },
+                                    taskCount = taskCount,
+                                    concurrency = concurrency,
+                                )
                             } finally {
                                 delay(1000)
                                 clean()
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private fun assertExecutions(
+        records: List<ExecutionRecord>,
+        taskCount: Int,
+        concurrency: Int,
+    ) {
+        val totalExpectedExecutionsMinusLastRound = taskCount * concurrency * (EXECUTIONS - 1)
+        records.size shouldBeGreaterThan totalExpectedExecutionsMinusLastRound
+
+        val executionsPerTaskAndTime =
+            records
+                .groupBy { it.taskName to it.executionTime }
+                .toSortedMap { (_, a), (_, b) -> a.compareTo(b) }
+        val (_, lastTime) = executionsPerTaskAndTime.lastKey()
+        executionsPerTaskAndTime.forAll { (pair, executionRecords) ->
+            val (taskName, executionTime) = pair
+            withClue(
+                "\n$taskName - ${executionTime.formatTime()} was executed ${executionRecords.size} " +
+                    "times instead of $concurrency: \n\t${executionRecords.joinToString("\n\t")}",
+            ) {
+                if (executionTime == lastTime) {
+                    // The last round might miss executions due to the server shutting down
+                    executionRecords.size shouldBeLessThanOrEqual concurrency
+                } else {
+                    executionRecords.size shouldBe concurrency
                 }
             }
         }
@@ -170,10 +163,9 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
         freqMs: Long,
         taskCount: Short = 1,
         concurrency: Short = 1,
-        kronTaskSchedule: SchedulerBuilder.() -> Unit,
     ): List<Pair<List<ExecutionRecord>, TestApplication>> =
         (1..count).map { ktorHost ->
-            val executionRecords = mutableListOf<ExecutionRecord>()
+            val executionRecords = synchronizedList(mutableListOf<ExecutionRecord>())
             val block: TestApplicationBuilder.() -> Unit = {
                 environment {
                     config = config.mergeWith(MapApplicationConfig("ktor.deployment.host" to ktorHost.toString()))
@@ -188,9 +180,11 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                             name = taskName
                             task = { taskExecutionTime ->
                                 executionRecords.add(ExecutionRecord(taskName, ktorHost.toString(), taskExecutionTime))
-                                log.info("Host: $ktorHost executing task $taskName at ${taskExecutionTime.formatTime()}")
+                                log.info(
+                                    "Host: $ktorHost executing task $taskName at ${taskExecutionTime.formatTime()}",
+                                )
                             }
-                            kronSchedule = kronTaskSchedule
+                            kronSchedule = kronTaskSchedule(freqMs)
                             this.concurrency = concurrency.toInt()
                         }
                     }
@@ -203,6 +197,14 @@ abstract class TaskSchedulingPluginTest : FunSpec() {
                     }
                     block()
                 }
+        }
+
+    private fun kronTaskSchedule(taskFrequencyMs: Long): SchedulerBuilder.() -> Unit =
+        {
+            milliseconds {
+                from(0) every taskFrequencyMs.toInt()
+                this.last
+            }
         }
 
     private fun exponentialScheduleGenerator(

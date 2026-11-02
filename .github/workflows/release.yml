@@ -172,7 +172,7 @@ jobs:
       # (Optional) Upload JReleaser output for debugging/audit
       - name: Upload JReleaser output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: jreleaser-output
           path: |

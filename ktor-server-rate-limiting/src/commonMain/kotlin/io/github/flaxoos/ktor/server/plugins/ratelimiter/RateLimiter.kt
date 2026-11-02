@@ -3,7 +3,7 @@ package io.github.flaxoos.ktor.server.plugins.ratelimiter
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receive
-import kotlinx.datetime.Clock.System.now
+import kotlin.time.Clock.System.now
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
 

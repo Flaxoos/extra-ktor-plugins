@@ -5,8 +5,8 @@ import io.github.flaxoos.ktor.server.plugins.ratelimiter.RateLimiterResponse
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.ApplicationCall
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.time.Duration
 
 private val logger = KotlinLogging.logger {}

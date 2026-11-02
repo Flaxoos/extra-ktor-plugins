@@ -8,8 +8,8 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.log
 import io.ktor.server.response.respond
-import kotlin.time.Clock.System.now
 import kotlin.reflect.KClass
+import kotlin.time.Clock.System.now
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.INFINITE
 
@@ -141,13 +141,14 @@ class RateLimitingConfiguration {
                             )
                         }
 
-                        is CallVolumeUnit.Calls ->
+                        is CallVolumeUnit.Calls -> {
                             if (callVolumeUnit.size.compareTo(1) != 0) {
                                 application.log.warn(
                                     "LeakyBucket does not support CallVolumeUnit.Calls with size " +
                                         "!= 1, 1 will be effectively used",
                                 )
                             }
+                        }
                     }
 
                     {
@@ -159,27 +160,31 @@ class RateLimitingConfiguration {
                     }
                 }
 
-                SlidingWindow::class -> (
-                    {
-                        SlidingWindow(
-                            rate = rate,
-                            capacity = capacity,
-                            callVolumeUnit = callVolumeUnit,
-                            clock = clock,
-                        )
-                    }
-                )
+                SlidingWindow::class -> {
+                    (
+                        {
+                            SlidingWindow(
+                                rate = rate,
+                                capacity = capacity,
+                                callVolumeUnit = callVolumeUnit,
+                                clock = clock,
+                            )
+                        }
+                    )
+                }
 
-                TokenBucket::class -> (
-                    {
-                        TokenBucket(
-                            rate = rate,
-                            capacity = capacity,
-                            callVolumeUnit = callVolumeUnit,
-                            clock = clock,
-                        )
-                    }
-                )
+                TokenBucket::class -> {
+                    (
+                        {
+                            TokenBucket(
+                                rate = rate,
+                                capacity = capacity,
+                                callVolumeUnit = callVolumeUnit,
+                                clock = clock,
+                            )
+                        }
+                    )
+                }
 
                 else -> {
                     error("Unsupported provider type: $type")

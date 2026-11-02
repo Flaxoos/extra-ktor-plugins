@@ -10,9 +10,9 @@ import io.github.flaxoos.ktor.extensions.plugin
 import io.github.flaxoos.ktor.extensions.setLanguageAndApiVersions
 import io.github.flaxoos.ktor.extensions.targetJvm
 import io.github.flaxoos.ktor.extensions.versionOf
-import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import dev.detekt.gradle.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
-import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
+import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -101,7 +101,7 @@ open class Conventions : Plugin<Project> {
 
             the<DetektExtension>().apply {
                 config.setFrom(rootDir.resolve("config/detekt/detekt.yml"))
-                buildUponDefaultConfig = true
+                buildUponDefaultConfig.set(true)
             }
 
             the<KtlintExtension>().apply {
@@ -123,15 +123,16 @@ open class Conventions : Plugin<Project> {
                 gradleVersion = "9.8.2"
                 distributionType = Wrapper.DistributionType.BIN
             }
-            extensions.findByType(KoverReportExtension::class)?.apply {
-                defaults {
-                    html { onCheck = true }
-                    verify {
-                        rule {
-                            isEnabled = true
-                            minBound(55)
+            extensions.findByType(KoverProjectExtension::class)?.apply {
+                reports {
+                    total {
+                        html { onCheck.set(true) }
+                        verify {
+                            rule {
+                                minBound(55)
+                            }
+                            onCheck.set(true)
                         }
-                        onCheck = true
                     }
                 }
             }

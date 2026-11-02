@@ -6,8 +6,8 @@ import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.ApplicationCall
 import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 private val logger = KotlinLogging.logger {}
 

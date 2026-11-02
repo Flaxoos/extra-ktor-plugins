@@ -282,10 +282,12 @@ jreleaser {
     // Sign the release
     signing {
         active = ALWAYS
-        armored = true
-        publicKey = jreleaserGpgPublicKey
-        secretKey = jreleaserGpgSecretKey
-        passphrase = jreleaserGpgPassphrase
+        pgp {
+            armored = true
+            publicKey = jreleaserGpgPublicKey
+            secretKey = jreleaserGpgSecretKey
+            passphrase = jreleaserGpgPassphrase
+        }
     }
     deploy {
         val stagingPath =
@@ -310,8 +312,8 @@ jreleaser {
 
                         connectTimeout = 20
                         readTimeout = 60
-                        retryDelay = 5
-                        maxRetries = 3
+                        retryDelay = 30
+                        maxRetries = 40
                     },
                 )
             }

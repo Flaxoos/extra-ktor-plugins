@@ -27,6 +27,9 @@ public val TaskScheduling: ApplicationPlugin<TaskSchedulingConfiguration> =
     ) {
         application.log.debug("Configuring TaskScheduler")
 
+        // Ensure a default task manager exists if none were configured
+        pluginConfig.ensureDefaultTaskManager()
+
         checkUniqueTaskNames()
 
         val taskManagers = createTaskManagers()
@@ -72,11 +75,8 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.checkTaskMangerAssignment
     }
 }
 
-private fun PluginBuilder<TaskSchedulingConfiguration>.createTaskManagers(): List<TaskManager<*>> {
-    val taskManagers = pluginConfig.taskManagers.map { createTaskManager -> createTaskManager(application) }
-    require(taskManagers.isNotEmpty()) { "No task managers were configured" }
-    return taskManagers
-}
+private fun PluginBuilder<TaskSchedulingConfiguration>.createTaskManagers(): List<TaskManager<*>> =
+    pluginConfig.taskManagers.map { createTaskManager -> createTaskManager(application) }
 
 private fun PluginBuilder<TaskSchedulingConfiguration>.checkUniqueTaskNames() {
     with(

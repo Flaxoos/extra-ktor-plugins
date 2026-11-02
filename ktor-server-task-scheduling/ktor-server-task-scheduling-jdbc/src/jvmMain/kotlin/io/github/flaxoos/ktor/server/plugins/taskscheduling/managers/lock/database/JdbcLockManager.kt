@@ -143,7 +143,6 @@ public class JdbcJobLockManagerConfiguration : DatabaseTaskLockManagerConfigurat
 /**
  * Add a [JdbcLockManager]
  */
-@TaskSchedulingDsl
 public fun TaskSchedulingConfiguration.jdbc(
     /**
      * The name of the task manager, will be used to identify the task manager when assigning tasks to it

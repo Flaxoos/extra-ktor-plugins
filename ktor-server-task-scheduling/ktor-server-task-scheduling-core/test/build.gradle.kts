@@ -11,7 +11,6 @@ kotlin {
         jvmMainDependencies {
             api(projects.ktorServerTaskScheduling.ktorServerTaskSchedulingCore)
             api(libs.kotest.framework.engine)
-            api(libs.kotest.framework.datatest)
             api(libs.kotest.assertions.core)
             api(libs.ktor.server.test.host)
             api(libs.kotest.extensions.testcontainers)

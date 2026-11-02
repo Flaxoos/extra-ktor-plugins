@@ -36,12 +36,10 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
                         }
                         task.task.invoke(application, executionTime)
                         logger.trace { "${application.host()}: Finished task execution using key $key" }
-                        key
                     } ?: run {
                         logger.debug {
                             "${application.host()}: Denied task execution for${task.name} - $concurrencyIndex at ${executionTime.format2()}"
                         }
-                        null
                     }
                 }
             }.joinAll()

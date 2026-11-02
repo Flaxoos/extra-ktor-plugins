@@ -245,7 +245,6 @@ internal fun KafkaConfigPropertiesContext.withSslProperties(properties: SslPrope
         }
     }
 
-@KafkaDsl
 fun KafkaConsumerConfig.consumerRecordHandler(
     topicName: TopicName,
     handler: ConsumerRecordHandler,
@@ -253,18 +252,15 @@ fun KafkaConsumerConfig.consumerRecordHandler(
     consumerRecordHandlers[topicName] = handler
 }
 
-@KafkaDsl
 fun KafkaConfig.common(configuration: CommonClientPropertiesBuilder.() -> Unit = { CommonClientPropertiesBuilder() }) {
     commonPropertiesBuilder =
         CommonClientPropertiesBuilder().apply(configuration)
 }
 
-@KafkaDsl
 fun KafkaConfig.admin(configuration: AdminPropertiesBuilder.() -> Unit = { AdminPropertiesBuilder() }) {
     adminPropertiesBuilder = AdminPropertiesBuilder().apply(configuration)
 }
 
-@KafkaDsl
 fun AbstractKafkaConfig.registerSchemas(configuration: SchemaRegistrationBuilder.() -> Unit = { SchemaRegistrationBuilder() }) {
     SchemaRegistrationBuilder().apply(configuration).let { schemaRegistrationBuilder ->
         schemas.putAll(schemaRegistrationBuilder.schemas)
@@ -287,7 +283,6 @@ fun AbstractKafkaConfig.registerSchemas(configuration: SchemaRegistrationBuilder
     }
 }
 
-@KafkaDsl
 fun KafkaConfig.topic(
     name: TopicName,
     block: TopicBuilder.() -> Unit,
@@ -295,7 +290,6 @@ fun KafkaConfig.topic(
     topicBuilders.add(TopicBuilder(name).apply(block))
 }
 
-@KafkaDsl
 fun KafkaConfig.producer(
     configuration: ProducerPropertiesBuilder.() -> Unit = {
         ProducerPropertiesBuilder(
@@ -312,7 +306,6 @@ fun KafkaConfig.producer(
         ).apply(configuration)
 }
 
-@KafkaDsl
 fun KafkaConfig.consumer(
     configuration: ConsumerPropertiesBuilder.() -> Unit = {
         ConsumerPropertiesBuilder(
@@ -329,7 +322,6 @@ fun KafkaConfig.consumer(
         ).apply(configuration)
 }
 
-@KafkaDsl
 fun AbstractKafkaConfig.consumerConfig(configuration: KafkaConsumerConfig.() -> Unit = { }) {
     consumerConfig = KafkaConsumerConfig().apply(configuration)
 }
@@ -350,7 +342,6 @@ class SchemaRegistrationBuilder {
      * In any case, the following it would be configured with serialization json and the configured
      * [AbstractKafkaConfig.schemaRegistrationTimeoutMs]
      */
-    @KafkaDsl
     fun using(provider: () -> HttpClient) {
         clientProvider = provider
     }
@@ -366,7 +357,6 @@ class TopicBuilder(
     var replicasAssignments: Map<Int, List<Int?>>? = null
     internal var configs: Map<String, Any?>? = null
 
-    @KafkaDsl
     fun configs(config: TopicPropertiesBuilder.() -> Unit) {
         configs = TopicPropertiesBuilder().apply(config).build()
     }
@@ -397,7 +387,6 @@ class TopicBuilder(
 class AdditionalKafkaProperties {
     internal val map = mutableMapOf<String, Any?>()
 
-    @KafkaDsl
     operator fun String.invoke(value: Any?) {
         map[this] = value
     }
@@ -418,7 +407,6 @@ sealed class KafkaPropertiesBuilder {
 
     abstract fun doBuild(): KafkaProperties
 
-    @KafkaDsl
     fun additional(config: AdditionalKafkaProperties.() -> Unit) {
         additionalKafkaProperties.config()
     }
@@ -622,7 +610,6 @@ class ProducerPropertiesBuilder(
     /**
      * This is not yet tested but should work as it just does the same thing all the config function do which is to add these properties to the config map
      */
-    @KafkaDsl
     fun serializer(configuration: KafkaAvroSerializerPropertiesBuilder.() -> Unit = { KafkaAvroSerializerPropertiesBuilder() }) {
         serializerPropertiesBuilder = KafkaAvroSerializerPropertiesBuilder().apply(configuration)
     }
@@ -691,7 +678,6 @@ class ConsumerPropertiesBuilder(
     /**
      * This is not yet tested but should work as it just does the same thing all the config function do which is to add these properties to the config map
      */
-    @KafkaDsl
     fun deserializer(configuration: KafkaAvroDeserializerPropertiesBuilder.() -> Unit = { KafkaAvroDeserializerPropertiesBuilder() }) {
         deserializerPropertiesBuilder = KafkaAvroDeserializerPropertiesBuilder().apply(configuration)
     }

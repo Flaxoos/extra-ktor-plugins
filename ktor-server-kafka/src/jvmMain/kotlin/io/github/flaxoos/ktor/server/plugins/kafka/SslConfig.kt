@@ -67,7 +67,6 @@ class SslSettings(
 /**
  * Sets the default SSL configuration for all components.
  */
-@KafkaDsl
 fun KafkaConfig.commonSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
     commonSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
@@ -75,7 +74,6 @@ fun KafkaConfig.commonSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
 /**
  * Sets a specific SSL configuration for the admin client.
  */
-@KafkaDsl
 fun KafkaConfig.adminSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
     adminSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
@@ -83,7 +81,6 @@ fun KafkaConfig.adminSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
 /**
  * Sets a specific SSL configuration for the producer.
  */
-@KafkaDsl
 fun KafkaConfig.producerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
     producerSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
@@ -91,7 +88,6 @@ fun KafkaConfig.producerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) 
 /**
  * Sets a specific SSL configuration for the consumer.
  */
-@KafkaDsl
 fun KafkaConfig.consumerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
     consumerSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
@@ -99,7 +95,6 @@ fun KafkaConfig.consumerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) 
 /**
  * Sets a specific SSL configuration for the Schema Registry client.
  */
-@KafkaDsl
 fun KafkaConfig.schemaRegistryClientSsl(configuration: SslPropertiesBuilder.() -> Unit) {
     schemaRegistryClientSslPropertiesBuilder = SslPropertiesBuilder("schema.registry.").apply(configuration)
 }
@@ -107,7 +102,6 @@ fun KafkaConfig.schemaRegistryClientSsl(configuration: SslPropertiesBuilder.() -
 /**
  * Sets the default SASL configuration for all components.
  */
-@KafkaDsl
 fun KafkaConfig.commonSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
     commonSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
 }
@@ -115,7 +109,6 @@ fun KafkaConfig.commonSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) 
 /**
  * Sets a specific SASL configuration for the admin client.
  */
-@KafkaDsl
 fun KafkaConfig.adminSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
     adminSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
 }
@@ -123,7 +116,6 @@ fun KafkaConfig.adminSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
 /**
  * Sets a specific SASL configuration for the producer.
  */
-@KafkaDsl
 fun KafkaConfig.producerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
     producerSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
 }
@@ -131,7 +123,6 @@ fun KafkaConfig.producerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit
 /**
  * Sets a specific SASL configuration for the consumer.
  */
-@KafkaDsl
 fun KafkaConfig.consumerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
     consumerSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
 }
@@ -139,7 +130,6 @@ fun KafkaConfig.consumerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit
 /**
  * Sets a specific SASL configuration for the Schema Registry client.
  */
-@KafkaDsl
 fun KafkaConfig.schemaRegistryClientSasl(configuration: SaslPropertiesBuilder.() -> Unit) {
     schemaRegistryClientSaslPropertiesBuilder = SaslPropertiesBuilder("schema.registry.").apply(configuration)
 }
@@ -179,12 +169,10 @@ data class SslPropertiesBuilderPair(
     var broker: SslPropertiesBuilder? = null,
     var schemaRegistry: SslPropertiesBuilder? = null,
 ) {
-    @KafkaDsl
     fun broker(configuration: SslPropertiesBuilder.() -> Unit) {
         broker = SslPropertiesBuilder().apply(configuration)
     }
 
-    @KafkaDsl
     fun schemaRegistry(configuration: SslPropertiesBuilder.() -> Unit) {
         schemaRegistry = SslPropertiesBuilder("schema.registry.").apply(configuration)
     }
@@ -195,12 +183,10 @@ data class SaslPropertiesBuilderPair(
     var broker: SaslPropertiesBuilder? = null,
     var schemaRegistry: SaslPropertiesBuilder? = null,
 ) {
-    @KafkaDsl
     fun broker(configuration: SaslPropertiesBuilder.() -> Unit) {
         broker = SaslPropertiesBuilder().apply(configuration)
     }
 
-    @KafkaDsl
     fun schemaRegistry(configuration: SaslPropertiesBuilder.() -> Unit) {
         schemaRegistry = SaslPropertiesBuilder("schema.registry.").apply(configuration)
     }
@@ -251,12 +237,10 @@ class SslPropertiesBuilder(
         return configMap
     }
 
-    @KafkaDsl
     fun trustStore(configuration: KeyStorePropertiesBuilder.() -> Unit) {
         trustStore = KeyStorePropertiesBuilder().apply(configuration)
     }
 
-    @KafkaDsl
     fun keyStore(configuration: KeyStorePropertiesBuilder.() -> Unit) {
         keyStore = KeyStorePropertiesBuilder().apply(configuration)
     }
@@ -313,19 +297,16 @@ interface SecurityPropertiesBuilder {
     var sslPropertiesBuilder: SslPropertiesBuilder?
     var schemaRegistrySslPropertiesBuilder: SslPropertiesBuilder?
 
-    @KafkaDsl
     fun ssl(configuration: SslPropertiesBuilder.() -> Unit = { SslPropertiesBuilder(namespace) }) {
         sslPropertiesBuilder = SslPropertiesBuilder(namespace).apply(configuration)
     }
 
-    @KafkaDsl
     fun schemaRegistrySsl(configuration: SslPropertiesBuilder.() -> Unit = { SslPropertiesBuilder("schema.registry.") }) {
         schemaRegistrySslPropertiesBuilder = SslPropertiesBuilder("schema.registry.").apply(configuration)
     }
 
     var saslPropertiesBuilder: SaslPropertiesBuilder?
 
-    @KafkaDsl
     fun sasl(configuration: SaslPropertiesBuilder.() -> Unit = { SaslPropertiesBuilder(namespace) }) {
         saslPropertiesBuilder = SaslPropertiesBuilder(namespace).apply(configuration)
     }

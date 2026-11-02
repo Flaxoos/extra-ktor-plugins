@@ -26,7 +26,6 @@ public open class TaskSchedulingConfiguration {
      * Add a task to be managed by a [TaskManager] with the given name or the default one if no name is provided and a
      * default task manager has been configured
      */
-    @TaskSchedulingDsl
     public fun task(
         /**
          * The name of the [TaskManager] to manage the task. if not provided, the default task manager will be used,

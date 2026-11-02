@@ -237,7 +237,6 @@ public class MongoDBJobLockManagerConfiguration : DatabaseTaskLockManagerConfigu
 /**
  * Add a [MongoDBLockManager]
  */
-@TaskSchedulingDsl
 public fun TaskSchedulingConfiguration.mongoDb(
     /**
      * The name of the task manager, will be used to identify the task manager when assigning tasks to it

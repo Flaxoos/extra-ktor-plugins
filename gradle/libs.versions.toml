@@ -1,10 +1,10 @@
 [versions]
 # Core technologies
-kotlin = "2.1.10"
+kotlin = "2.4.21"
 java = "17"
-kotlinx-serialization = "1.8.0"
-kotlinx-io = "0.7.0"
-ksp = "2.1.10-1.0.31"
+kotlinx-serialization = "1.12.0"
+kotlinx-io = "0.9.2"
+ksp = "2.3.13"
 reactor = "3.7.4"
 
 # Web Framework
@@ -25,13 +25,11 @@ kotlin-logging = "5.1.0"
 logging_capabilities = "0.11.1"
 
 # Asynchronous and Concurrency
-atomicfu = "0.27.0"
-kotlinx-coroutines = "1.10.1"
+atomicfu = "0.33.0"
+kotlinx-coroutines = "1.11.0"
 
 # Testing
-kotest-6 = "6.0.0.M1"
-kotest-5 = "5.9.1"
-kotest-test-containers = "2.0.2"
+kotest = "6.2.6"
 mockk = "1.13.4"
 mockative = "2.0.1"
 kmock = "0.3.0-rc08"
@@ -131,17 +129,15 @@ mongodb-driver-kotlin-coroutine = { module = "org.mongodb:mongodb-driver-kotlin-
 mongodb-bson-kotlinx = { module = "org.mongodb:bson-kotlinx", version.ref = "mongodb" }
 
 # Testing libraries
-kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest-6" }
-kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest-6" }
-kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest-5" }
-kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest-6" }
-kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest-6" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 mockk-agent-jvm = { module = "io.mockk:mockk-agent-jvm", version.ref = "mockk" }
 mockative = { module = "io.mockative:mockative", version.ref = "mockative" }
 mockative-processor = { module = "io.mockative:mockative-processor", version.ref = "mockative" }
-kotest-extensions-testcontainers = { module = "io.kotest.extensions:kotest-extensions-testcontainers", version.ref = "kotest-test-containers" }
-kotest-extensions-testcontainers-kafka = { module = "io.kotest.extensions:kotest-extensions-testcontainers-kafka", version.ref = "kotest-test-containers" }
+kotest-extensions-testcontainers = { module = "io.kotest:kotest-extensions-testcontainers", version.ref = "kotest" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
@@ -173,7 +169,7 @@ kotlin-logging = { module = "io.github.oshai:kotlin-logging", version.ref = "kot
 loggingCapabilities-gradlePlugin = { module = "dev.jacomet.gradle.plugins:logging-capabilities", version.ref = "logging_capabilities" }
 
 # Testing plugins
-kotestFrameworkMultiplatform-gradlePlugin = { module = "io.kotest:kotest-framework-multiplatform-plugin-gradle", version.ref = "kotest-6" }
+kotest-gradlePlugin = { module = "io.kotest:kotest-framework-plugin-gradle", version.ref = "kotest" }
 
 # Documentation
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
@@ -224,7 +220,7 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "atomicfu" }
 
 # Testing
-kotest = { id = "io.kotest.multiplatform", version.ref = "kotest-6" }
+kotest = { id = "io.kotest", version.ref = "kotest" }
 
 # Ksp
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

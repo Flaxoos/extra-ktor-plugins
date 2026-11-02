@@ -3,7 +3,7 @@ package io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.redis
 import com.redis.testcontainers.RedisContainer
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.TaskSchedulingPluginTest
 import io.kotest.core.extensions.install
-import io.kotest.extensions.testcontainers.ContainerExtension
+import io.kotest.extensions.testcontainers.TestContainerSpecExtension
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 import kotlin.time.Duration.Companion.minutes
@@ -15,7 +15,7 @@ class RedisLockManagerPluginTest : TaskSchedulingPluginTest() {
             .withEnv("REDIS_USERNAME", "flaxoos")
             .withEnv("REDIS_PASSWORD", "password")
     private val redisContainer =
-        install(ContainerExtension(redis)) {
+        install(TestContainerSpecExtension(redis)) {
             waitingFor(Wait.forListeningPort()).withStartupTimeout(1.minutes.toJavaDuration())
         }
 

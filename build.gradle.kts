@@ -1,4 +1,3 @@
-import com.gradle.enterprise.gradleplugin.GradleEnterpriseExtension
 import io.github.flaxoos.ktor.extensions.jreleaserGpgPassphrase
 import io.github.flaxoos.ktor.extensions.jreleaserGpgPublicKey
 import io.github.flaxoos.ktor.extensions.jreleaserGpgSecretKey
@@ -424,13 +423,6 @@ subprojects {
             info {
                 testDetails()
             }
-        }
-    }
-
-    extensions.findByType(GradleEnterpriseExtension::class)?.apply {
-        buildScan {
-            termsOfServiceUrl = "https://gradle.com/terms-of-service"
-            termsOfServiceAgree = "yes"
         }
     }
 }

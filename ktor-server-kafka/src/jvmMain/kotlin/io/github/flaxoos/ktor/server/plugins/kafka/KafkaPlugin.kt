@@ -24,7 +24,6 @@ import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.util.AttributeKey
 import io.ktor.utils.io.CancellationException
-import io.ktor.utils.io.KtorDsl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -58,7 +57,6 @@ object FileConfig {
         }
 
     @Suppress("FunctionName")
-    @KtorDsl
     fun Kafka(configurationPath: String) =
         createApplicationPlugin(
             name = "Kafka",
@@ -71,7 +69,6 @@ object FileConfig {
     /**
      * Installs the [Kafka] plugin with the given [KafkaFileConfig] block
      */
-    @KtorDsl
     fun Application.kafka(
         configurationPath: String = DEFAULT_CONFIG_PATH,
         config: KafkaFileConfig.() -> Unit,
@@ -117,7 +114,6 @@ val Kafka =
 /**
  * Installs the [Kafka] plugin with the given [KafkaConfig] block
  */
-@KtorDsl
 @Suppress("UNUSED")
 fun Application.installKafka(config: KafkaConfig.() -> Unit) {
     install(Kafka) { config() }

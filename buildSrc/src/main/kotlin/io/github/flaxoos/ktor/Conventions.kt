@@ -4,7 +4,6 @@ import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
 import io.github.flaxoos.ktor.extensions.configurePublishing
-import io.github.flaxoos.ktor.extensions.enableContextReceivers
 import io.github.flaxoos.ktor.extensions.gprReadCredentials
 import io.github.flaxoos.ktor.extensions.library
 import io.github.flaxoos.ktor.extensions.plugin
@@ -23,7 +22,6 @@ import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.the
-import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -44,7 +42,7 @@ open class Conventions : Plugin<Project> {
                 apply("maven-publish")
                 apply("signing")
                 apply("idea")
-                apply("io.kotest.multiplatform")
+                apply("io.kotest")
                 apply(project.plugin("loggingCapabilities"))
                 apply(project.plugin("atomicfu"))
                 apply(project.plugin("kover"))
@@ -60,7 +58,6 @@ open class Conventions : Plugin<Project> {
                     gprReadCredentials()
                 }
             }
-            enableContextReceivers()
 
             extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
                 targetJvm(project)
@@ -77,7 +74,6 @@ open class Conventions : Plugin<Project> {
                         implementation(kotlin("test"))
                         implementation(library("kotlinx-coroutines-test"))
                         implementation(library("kotest-framework-engine"))
-                        implementation(library("kotest-framework-datatest"))
                         implementation(library("kotest-assertions-core"))
                     }
 
@@ -124,7 +120,7 @@ open class Conventions : Plugin<Project> {
             }
 
             tasks.withType<Wrapper> {
-                gradleVersion = "8.11"
+                gradleVersion = "9.8.2"
                 distributionType = Wrapper.DistributionType.BIN
             }
             extensions.findByType(KoverReportExtension::class)?.apply {
@@ -159,13 +155,6 @@ open class Conventions : Plugin<Project> {
                 dependenciesVersion = versionOf("atomicfu")
                 transformJvm = true
                 jvmVariant = "FU"
-            }
-
-            if (hasProperty("buildScan")) {
-                extensions.findByName("buildScan")?.withGroovyBuilder {
-                    setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
-                    setProperty("termsOfServiceAgree", "yes")
-                }
             }
 
             configurePublishing()

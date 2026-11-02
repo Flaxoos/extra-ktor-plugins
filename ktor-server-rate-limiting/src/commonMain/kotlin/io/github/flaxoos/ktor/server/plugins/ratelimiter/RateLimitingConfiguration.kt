@@ -97,7 +97,6 @@ class RateLimitingConfiguration {
      */
     var excludePaths: Set<Regex> = emptySet()
 
-    @RateLimitingDsl
     fun rateLimiter(configuration: RateLimiterConfiguration.() -> Unit) {
         rateLimiterConfiguration = RateLimiterConfiguration().apply(configuration)
     }

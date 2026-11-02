@@ -4,11 +4,11 @@ import io.github.flaxoos.ktor.ProjectPropertyDelegate
 import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 
-context(Project)
+context(project: Project)
 fun MavenArtifactRepository.gprReadCredentials() {
     credentials {
-        username = gprUser
-        password = gprReadToken
+        username = project.gprUser
+        password = project.gprReadToken
     }
 }
 

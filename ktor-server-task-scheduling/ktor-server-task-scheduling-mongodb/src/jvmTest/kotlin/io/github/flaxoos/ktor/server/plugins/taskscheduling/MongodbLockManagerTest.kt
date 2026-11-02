@@ -4,16 +4,16 @@ import com.mongodb.kotlin.client.coroutine.MongoClient
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.MongoDbTaskLock
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.mongoDb
 import io.kotest.core.extensions.install
-import io.kotest.extensions.testcontainers.ContainerExtension
+import io.kotest.extensions.testcontainers.TestContainerSpecExtension
 import org.bson.Document
-import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.containers.wait.strategy.Wait
+import org.testcontainers.mongodb.MongoDBContainer
 import org.testcontainers.utility.DockerImageName
 
 class MongodbLockManagerTest : TaskSchedulingPluginTest() {
     private val mongodb = MongoDBContainer(DockerImageName.parse("mongo:6.0.4"))
     private val mongodbContainer =
-        install(ContainerExtension(mongodb)) {
+        install(TestContainerSpecExtension(mongodb)) {
             waitingFor(Wait.forListeningPort())
         }
     private val mongoClient = MongoClient.create(mongodbContainer.connectionString)

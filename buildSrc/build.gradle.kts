@@ -11,6 +11,9 @@ kotlin {
             .get()
             .toInt(),
     )
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+    }
 }
 
 repositories {
@@ -32,7 +35,7 @@ dependencies {
     implementation(libs.kover.gradlePlugin)
     implementation(libs.atomicfu.gradlePlugin)
     implementation(libs.loggingCapabilities.gradlePlugin)
-    implementation(libs.kotestFrameworkMultiplatform.gradlePlugin)
+    implementation(libs.kotest.gradlePlugin)
     implementation(libs.ktlint.gradlePlugin)
     implementation(libs.ktor.client.cio)
     implementation(libs.kover.badge.gradlePlugin)
@@ -47,12 +50,6 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-receivers")
-    }
 }
 
 gradlePlugin {

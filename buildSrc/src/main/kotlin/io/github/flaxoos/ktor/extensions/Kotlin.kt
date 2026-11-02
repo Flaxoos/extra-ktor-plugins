@@ -7,14 +7,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 private const val KOTLIN = "kotlin"
 
-fun Project.enableContextReceivers() {
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        compilerOptions {
-            freeCompilerArgs.add("-Xcontext-receivers")
-        }
-    }
-}
-
 fun Project.setLanguageAndApiVersions() {
     tasks.withType(KotlinCompilationTask::class) {
         compilerOptions {

@@ -147,7 +147,6 @@ public class RedisTaskLockManagerConfiguration(
 /**
  * Add a [RedisLockManager]
  */
-@TaskSchedulingDsl
 public fun TaskSchedulingConfiguration.redis(
     /**
      * The name of the task manager, will be used to identify the task manager when assigning tasks to it

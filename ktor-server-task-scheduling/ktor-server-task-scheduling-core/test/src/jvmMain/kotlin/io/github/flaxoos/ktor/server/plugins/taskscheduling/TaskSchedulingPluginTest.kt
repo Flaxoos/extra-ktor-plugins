@@ -6,7 +6,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.kotest.assertions.retry
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.core.spec.style.scopes.ContainerScope
+import io.kotest.core.spec.style.scopes.FunSpecContainerScope
 import io.kotest.datatest.withData
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -40,7 +40,7 @@ private val taskCounts = listOf(2)
 abstract class TaskSchedulingPluginTest : FunSpec() {
     protected abstract suspend fun clean()
 
-    suspend fun ContainerScope.testTaskScheduling(
+    suspend fun FunSpecContainerScope.testTaskScheduling(
         engineCount: Int = ENGINE_COUNT,
         executions: Int = EXECUTIONS,
         executionBufferMs: Int = DEFAULT_EXECUTION_BUFFER_MS,

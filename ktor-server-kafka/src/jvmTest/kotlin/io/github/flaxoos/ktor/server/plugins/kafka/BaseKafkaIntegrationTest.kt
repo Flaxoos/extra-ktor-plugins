@@ -140,10 +140,10 @@ abstract class BaseKafkaIntegrationTest : FunSpec() {
                         .replace(SCHEMA_REGISTRY_URL_PLACEHOLDER, resolvedSchemaRegistryUrl)
                         .replace(
                             GROUP_ID_PLACEHOLDER,
-                            testCase.name.testName.plus("-group"),
+                            testCase.name.name.plus("-group"),
                         ).replace(
                             CLIENT_ID_PLACEHOLDER,
-                            testCase.name.testName.plus("-client"),
+                            testCase.name.name.plus("-client"),
                         ),
                 )
             }

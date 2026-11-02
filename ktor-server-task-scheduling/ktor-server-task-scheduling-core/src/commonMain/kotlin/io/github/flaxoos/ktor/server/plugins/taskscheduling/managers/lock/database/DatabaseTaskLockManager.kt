@@ -1,5 +1,6 @@
 package io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database
 
+import arrow.core.raise.catch
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.TaskSchedulingDsl
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.TaskLockManager
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.TaskLockManagerConfiguration
@@ -20,16 +21,14 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
         initTaskLockTable()
         tasks.forEach { task ->
             task.concurrencyRange().forEach { taskConcurrencyIndex ->
-                runCatching {
-                    insertTaskLock(task, taskConcurrencyIndex)
-                }.onFailure {
-                    logger.error(it) { "${this::class.simpleName} failed to insert task during initialization" }
-                }.getOrNull()
-                    ?.let {
-                        if (it) {
-                            logger.debug { "${this::class.simpleName} inserted task lock key during initialization" }
-                        }
+                val inserted =
+                    catch({ insertTaskLock(task, taskConcurrencyIndex) }) {
+                        logger.error(it) { "${this::class.simpleName} failed to insert task during initialization" }
+                        false
                     }
+                if (inserted) {
+                    logger.debug { "${this::class.simpleName} inserted task lock key during initialization" }
+                }
             }
         }
     }
@@ -39,7 +38,7 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
         executionTime: DateTime,
         concurrencyIndex: Int,
     ): DB_TASK_LOCK_KEY? =
-        runCatching {
+        catch({
             updateTaskLock(task, concurrencyIndex, executionTime).also {
                 if (it == null) {
                     logger.debug {
@@ -53,12 +52,13 @@ public abstract class DatabaseTaskLockManager<DB_TASK_LOCK_KEY : DatabaseTaskLoc
                     }
                 }
             }
-        }.onFailure {
+        }) {
             logger.warn {
                 "${application.host()}: ${executionTime.format2()}: Failed acquiring lock for ${task.name} - " +
                     "$concurrencyIndex: ${it.message}"
             }
-        }.getOrNull()
+            null
+        }
 
     /**
      * Create the task lock key table in the database

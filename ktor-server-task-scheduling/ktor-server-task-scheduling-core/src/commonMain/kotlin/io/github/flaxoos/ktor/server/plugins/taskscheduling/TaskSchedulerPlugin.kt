@@ -12,6 +12,7 @@ import io.ktor.server.application.log
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Task scheduler plugin
@@ -96,13 +97,7 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.checkUniqueTaskNames() {
 }
 
 private fun TaskManager<*>.startTask(task: Task) {
-    application.launch(
-        context =
-            application.coroutineContext
-                .apply {
-                    task.dispatcher?.let { this + it } ?: this
-                }.apply { this + CoroutineName(task.name) },
-    ) {
+    application.launch(context = CoroutineName(task.name) + (task.dispatcher ?: EmptyCoroutineContext)) {
         task.kronSchedule.doInfinity { executionTime ->
             execute(task, executionTime)
         }

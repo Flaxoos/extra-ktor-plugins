@@ -14,8 +14,8 @@ ktor = "3.6.1"
 android = "8.1.0"
 
 # Database
-h2 = "2.3.232"
-postgres = "42.7.5"
+h2 = "2.5.252"
+postgres = "42.7.14"
 exposed = "1.0.0"
 mongodb = "5.3.1"
 
@@ -30,11 +30,11 @@ kotlinx-coroutines = "1.11.0"
 
 # Testing
 kotest = "6.2.6"
-mockk = "1.13.4"
+mockk = "1.14.11"
 mockative = "2.0.1"
 kmock = "0.3.0-rc08"
-testcontainers = "1.20.6"
-redis-testcontainers = "1.6.4"
+testcontainers = "2.0.5"
+redis-testcontainers = "3.0.1"
 
 # Code Quality and Coverage
 ktlint-gradle = "12.1.1"
@@ -140,10 +140,10 @@ mockative-processor = { module = "io.mockative:mockative-processor", version.ref
 kotest-extensions-testcontainers = { module = "io.kotest:kotest-extensions-testcontainers", version.ref = "kotest" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
-testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
-testcontainers-redis = { module = "com.redis.testcontainers:testcontainers-redis", version.ref = "redis-testcontainers" }
-testcontainers-mongodb = { module = "org.testcontainers:mongodb", version.ref = "testcontainers" }
-testcontainers-postgres = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka", version.ref = "testcontainers" }
+testcontainers-redis = { module = "com.redis:testcontainers-redis", version.ref = "redis-testcontainers" }
+testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb", version.ref = "testcontainers" }
+testcontainers-postgres = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
 
 # Messaging Libraries
 kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }

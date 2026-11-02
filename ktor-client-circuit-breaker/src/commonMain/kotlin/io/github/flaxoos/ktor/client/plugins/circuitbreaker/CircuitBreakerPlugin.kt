@@ -2,8 +2,8 @@ package io.github.flaxoos.ktor.client.plugins.circuitbreaker
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.api.ClientPluginBuilder
+import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.client.statement.request
 import io.ktor.util.AttributeKey
 import io.ktor.util.collections.ConcurrentMap
 
@@ -24,28 +24,21 @@ val CircuitBreaking =
                 }
             }
         require(instances.isNotEmpty()) { "At least one circuit breaker must be specified" }
-        client.circuitBreakerRegistry().putAll(
-            instances.mapValues { entry ->
-                entry.value.apply { initialize(client.engine.dispatcher) }
-            },
-        )
+        client.circuitBreakerRegistry().putAll(instances)
         circuitBreakerPluginBuilder()
     }
 
-internal fun HttpClient.circuitBreakerRegistry() = this.attributes.computeIfAbsent(CircuitBreakerInstancesRegistryKey) { ConcurrentMap() }
+internal fun HttpClient.circuitBreakerRegistry(): ConcurrentMap<CircuitBreakerName, CircuitBreaker> =
+    attributes.computeIfAbsent(CircuitBreakerInstancesRegistryKey) { ConcurrentMap() }
 
 internal fun ClientPluginBuilder<CircuitBreakerConfig>.circuitBreakerPluginBuilder() {
     val instanceRegistry = client.circuitBreakerRegistry()
 
-    onRequest { request, _ ->
-        request.attributes.getOrNull(CircuitBreakerNameKey)?.let { circuitBreakerName ->
-            instanceRegistry.getValue(circuitBreakerName).wire()
-        }
-    }
-
-    onResponse { response ->
-        response.request.attributes.getOrNull(CircuitBreakerNameKey)?.let { circuitBreakerName ->
-            instanceRegistry.getValue(circuitBreakerName).handleResponse(response)
+    on(Send) { request ->
+        val circuitBreakerName = request.attributes.getOrNull(CircuitBreakerNameKey)
+        when (val circuitBreaker = circuitBreakerName?.let(instanceRegistry::getValue)) {
+            null -> proceed(request)
+            else -> circuitBreaker.protect { proceed(request) }
         }
     }
 }

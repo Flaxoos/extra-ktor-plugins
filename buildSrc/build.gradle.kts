@@ -36,6 +36,7 @@ dependencies {
     implementation(libs.atomicfu.gradlePlugin)
     implementation(libs.loggingCapabilities.gradlePlugin)
     implementation(libs.kotest.gradlePlugin)
+    implementation(libs.ksp.gradlePlugin)
     implementation(libs.ktlint.gradlePlugin)
     implementation(libs.ktor.client.cio)
     implementation(libs.kover.badge.gradlePlugin)

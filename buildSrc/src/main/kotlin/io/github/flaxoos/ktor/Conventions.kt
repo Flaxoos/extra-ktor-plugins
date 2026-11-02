@@ -42,6 +42,7 @@ open class Conventions : Plugin<Project> {
                 apply("maven-publish")
                 apply("signing")
                 apply("idea")
+                apply(project.plugin("ksp"))
                 apply("io.kotest")
                 apply(project.plugin("loggingCapabilities"))
                 apply(project.plugin("atomicfu"))

@@ -16,7 +16,7 @@ android = "8.1.0"
 # Database
 h2 = "2.3.232"
 postgres = "42.7.5"
-exposed = "0.60.0"
+exposed = "1.0.0"
 mongodb = "5.3.1"
 
 # Logging
@@ -49,7 +49,7 @@ detekt = "1.23.1"
 kotlinx-datetime = "0.6.2"
 
 # Functional Programming
-arrow = "1.2.4"
+arrow = "2.1.2"
 
 # Messaging
 kafka = "4.0.0"
@@ -84,6 +84,7 @@ uuid = "0.8.4"
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
+arrow-resilience = { module = "io.arrow-kt:arrow-resilience", version.ref = "arrow" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }

@@ -4,8 +4,6 @@ import io.github.flaxoos.ktor.extensions.jreleaserGpgPublicKey
 import io.github.flaxoos.ktor.extensions.jreleaserGpgSecretKey
 import io.github.flaxoos.ktor.extensions.mcPassword
 import io.github.flaxoos.ktor.extensions.mcUsername
-import io.github.flaxoos.ktor.extensions.ossrhPassword
-import io.github.flaxoos.ktor.extensions.ossrhUsername
 import org.eclipse.jgit.api.Git
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
@@ -13,7 +11,10 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 import org.gradle.api.tasks.testing.logging.TestLogging
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jreleaser.gradle.plugin.dsl.deploy.maven.MavenCentralMavenDeployer
+import org.jreleaser.gradle.plugin.dsl.deploy.maven.MavenDeployer
 import org.jreleaser.gradle.plugin.dsl.deploy.maven.Nexus2MavenDeployer
 import org.jreleaser.model.Active.ALWAYS
 import org.jreleaser.model.Active.RELEASE
@@ -52,8 +53,12 @@ scmVersion {
     snapshotCreator { version, position ->
         val releaseMode = project.findProperty("release.mode")?.toString()
         when (releaseMode) {
-            "release" -> "" // No suffix for production releases
-            "snapshot", null -> "-SNAPSHOT" // Default to snapshot
+            "release" -> ""
+
+            // No suffix for production releases
+            "snapshot", null -> "-SNAPSHOT"
+
+            // Default to snapshot
             else -> "-SNAPSHOT"
         }
     }
@@ -255,7 +260,7 @@ allprojects {
 jreleaser {
     // Configure the project
     project {
-        name = "${rootProject.name}: ${project.name}"
+        name = "${rootProject.name} - ${project.name}"
         description =
             "This project provides a suite of feature-rich, efficient, and highly customizable plugins for your Ktor Server or Client, crafted in Kotlin, available for multiplatform."
 
@@ -322,14 +327,14 @@ jreleaser {
                         stagingRepository(stagingPath)
 
                         // maven central snapshots
-                        // snapshotUrl = "https://central.sonatype.com/repository/maven-snapshots/"
-                        // username = mcUsername
-                        // password = mcPassword
+                        snapshotUrl = "https://central.sonatype.com/repository/maven-snapshots/"
+                        username = mcUsername
+                        password = mcPassword
 
                         // ossrh snapshots
-                        snapshotUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-                        username = ossrhUsername
-                        password = ossrhPassword
+                        // snapshotUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                        // username = ossrhUsername
+                        // password = ossrhPassword
                     },
                 )
             }
@@ -354,6 +359,49 @@ jreleaser {
                 preset = "conventional-commits"
                 contributors {
                     enabled = false
+                }
+            }
+        }
+    }
+}
+
+// Add artifact overrides for native (klib) targets after all subprojects are evaluated
+gradle.projectsEvaluated {
+
+    val nativeArtifactIds =
+        subprojects.flatMap { subProject ->
+            subProject
+                .the<KotlinMultiplatformExtension>()
+                .targets
+                .filterIsInstance<KotlinNativeTarget>()
+                .map { "${subProject.name}-${it.name}" }
+        }
+
+    fun MavenDeployer.overrideNativeArtifacts() {
+        nativeArtifactIds.forEach { nativeArtifact ->
+            artifactOverride {
+                groupId.set(rootProject.group.toString())
+                artifactId.set(nativeArtifact)
+                jar.set(false)
+                sourceJar.set(false)
+                javadocJar.set(false)
+                verifyPom.set(false)
+            }
+        }
+    }
+
+    jreleaser {
+        deploy {
+            maven {
+                mavenCentral {
+                    named("release-deploy") {
+                        overrideNativeArtifacts()
+                    }
+                }
+                nexus2 {
+                    named("snapshot-deploy") {
+                        overrideNativeArtifacts()
+                    }
                 }
             }
         }

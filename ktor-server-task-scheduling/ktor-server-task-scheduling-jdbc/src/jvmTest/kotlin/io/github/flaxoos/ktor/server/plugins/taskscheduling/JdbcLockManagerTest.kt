@@ -4,9 +4,10 @@ import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.databa
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.jdbc
 import io.kotest.core.extensions.install
 import io.kotest.extensions.testcontainers.ContainerExtension
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.deleteAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
@@ -27,7 +28,7 @@ class JdbcLockManagerTest : TaskSchedulingPluginTest() {
             testTaskScheduling {
                 jdbc {
                     database =
-                        org.jetbrains.exposed.sql.Database
+                        Database
                             .connect(
                                 url = postgresContainer.getJdbcUrl(),
                                 driver = "org.postgresql.Driver",

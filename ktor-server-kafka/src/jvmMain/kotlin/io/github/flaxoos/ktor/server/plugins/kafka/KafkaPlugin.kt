@@ -43,6 +43,7 @@ object FileConfig {
      *          )
      *     }
      * }
+     * ```
      * @receiver [Application] the ktor server application
      * @param configurationPath The path to the configuration in the application configuration file
      * @param config Configuration block for the plugin, see [KafkaConsumerConfig]

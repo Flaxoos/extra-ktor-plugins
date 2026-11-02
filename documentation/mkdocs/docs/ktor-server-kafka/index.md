@@ -70,9 +70,9 @@ install(Kafka) {
 Alternatively, You can easily install the Kafka plugin using an application configuration file:
 
 ```kotlin
-install(KafkaFromFileConfig.Kafka) {
+install(FileConfig.Kafka) {
     consumerConfig {
-        consumerRecordHandler("my-topic") { record ->
+        consumerRecordHandler(named("my-topic")) { record ->
             myService.save(record)
         }
     }
@@ -87,7 +87,7 @@ The above will look for the config in `ktor.kafka` by default.
 You can also specify a different path if needed:
 
 ```kotlin
-install(KafkaFromFileConfig.Kafka("ktor.my.kafka")) {
+install(FileConfig.Kafka("ktor.my.kafka")) {
     ...
 }
 ```

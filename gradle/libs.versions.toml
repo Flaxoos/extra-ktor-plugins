@@ -8,7 +8,7 @@ ksp = "2.3.13"
 reactor = "3.7.4"
 
 # Web Framework
-ktor = "3.1.1"
+ktor = "3.6.1"
 
 # Android
 android = "8.1.0"
@@ -47,7 +47,7 @@ detekt = "1.23.1"
 kotlinx-datetime = "0.6.2"
 
 # Functional Programming
-arrow = "2.1.2"
+arrow = "2.3.0"
 
 # Messaging
 kafka = "4.0.0"

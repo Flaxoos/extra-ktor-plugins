@@ -107,6 +107,9 @@ open class Conventions : Plugin<Project> {
 
             the<KtlintExtension>().apply {
                 version.set(versionOf("ktlint"))
+                filter {
+                    exclude { it.file.startsWith(layout.buildDirectory.get().asFile) }
+                }
             }
 
             tasks.withType<KtLintCheckTask> {

@@ -5,9 +5,9 @@ import io.github.flaxoos.ktor.server.plugins.ratelimiter.RateLimiterResponse
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.ApplicationCall
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 private val logger = KotlinLogging.logger {}
 
@@ -60,7 +60,8 @@ class TokenBucket(
                 exceededBy = callSize,
                 message =
                     "Insufficient tokens to accept call. tokens: $currentVolume, " +
-                        "measured in ${callVolumeUnit::class.simpleName?.lowercase()} of size ${callVolumeUnit.size}. " +
+                        "measured in ${callVolumeUnit::class.simpleName?.lowercase()} of size " +
+                        "${callVolumeUnit.size}. " +
                         "call size: $callSize",
             )
         }

@@ -1,67 +1,65 @@
 [versions]
 # Core technologies
-kotlin = "2.1.10"
+kotlin = "2.4.21"
 java = "17"
-kotlinx-serialization = "1.8.0"
-kotlinx-io = "0.7.0"
-ksp = "2.1.10-1.0.31"
-reactor = "3.7.4"
+kotlinx-serialization = "1.12.0"
+kotlinx-io = "0.9.2"
+ksp = "2.3.13"
+reactor = "3.8.8"
 
 # Web Framework
-ktor = "3.1.1"
+ktor = "3.6.1"
 
 # Android
 android = "8.1.0"
 
 # Database
-h2 = "2.3.232"
-postgres = "42.7.5"
-exposed = "1.0.0"
-mongodb = "5.3.1"
+h2 = "2.5.252"
+postgres = "42.7.14"
+exposed = "1.6.0"
+mongodb = "5.14.0"
 
 # Logging
-logback = "1.5.12"
-kotlin-logging = "5.1.0"
+logback = "1.6.6"
+kotlin-logging = "8.0.4"
 logging_capabilities = "0.11.1"
 
 # Asynchronous and Concurrency
-atomicfu = "0.27.0"
-kotlinx-coroutines = "1.10.1"
+atomicfu = "0.33.0"
+kotlinx-coroutines = "1.11.0"
 
 # Testing
-kotest-6 = "6.0.0.M1"
-kotest-5 = "5.9.1"
-kotest-test-containers = "2.0.2"
-mockk = "1.13.4"
+kotest = "6.2.6"
+mockk = "1.14.11"
 mockative = "2.0.1"
 kmock = "0.3.0-rc08"
-testcontainers = "1.20.6"
-redis-testcontainers = "1.6.4"
+testcontainers = "2.0.5"
+redis-testcontainers = "3.0.1"
 
 # Code Quality and Coverage
-ktlint-gradle = "12.1.1"
-ktlint = "1.3.1"
-kover = "0.7.2"
+ktlint-gradle = "14.2.0"
+ktlint = "1.8.0"
+kover = "0.9.11"
 koverBadge = "0.0.6"
-detekt = "1.23.1"
+detekt = "2.0.0-alpha.6"
 
 # Date and Time
-kotlinx-datetime = "0.6.2"
+kotlinx-datetime = "0.8.0"
 
 # Functional Programming
-arrow = "2.1.2"
+arrow = "2.3.0"
 
 # Messaging
-kafka = "4.0.0"
-confluent = "7.7.1"
+kafka = "7.9.10-ccs"
+confluent = "7.9.10"
 avro4k = "0.41.0"
-avro = "1.12.0"
+avro = "1.12.2"
 
 # Redis
 kreds = "0.9.1"
 redis-mp-client = "0.0.3"
 microutils = "3.0.5" # required for kreds lib that doesn't expose via api() - https://github.com/crackthecodeabhi/kreds/blob/main/build.gradle.kts#L74-L76
-netty = "4.1.104.Final" # required for kreds lib that doesn't expose via api() - https://github.com/crackthecodeabhi/kreds/blob/main/build.gradle.kts#L74-L76
+netty = "4.1.139.Final" # required for kreds lib that doesn't expose via api() - https://github.com/crackthecodeabhi/kreds/blob/main/build.gradle.kts#L74-L76
 
 # Documentation
 dokka = "1.9.10"
@@ -71,12 +69,12 @@ gradle-release = "3.0.2"
 
 # Publishing
 nexusPublish = "2.0.0"
-jreleaser = "1.20.0"
-axion-release = "1.20.1"
-mkdocs-build = "3.0.0"
+jreleaser = "1.27.0"
+axion-release = "1.21.4"
+mkdocs-build = "4.0.1"
 
 # Miscellaneous
-krontab = "2.7.2"
+krontab = "3.1.0"
 uuid = "0.8.4"
 
 [libraries]
@@ -131,23 +129,21 @@ mongodb-driver-kotlin-coroutine = { module = "org.mongodb:mongodb-driver-kotlin-
 mongodb-bson-kotlinx = { module = "org.mongodb:bson-kotlinx", version.ref = "mongodb" }
 
 # Testing libraries
-kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest-6" }
-kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest-6" }
-kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest-5" }
-kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest-6" }
-kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest-6" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 mockk-agent-jvm = { module = "io.mockk:mockk-agent-jvm", version.ref = "mockk" }
 mockative = { module = "io.mockative:mockative", version.ref = "mockative" }
 mockative-processor = { module = "io.mockative:mockative-processor", version.ref = "mockative" }
-kotest-extensions-testcontainers = { module = "io.kotest.extensions:kotest-extensions-testcontainers", version.ref = "kotest-test-containers" }
-kotest-extensions-testcontainers-kafka = { module = "io.kotest.extensions:kotest-extensions-testcontainers-kafka", version.ref = "kotest-test-containers" }
+kotest-extensions-testcontainers = { module = "io.kotest:kotest-extensions-testcontainers", version.ref = "kotest" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
-testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
-testcontainers-redis = { module = "com.redis.testcontainers:testcontainers-redis", version.ref = "redis-testcontainers" }
-testcontainers-mongodb = { module = "org.testcontainers:mongodb", version.ref = "testcontainers" }
-testcontainers-postgres = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka", version.ref = "testcontainers" }
+testcontainers-redis = { module = "com.redis:testcontainers-redis", version.ref = "redis-testcontainers" }
+testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb", version.ref = "testcontainers" }
+testcontainers-postgres = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
 
 # Messaging Libraries
 kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
@@ -161,7 +157,7 @@ avro-tools = { module = "org.apache.avro:avro-tools", version.ref = "avro" }
 ktlint-gradlePlugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint-gradle" }
 kover-gradlePlugin = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
 kover-badge-gradlePlugin = { module = "io.github.flaxoos:kover-badge", version.ref = "koverBadge" }
-detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+detekt-gradlePlugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 
 # Asynchronous and Concurrency plugins
 atomicfu-gradlePlugin = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version.ref = "atomicfu" }
@@ -173,7 +169,7 @@ kotlin-logging = { module = "io.github.oshai:kotlin-logging", version.ref = "kot
 loggingCapabilities-gradlePlugin = { module = "dev.jacomet.gradle.plugins:logging-capabilities", version.ref = "logging_capabilities" }
 
 # Testing plugins
-kotestFrameworkMultiplatform-gradlePlugin = { module = "io.kotest:kotest-framework-multiplatform-plugin-gradle", version.ref = "kotest-6" }
+kotest-gradlePlugin = { module = "io.kotest:kotest-framework-plugin-gradle", version.ref = "kotest" }
 
 # Documentation
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
@@ -214,7 +210,7 @@ kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 kover-badge = { id = "io.github.flaxoos.kover-badge", version.ref = "koverBadge" }
 loggingCapabilities = { id = "dev.jacomet.logging-capabilities", version.ref = "logging_capabilities" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
 # Documentation
@@ -224,7 +220,7 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "atomicfu" }
 
 # Testing
-kotest = { id = "io.kotest.multiplatform", version.ref = "kotest-6" }
+kotest = { id = "io.kotest", version.ref = "kotest" }
 
 # Ksp
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

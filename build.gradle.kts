@@ -1,4 +1,3 @@
-import com.gradle.enterprise.gradleplugin.GradleEnterpriseExtension
 import io.github.flaxoos.ktor.extensions.jreleaserGpgPassphrase
 import io.github.flaxoos.ktor.extensions.jreleaserGpgPublicKey
 import io.github.flaxoos.ktor.extensions.jreleaserGpgSecretKey
@@ -283,10 +282,12 @@ jreleaser {
     // Sign the release
     signing {
         active = ALWAYS
-        armored = true
-        publicKey = jreleaserGpgPublicKey
-        secretKey = jreleaserGpgSecretKey
-        passphrase = jreleaserGpgPassphrase
+        pgp {
+            armored = true
+            publicKey = jreleaserGpgPublicKey
+            secretKey = jreleaserGpgSecretKey
+            passphrase = jreleaserGpgPassphrase
+        }
     }
     deploy {
         val stagingPath =
@@ -311,8 +312,8 @@ jreleaser {
 
                         connectTimeout = 20
                         readTimeout = 60
-                        retryDelay = 5
-                        maxRetries = 3
+                        retryDelay = 30
+                        maxRetries = 40
                     },
                 )
             }
@@ -424,13 +425,6 @@ subprojects {
             info {
                 testDetails()
             }
-        }
-    }
-
-    extensions.findByType(GradleEnterpriseExtension::class)?.apply {
-        buildScan {
-            termsOfServiceUrl = "https://gradle.com/terms-of-service"
-            termsOfServiceAgree = "yes"
         }
     }
 }

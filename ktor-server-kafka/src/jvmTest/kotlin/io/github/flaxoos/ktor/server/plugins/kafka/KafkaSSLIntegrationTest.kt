@@ -1,8 +1,7 @@
 package io.github.flaxoos.ktor.server.plugins.kafka
 
 import io.kotest.core.extensions.install
-import io.kotest.extensions.testcontainers.ContainerExtension
-import io.kotest.extensions.testcontainers.ContainerLifecycleMode
+import io.kotest.extensions.testcontainers.TestContainerSpecExtension
 import io.ktor.server.application.install
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.config.SslConfigs
@@ -27,43 +26,27 @@ class KafkaSSLIntegrationTest : BaseKafkaIntegrationTest() {
     init {
         val kafkaContainer = KafkaGenericContainer.new()
         val schemaRegistryContainer = SchemaRegistryContainer.new()
-        val zooKeeper =
-            install(
-                ContainerExtension(
-                    zookeeperContainer,
-                    ContainerLifecycleMode.Spec,
-                    beforeStart = { generateCertificates() },
-                ),
-            )
+        generateCertificates()
+        val zooKeeper = install(TestContainerSpecExtension(zookeeperContainer))
+        bootstrapServers = BOOTSTRAP_SERVERS
         val kafka =
             install(
-                ContainerExtension(
+                TestContainerSpecExtension(
                     kafkaContainer.apply {
                         sslConfig()
                         dependsOn(zooKeeper)
                     },
-                    ContainerLifecycleMode.Spec,
-                    beforeStart = {
-                        bootstrapServers = BOOTSTRAP_SERVERS
-                        zooKeeper.start()
-                    },
                 ),
             )
         install(
-            ContainerExtension(
+            TestContainerSpecExtension(
                 schemaRegistryContainer.apply {
                     sslConfig()
                     dependsOn(kafka)
                 },
-                ContainerLifecycleMode.Spec,
-                beforeStart = {
-                    kafkaContainer.start()
-                },
-                beforeTest = {
-                    resolvedSchemaRegistryUrl = SCHEMA_REGISTRY_URL
-                },
             ),
         )
+        resolvedSchemaRegistryUrl = SCHEMA_REGISTRY_URL
 
         test("With code configuration").config(timeout = 20.seconds) {
             testKafkaApplication(waitSecondsAfterApplicationStart = 10) {

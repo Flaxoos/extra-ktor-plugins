@@ -13,11 +13,7 @@ internal fun Map<String, Any?>.createKafkaAdminClient(): AdminClient = AdminClie
 internal class CoroutineScopedAdminClient(
     val adminClient: AdminClient,
     val scope: CoroutineScope,
-) {
-    companion object {
-        fun CoroutineScope.CoroutineScopedAdminClient(adminClient: AdminClient) = CoroutineScopedAdminClient(adminClient, this)
-    }
-}
+)
 
 @Suppress("ForbiddenVoid")
 internal suspend fun CoroutineScopedAdminClient.createKafkaTopics(

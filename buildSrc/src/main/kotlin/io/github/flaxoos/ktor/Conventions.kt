@@ -4,16 +4,15 @@ import dev.jacomet.gradle.plugins.logging.extension.LoggingCapabilitiesExtension
 import io.github.flaxoos.kover.ColorBand.Companion.from
 import io.github.flaxoos.kover.KoverBadgePluginExtension
 import io.github.flaxoos.ktor.extensions.configurePublishing
-import io.github.flaxoos.ktor.extensions.enableContextReceivers
 import io.github.flaxoos.ktor.extensions.gprReadCredentials
 import io.github.flaxoos.ktor.extensions.library
 import io.github.flaxoos.ktor.extensions.plugin
 import io.github.flaxoos.ktor.extensions.setLanguageAndApiVersions
 import io.github.flaxoos.ktor.extensions.targetJvm
 import io.github.flaxoos.ktor.extensions.versionOf
-import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import dev.detekt.gradle.extensions.DetektExtension
 import kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension
-import kotlinx.kover.gradle.plugin.dsl.KoverReportExtension
+import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -23,7 +22,6 @@ import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.the
-import org.gradle.kotlin.dsl.withGroovyBuilder
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -44,7 +42,8 @@ open class Conventions : Plugin<Project> {
                 apply("maven-publish")
                 apply("signing")
                 apply("idea")
-                apply("io.kotest.multiplatform")
+                apply(project.plugin("ksp"))
+                apply("io.kotest")
                 apply(project.plugin("loggingCapabilities"))
                 apply(project.plugin("atomicfu"))
                 apply(project.plugin("kover"))
@@ -60,7 +59,6 @@ open class Conventions : Plugin<Project> {
                     gprReadCredentials()
                 }
             }
-            enableContextReceivers()
 
             extensions.findByType(KotlinMultiplatformExtension::class)?.apply {
                 targetJvm(project)
@@ -77,7 +75,6 @@ open class Conventions : Plugin<Project> {
                         implementation(kotlin("test"))
                         implementation(library("kotlinx-coroutines-test"))
                         implementation(library("kotest-framework-engine"))
-                        implementation(library("kotest-framework-datatest"))
                         implementation(library("kotest-assertions-core"))
                     }
 
@@ -105,11 +102,14 @@ open class Conventions : Plugin<Project> {
 
             the<DetektExtension>().apply {
                 config.setFrom(rootDir.resolve("config/detekt/detekt.yml"))
-                buildUponDefaultConfig = true
+                buildUponDefaultConfig.set(true)
             }
 
             the<KtlintExtension>().apply {
                 version.set(versionOf("ktlint"))
+                filter {
+                    exclude { it.file.startsWith(layout.buildDirectory.get().asFile) }
+                }
             }
 
             tasks.withType<KtLintCheckTask> {
@@ -117,25 +117,26 @@ open class Conventions : Plugin<Project> {
             }
 
             tasks.named("build") {
-                dependsOn(tasks.matching { it.name.matches(Regex("detekt(?!.*Baseline).*\\b(Main|Test)\\b\n")) })
+                dependsOn(tasks.matching { it.name.matches(Regex("detekt(Main|Test)\\w+")) })
             }
             tasks.withType<KotlinJvmTest> {
                 useJUnitPlatform()
             }
 
             tasks.withType<Wrapper> {
-                gradleVersion = "8.11"
+                gradleVersion = "9.8.2"
                 distributionType = Wrapper.DistributionType.BIN
             }
-            extensions.findByType(KoverReportExtension::class)?.apply {
-                defaults {
-                    html { onCheck = true }
-                    verify {
-                        rule {
-                            isEnabled = true
-                            minBound(55)
+            extensions.findByType(KoverProjectExtension::class)?.apply {
+                reports {
+                    total {
+                        html { onCheck.set(true) }
+                        verify {
+                            rule {
+                                minBound(55)
+                            }
+                            onCheck.set(true)
                         }
-                        onCheck = true
                     }
                 }
             }
@@ -159,13 +160,6 @@ open class Conventions : Plugin<Project> {
                 dependenciesVersion = versionOf("atomicfu")
                 transformJvm = true
                 jvmVariant = "FU"
-            }
-
-            if (hasProperty("buildScan")) {
-                extensions.findByName("buildScan")?.withGroovyBuilder {
-                    setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
-                    setProperty("termsOfServiceAgree", "yes")
-                }
             }
 
             configurePublishing()

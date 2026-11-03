@@ -48,7 +48,6 @@ import kotlinx.coroutines.delay
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.reflect.KClass
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val LIMIT = 5
@@ -149,8 +148,8 @@ class RateLimitingPluginTest : FunSpec() {
                         when (it.implementation) {
                             TokenBucket::class, SlidingWindow::class -> {
                                 forAll { response ->
-                                    (response.responseTime.timestamp - earliestRequestTime).milliseconds shouldBeLessThan
-                                        RATE_LIMITER_RATE_MS.milliseconds
+                                    val elapsed = (response.responseTime.timestamp - earliestRequestTime).milliseconds
+                                    elapsed shouldBeLessThan RATE_LIMITER_RATE_MS.milliseconds
                                 }
                             }
 
@@ -160,7 +159,8 @@ class RateLimitingPluginTest : FunSpec() {
                                     .sortedBy { response -> response.responseTime.timestamp }
                                     .windowed(2)
                                     .map { responses ->
-                                        (responses[1].responseTime.timestamp - responses[0].responseTime.timestamp).milliseconds
+                                        (responses[1].responseTime.timestamp - responses[0].responseTime.timestamp)
+                                            .milliseconds
                                     }.onEach { duration ->
                                         // Grace period of 20ms for inaccuracies
                                         duration.shouldBeLessThan((RATE_LIMITER_RATE_MS + 20L).milliseconds)
@@ -319,7 +319,6 @@ class RateLimitingPluginTest : FunSpec() {
     private suspend fun RateLimiterTestScope.testCalls(
         path: String = LIMITED_PATH,
         times: Int = LIMIT,
-        callDelay: Duration = REQUEST_DELAY_MS.milliseconds,
         callers: List<String> = listOf(CALLER1),
         userAgent: String? = null,
         checkResponses: suspend List<HttpResponse>.() -> Unit,
@@ -329,7 +328,7 @@ class RateLimitingPluginTest : FunSpec() {
                 .flatMap { index ->
                     callers.map { caller ->
                         async {
-                            delay(callDelay)
+                            delay(REQUEST_DELAY_MS.milliseconds)
                             client.get(path) {
                                 val auth = encodeBasicAuth(caller)
                                 headers.append("Authorization", "Basic $auth")
@@ -348,7 +347,8 @@ class RateLimitingPluginTest : FunSpec() {
         withClue("Should be limited") {
             logErrors()
             map { it.status } shouldContain TooManyRequests
-            flatMap { it.headers.names() } shouldContainAll listOf("X-RateLimit-Limit", "X-RateLimit-Measured-by", "X-RateLimit-Reset")
+            flatMap { it.headers.names() } shouldContainAll
+                listOf("X-RateLimit-Limit", "X-RateLimit-Measured-by", "X-RateLimit-Reset")
         }
     }
 
@@ -367,8 +367,8 @@ class RateLimitingPluginTest : FunSpec() {
     }
 
     private suspend fun Iterable<HttpResponse>.logErrors() {
-        filter { it.status.value == InternalServerError.value }.forEach {
-            it.bodyAsText().let { logger.error { it } }
+        filter { it.status.value == InternalServerError.value }.forEach { response ->
+            response.bodyAsText().let { body -> logger.error { body } }
         }
     }
 }

@@ -67,7 +67,6 @@ class SslSettings(
 /**
  * Sets the default SSL configuration for all components.
  */
-@KafkaDsl
 fun KafkaConfig.commonSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
     commonSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
@@ -75,7 +74,6 @@ fun KafkaConfig.commonSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
 /**
  * Sets a specific SSL configuration for the admin client.
  */
-@KafkaDsl
 fun KafkaConfig.adminSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
     adminSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
@@ -83,7 +81,6 @@ fun KafkaConfig.adminSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
 /**
  * Sets a specific SSL configuration for the producer.
  */
-@KafkaDsl
 fun KafkaConfig.producerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
     producerSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
@@ -91,7 +88,6 @@ fun KafkaConfig.producerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) 
 /**
  * Sets a specific SSL configuration for the consumer.
  */
-@KafkaDsl
 fun KafkaConfig.consumerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) {
     consumerSslPropertiesBuilderPair = SslPropertiesBuilderPair().apply(configuration)
 }
@@ -99,7 +95,6 @@ fun KafkaConfig.consumerSsl(configuration: SslPropertiesBuilderPair.() -> Unit) 
 /**
  * Sets a specific SSL configuration for the Schema Registry client.
  */
-@KafkaDsl
 fun KafkaConfig.schemaRegistryClientSsl(configuration: SslPropertiesBuilder.() -> Unit) {
     schemaRegistryClientSslPropertiesBuilder = SslPropertiesBuilder("schema.registry.").apply(configuration)
 }
@@ -107,7 +102,6 @@ fun KafkaConfig.schemaRegistryClientSsl(configuration: SslPropertiesBuilder.() -
 /**
  * Sets the default SASL configuration for all components.
  */
-@KafkaDsl
 fun KafkaConfig.commonSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
     commonSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
 }
@@ -115,7 +109,6 @@ fun KafkaConfig.commonSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) 
 /**
  * Sets a specific SASL configuration for the admin client.
  */
-@KafkaDsl
 fun KafkaConfig.adminSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
     adminSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
 }
@@ -123,7 +116,6 @@ fun KafkaConfig.adminSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
 /**
  * Sets a specific SASL configuration for the producer.
  */
-@KafkaDsl
 fun KafkaConfig.producerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
     producerSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
 }
@@ -131,7 +123,6 @@ fun KafkaConfig.producerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit
 /**
  * Sets a specific SASL configuration for the consumer.
  */
-@KafkaDsl
 fun KafkaConfig.consumerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit) {
     consumerSaslPropertiesBuilderPair = SaslPropertiesBuilderPair().apply(configuration)
 }
@@ -139,7 +130,6 @@ fun KafkaConfig.consumerSasl(configuration: SaslPropertiesBuilderPair.() -> Unit
 /**
  * Sets a specific SASL configuration for the Schema Registry client.
  */
-@KafkaDsl
 fun KafkaConfig.schemaRegistryClientSasl(configuration: SaslPropertiesBuilder.() -> Unit) {
     schemaRegistryClientSaslPropertiesBuilder = SaslPropertiesBuilder("schema.registry.").apply(configuration)
 }
@@ -179,12 +169,10 @@ data class SslPropertiesBuilderPair(
     var broker: SslPropertiesBuilder? = null,
     var schemaRegistry: SslPropertiesBuilder? = null,
 ) {
-    @KafkaDsl
     fun broker(configuration: SslPropertiesBuilder.() -> Unit) {
         broker = SslPropertiesBuilder().apply(configuration)
     }
 
-    @KafkaDsl
     fun schemaRegistry(configuration: SslPropertiesBuilder.() -> Unit) {
         schemaRegistry = SslPropertiesBuilder("schema.registry.").apply(configuration)
     }
@@ -195,12 +183,10 @@ data class SaslPropertiesBuilderPair(
     var broker: SaslPropertiesBuilder? = null,
     var schemaRegistry: SaslPropertiesBuilder? = null,
 ) {
-    @KafkaDsl
     fun broker(configuration: SaslPropertiesBuilder.() -> Unit) {
         broker = SaslPropertiesBuilder().apply(configuration)
     }
 
-    @KafkaDsl
     fun schemaRegistry(configuration: SaslPropertiesBuilder.() -> Unit) {
         schemaRegistry = SaslPropertiesBuilder("schema.registry.").apply(configuration)
     }
@@ -223,40 +209,30 @@ class SslPropertiesBuilder(
     var endpointIdentificationAlgorithm: String? = null
     var secureRandomImplementation: String? = null
 
-    override fun doBuild(): KafkaProperties {
-        val configMap = mutableMapOf<String, Any?>()
-        protocol?.let { configMap[namespace + SslConfigs.SSL_PROTOCOL_CONFIG] = it }
-        provider?.let { configMap[namespace + SslConfigs.SSL_PROVIDER_CONFIG] = it }
-        cipherSuites?.let { configMap[namespace + SslConfigs.SSL_CIPHER_SUITES_CONFIG] = it }
-        enabledProtocols?.let { configMap[namespace + SslConfigs.SSL_ENABLED_PROTOCOLS_CONFIG] = it }
-        keyStore?.let {
-            it.type.let { configMap[namespace + SslConfigs.SSL_KEYSTORE_TYPE_CONFIG] = it }
-            it.location.let { configMap[namespace + SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG] = it }
-            it.password.let { configMap[namespace + SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG] = it }
-            it.managerAlgorithm?.let { configMap[namespace + SslConfigs.SSL_KEYMANAGER_ALGORITHM_CONFIG] = it }
-        }
-        trustStore?.let {
-            it.type.let { configMap[namespace + SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG] = it }
-            it.location.let { configMap[namespace + SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG] = it }
-            it.password.let { configMap[namespace + SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG] = it }
-            it.managerAlgorithm?.let { configMap[namespace + SslConfigs.SSL_TRUSTMANAGER_ALGORITHM_CONFIG] = it }
-        }
-        keyPassword?.let { configMap[namespace + SslConfigs.SSL_KEY_PASSWORD_CONFIG] = it }
-        endpointIdentificationAlgorithm?.let {
-            configMap[namespace + SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG] = it
-        }
-        secureRandomImplementation?.let {
-            configMap[namespace + SslConfigs.SSL_SECURE_RANDOM_IMPLEMENTATION_CONFIG] = it
-        }
-        return configMap
-    }
+    override fun doBuild(): KafkaProperties =
+        kafkaPropertiesOf(
+            SslConfigs.SSL_PROTOCOL_CONFIG to protocol,
+            SslConfigs.SSL_PROVIDER_CONFIG to provider,
+            SslConfigs.SSL_CIPHER_SUITES_CONFIG to cipherSuites,
+            SslConfigs.SSL_ENABLED_PROTOCOLS_CONFIG to enabledProtocols,
+            SslConfigs.SSL_KEYSTORE_TYPE_CONFIG to keyStore?.type,
+            SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG to keyStore?.location,
+            SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG to keyStore?.password,
+            SslConfigs.SSL_KEYMANAGER_ALGORITHM_CONFIG to keyStore?.managerAlgorithm,
+            SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG to trustStore?.type,
+            SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG to trustStore?.location,
+            SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG to trustStore?.password,
+            SslConfigs.SSL_TRUSTMANAGER_ALGORITHM_CONFIG to trustStore?.managerAlgorithm,
+            SslConfigs.SSL_KEY_PASSWORD_CONFIG to keyPassword,
+            SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG to endpointIdentificationAlgorithm,
+            SslConfigs.SSL_SECURE_RANDOM_IMPLEMENTATION_CONFIG to secureRandomImplementation,
+            namespace = namespace,
+        )
 
-    @KafkaDsl
     fun trustStore(configuration: KeyStorePropertiesBuilder.() -> Unit) {
         trustStore = KeyStorePropertiesBuilder().apply(configuration)
     }
 
-    @KafkaDsl
     fun keyStore(configuration: KeyStorePropertiesBuilder.() -> Unit) {
         keyStore = KeyStorePropertiesBuilder().apply(configuration)
     }
@@ -281,30 +257,24 @@ class SaslPropertiesBuilder(
     var loginCallbackHandlerClass: String? = null
     var loginClass: String? = null
 
-    override fun doBuild(): KafkaProperties {
-        val configMap = mutableMapOf<String, Any?>()
-        kerberosServiceName?.let { configMap[namespace + SaslConfigs.SASL_KERBEROS_SERVICE_NAME] = it }
-        kerberosKinitCmd?.let { configMap[namespace + SaslConfigs.SASL_KERBEROS_KINIT_CMD] = it }
-        kerberosTicketRenewWindowFactor?.let {
-            configMap[SaslConfigs.SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR] = it
-        }
-        kerberosTicketRenewJitter?.let { configMap[namespace + SaslConfigs.SASL_KERBEROS_TICKET_RENEW_JITTER] = it }
-        kerberosMinTimeBeforeRelogin?.let {
-            configMap[namespace + SaslConfigs.SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN] = it
-        }
-        loginRefreshWindowFactor?.let { configMap[namespace + SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_FACTOR] = it }
-        loginRefreshWindowJitter?.let { configMap[namespace + SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_JITTER] = it }
-        loginRefreshMinPeriodSeconds?.let {
-            configMap[namespace + SaslConfigs.SASL_LOGIN_REFRESH_MIN_PERIOD_SECONDS] = it
-        }
-        loginRefreshBufferSeconds?.let { configMap[namespace + SaslConfigs.SASL_LOGIN_REFRESH_BUFFER_SECONDS] = it }
-        mechanism?.let { configMap[namespace + SaslConfigs.SASL_MECHANISM] = it }
-        jaasConfig?.let { configMap[namespace + SaslConfigs.SASL_JAAS_CONFIG] = it }
-        clientCallbackHandlerClass?.let { configMap[namespace + SaslConfigs.SASL_CLIENT_CALLBACK_HANDLER_CLASS] = it }
-        loginCallbackHandlerClass?.let { configMap[namespace + SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS] = it }
-        loginClass?.let { configMap[namespace + SaslConfigs.SASL_LOGIN_CLASS] = it }
-        return configMap
-    }
+    override fun doBuild(): KafkaProperties =
+        kafkaPropertiesOf(
+            SaslConfigs.SASL_KERBEROS_SERVICE_NAME to kerberosServiceName,
+            SaslConfigs.SASL_KERBEROS_KINIT_CMD to kerberosKinitCmd,
+            SaslConfigs.SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR to kerberosTicketRenewWindowFactor,
+            SaslConfigs.SASL_KERBEROS_TICKET_RENEW_JITTER to kerberosTicketRenewJitter,
+            SaslConfigs.SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN to kerberosMinTimeBeforeRelogin,
+            SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_FACTOR to loginRefreshWindowFactor,
+            SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_JITTER to loginRefreshWindowJitter,
+            SaslConfigs.SASL_LOGIN_REFRESH_MIN_PERIOD_SECONDS to loginRefreshMinPeriodSeconds,
+            SaslConfigs.SASL_LOGIN_REFRESH_BUFFER_SECONDS to loginRefreshBufferSeconds,
+            SaslConfigs.SASL_MECHANISM to mechanism,
+            SaslConfigs.SASL_JAAS_CONFIG to jaasConfig,
+            SaslConfigs.SASL_CLIENT_CALLBACK_HANDLER_CLASS to clientCallbackHandlerClass,
+            SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS to loginCallbackHandlerClass,
+            SaslConfigs.SASL_LOGIN_CLASS to loginClass,
+            namespace = namespace,
+        )
 }
 
 interface SecurityPropertiesBuilder {
@@ -313,19 +283,18 @@ interface SecurityPropertiesBuilder {
     var sslPropertiesBuilder: SslPropertiesBuilder?
     var schemaRegistrySslPropertiesBuilder: SslPropertiesBuilder?
 
-    @KafkaDsl
     fun ssl(configuration: SslPropertiesBuilder.() -> Unit = { SslPropertiesBuilder(namespace) }) {
         sslPropertiesBuilder = SslPropertiesBuilder(namespace).apply(configuration)
     }
 
-    @KafkaDsl
-    fun schemaRegistrySsl(configuration: SslPropertiesBuilder.() -> Unit = { SslPropertiesBuilder("schema.registry.") }) {
+    fun schemaRegistrySsl(
+        configuration: SslPropertiesBuilder.() -> Unit = { SslPropertiesBuilder("schema.registry.") },
+    ) {
         schemaRegistrySslPropertiesBuilder = SslPropertiesBuilder("schema.registry.").apply(configuration)
     }
 
     var saslPropertiesBuilder: SaslPropertiesBuilder?
 
-    @KafkaDsl
     fun sasl(configuration: SaslPropertiesBuilder.() -> Unit = { SaslPropertiesBuilder(namespace) }) {
         saslPropertiesBuilder = SaslPropertiesBuilder(namespace).apply(configuration)
     }

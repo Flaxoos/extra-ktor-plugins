@@ -9,7 +9,6 @@ import io.ktor.util.collections.ConcurrentMap
 /**
  * Register a [CircuitBreaker] with a given name
  */
-@CircuitBreakerDsl
 fun CircuitBreakerConfig.register(
     name: CircuitBreakerName,
     config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit,
@@ -20,7 +19,6 @@ fun CircuitBreakerConfig.register(
 /**
  * Registers a global [CircuitBreaker] that is applied to the whole client
  */
-@CircuitBreakerDsl
 fun CircuitBreakerConfig.global(config: CircuitBreakerConfig.CircuitBreakerBuilder.() -> Unit) {
     global =
         CircuitBreaker(

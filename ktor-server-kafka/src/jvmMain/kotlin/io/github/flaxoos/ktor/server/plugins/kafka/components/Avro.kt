@@ -86,7 +86,8 @@ class SchemaRegistryClient(
                         }
                         if (!it.status.isSuccess()) {
                             application.log.error(
-                                "Failed registering schema to schema registry at ${it.call.request.url}:\n${it.status} " +
+                                "Failed registering schema to schema registry at " +
+                                    "${it.call.request.url}:\n${it.status} " +
                                     "${it.bodyAsText()}:\nschema: $payload",
                             )
                         }
@@ -108,7 +109,8 @@ class SchemaRegistryClient(
  * @return the resulting [T] must be annotated with [Serializable]
  * @throws [SerializationException] if serialization fails
  */
-inline fun <reified T> fromRecord(record: GenericRecord): T = Avro.default.fromRecord(serializer(typeOf<T>()), record) as T
+inline fun <reified T> fromRecord(record: GenericRecord): T =
+    Avro.default.fromRecord(serializer(typeOf<T>()), record) as T
 
 /**
  * converts a [T] to a [GenericRecord]

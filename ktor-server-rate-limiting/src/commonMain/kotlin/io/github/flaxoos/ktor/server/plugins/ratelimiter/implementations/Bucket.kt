@@ -7,7 +7,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
+import kotlin.time.Instant.Companion.fromEpochMilliseconds
 
 sealed class Bucket(
     initialVolume: Int,
@@ -137,7 +137,8 @@ sealed class Bucket(
                 currentVolume
             } else {
                 log.trace {
-                    "${call.id()}: Volume not updated due to exceeding volume: currentVolume: $currentVolume, updatedVolume: $updatedVolume, diff: $diff, max: ${capacity * callVolumeUnit.size}"
+                    "${call.id()}: Volume not updated due to exceeding volume: currentVolume: $currentVolume, " +
+                        "updatedVolume: $updatedVolume, diff: $diff, max: ${capacity * callVolumeUnit.size}"
                 }
                 null
             }

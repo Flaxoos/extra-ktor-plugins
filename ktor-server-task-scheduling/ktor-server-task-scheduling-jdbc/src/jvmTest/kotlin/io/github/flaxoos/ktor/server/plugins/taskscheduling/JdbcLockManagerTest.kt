@@ -3,19 +3,19 @@ package io.github.flaxoos.ktor.server.plugins.taskscheduling
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.DefaultTaskLockTable
 import io.github.flaxoos.ktor.server.plugins.taskscheduling.managers.lock.database.jdbc
 import io.kotest.core.extensions.install
-import io.kotest.extensions.testcontainers.ContainerExtension
+import io.kotest.extensions.testcontainers.TestContainerSpecExtension
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.deleteAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
+import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 
 class JdbcLockManagerTest : TaskSchedulingPluginTest() {
     private val postgres = PostgreSQLContainer(DockerImageName.parse("postgres:13.3"))
     private val postgresContainer =
-        install(ContainerExtension(postgres)) {
+        install(TestContainerSpecExtension(postgres)) {
             waitingFor(Wait.forListeningPort())
         }
 

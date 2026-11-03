@@ -19,10 +19,12 @@ kotlin {
     }
 }
 
-koverReport {
-    defaults {
-        verify {
-            onCheck = false
+kover {
+    reports {
+        total {
+            verify {
+                onCheck = false
+            }
         }
     }
 }

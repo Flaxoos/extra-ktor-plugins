@@ -26,7 +26,6 @@ public open class TaskSchedulingConfiguration {
      * Add a task to be managed by a [TaskManager] with the given name or the default one if no name is provided and a
      * default task manager has been configured
      */
-    @TaskSchedulingDsl
     public fun task(
         /**
          * The name of the [TaskManager] to manage the task. if not provided, the default task manager will be used,
@@ -39,7 +38,7 @@ public open class TaskSchedulingConfiguration {
         taskConfiguration: TaskConfiguration.() -> Unit,
     ) {
         tasks.getOrPut(taskManagerName.toTaskManagerName()) { mutableListOf() }.add(
-            TaskConfiguration().apply(taskConfiguration).also { checkNotNull(it.kronSchedule) }.let {
+            TaskConfiguration().apply(taskConfiguration).let {
                 Task(
                     name = it.name,
                     dispatcher = it.dispatcher,
@@ -79,7 +78,8 @@ public class TaskConfiguration {
     public var concurrency: Int = 1
 
     /**
-     * What dispatcher should be used to execute the task, if none is provided, the application's dispatcher will be used
+     * What dispatcher should be used to execute the task, if none is provided, the application's dispatcher will be
+     * used
      */
     public var dispatcher: CoroutineDispatcher? = null
 

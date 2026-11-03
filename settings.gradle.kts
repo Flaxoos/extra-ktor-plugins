@@ -9,7 +9,14 @@ pluginManagement {
 }
 
 plugins {
-    id("com.gradle.enterprise") version ("3.15.1")
+    id("com.gradle.develocity") version ("4.6.1")
+}
+
+develocity {
+    buildScan {
+        termsOfUseUrl = "https://gradle.com/help/legal-terms-of-use"
+        termsOfUseAgree = "yes"
+    }
 }
 
 dependencyResolutionManagement {

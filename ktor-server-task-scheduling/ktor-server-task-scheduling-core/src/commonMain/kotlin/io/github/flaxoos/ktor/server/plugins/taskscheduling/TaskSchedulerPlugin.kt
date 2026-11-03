@@ -12,6 +12,7 @@ import io.ktor.server.application.log
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Task scheduler plugin
@@ -58,7 +59,10 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.initializeTaskManagers(ta
                         tasks.toList()
                     }
             }
-                ?: error("Configuration verification did not check for missing task managers assigned to tasks, this is a bug")
+                ?: error(
+                    "Configuration verification did not check for missing task managers assigned to tasks, this is a " +
+                        "bug",
+                )
         }.toMap()
 
 private fun PluginBuilder<TaskSchedulingConfiguration>.checkTaskMangerAssignments(taskManagers: List<TaskManager<*>>) {
@@ -86,19 +90,14 @@ private fun PluginBuilder<TaskSchedulingConfiguration>.checkUniqueTaskNames() {
             .eachCount(),
     ) {
         require(all { it.value == 1 }) {
-            "Bad configuration: Task names must be unique, but the following tasks names are repeated: ${this.keys.joinToString()}"
+            "Bad configuration: Task names must be unique, but the following tasks names are repeated: " +
+                "${this.keys.joinToString()}"
         }
     }
 }
 
 private fun TaskManager<*>.startTask(task: Task) {
-    application.launch(
-        context =
-            application.coroutineContext
-                .apply {
-                    task.dispatcher?.let { this + it } ?: this
-                }.apply { this + CoroutineName(task.name) },
-    ) {
+    application.launch(context = CoroutineName(task.name) + (task.dispatcher ?: EmptyCoroutineContext)) {
         task.kronSchedule.doInfinity { executionTime ->
             execute(task, executionTime)
         }

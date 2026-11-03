@@ -150,7 +150,7 @@ private fun <T> logErrors(block: () -> T) =
         logger.error(it.message)
     }.getOrThrow()
 
-internal abstract class FixedPortsContainer<SELF : GenericContainer<SELF>>(
+internal sealed class FixedPortsContainer<SELF : GenericContainer<SELF>>(
     imageName: String,
 ) : GenericContainer<SELF>(imageName) {
     fun withFixedExposedPorts(vararg ports: Pair<Int, Int>) =
@@ -161,14 +161,15 @@ internal abstract class FixedPortsContainer<SELF : GenericContainer<SELF>>(
         }
 }
 
-internal class SchemaRegistryContainer private constructor() : FixedPortsContainer<SchemaRegistryContainer>(SCHEMA_REGISTRY_IMAGE) {
-    companion object {
-        @Suppress("unused")
-        val schemaRegistryImage: DockerImageName = DockerImageName.parse(SCHEMA_REGISTRY_IMAGE)
+internal class SchemaRegistryContainer private constructor() :
+    FixedPortsContainer<SchemaRegistryContainer>(SCHEMA_REGISTRY_IMAGE) {
+        companion object {
+            @Suppress("unused")
+            val schemaRegistryImage: DockerImageName = DockerImageName.parse(SCHEMA_REGISTRY_IMAGE)
 
-        fun new() = SchemaRegistryContainer()
+            fun new() = SchemaRegistryContainer()
+        }
     }
-}
 
 internal class KafkaGenericContainer private constructor() : FixedPortsContainer<KafkaGenericContainer>(KAFKA_IMAGE) {
     companion object {

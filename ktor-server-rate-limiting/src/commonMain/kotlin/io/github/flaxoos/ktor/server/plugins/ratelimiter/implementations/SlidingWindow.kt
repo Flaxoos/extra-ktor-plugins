@@ -8,7 +8,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.ApplicationCall
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
-import kotlinx.datetime.Clock.System.now
+import kotlin.time.Clock.System.now
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -30,7 +30,7 @@ data class SlidingWindow(
     override val clock: () -> Long = { now().toEpochMilliseconds() },
 ) : RateLimiter() {
     private val timeWindowMs = rate.inWholeMilliseconds
-    private var timestamps = ConcurrentFixedSizeWeightedQueue<Long>(capacity * callVolumeUnit.size)
+    private val timestamps = ConcurrentFixedSizeWeightedQueue<Long>(capacity * callVolumeUnit.size)
 
     override suspend fun tryAccept(call: ApplicationCall): RateLimiterResponse {
         val now = clock()
@@ -87,7 +87,8 @@ class ConcurrentFixedSizeWeightedQueue<T>(
     private var weight = 0.0
     private val lock = reentrantLock()
 
-    override fun toString(): String = "ConcurrentFixedSizeWeightedQueue(size=$size, weight=$weight, maxWeight=$maxWeight)"
+    override fun toString(): String =
+        "ConcurrentFixedSizeWeightedQueue(size=$size, weight=$weight, maxWeight=$maxWeight)"
 
     init {
         require(maxWeight > 0) {

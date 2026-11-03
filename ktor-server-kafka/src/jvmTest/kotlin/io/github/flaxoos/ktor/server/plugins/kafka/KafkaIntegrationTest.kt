@@ -4,8 +4,7 @@ import com.sksamuel.avro4k.AvroName
 import com.sksamuel.avro4k.AvroNamespace
 import io.kotest.common.ExperimentalKotest
 import io.kotest.core.extensions.install
-import io.kotest.extensions.testcontainers.ContainerExtension
-import io.kotest.extensions.testcontainers.ContainerLifecycleMode
+import io.kotest.extensions.testcontainers.TestContainerSpecExtension
 import io.ktor.server.application.install
 import kotlinx.serialization.Serializable
 import org.apache.kafka.clients.CommonClientConfigs
@@ -22,26 +21,10 @@ class KafkaIntegrationTest : BaseKafkaIntegrationTest() {
     init {
         val kafkaContainer: ConfluentKafkaContainer = newKafkaContainer()
         val schemaRegistryContainer = SchemaRegistryContainer.new()
-        val kafka =
-            install(
-                ContainerExtension(
-                    kafkaContainer.apply { config() },
-                    mode = ContainerLifecycleMode.Spec,
-                    beforeTest = {
-                        bootstrapServers = kafkaContainer.bootstrapServers
-                    },
-                ),
-            )
-        install(
-            ContainerExtension(
-                schemaRegistryContainer.apply { config(kafka) },
-                mode = ContainerLifecycleMode.Spec,
-                beforeTest = {
-                    resolvedSchemaRegistryUrl =
-                        "http://${schemaRegistryContainer.host}:${schemaRegistryContainer.firstMappedPort}"
-                },
-            ),
-        )
+        val kafka = install(TestContainerSpecExtension(kafkaContainer.apply { config() }))
+        bootstrapServers = kafka.bootstrapServers
+        val schemaRegistry = install(TestContainerSpecExtension(schemaRegistryContainer.apply { config(kafka) }))
+        resolvedSchemaRegistryUrl = "http://${schemaRegistry.host}:${schemaRegistry.firstMappedPort}"
         context("should produce and consume records").config(timeout = 20.seconds) {
             test("With default config path") {
                 editConfigurationFile()

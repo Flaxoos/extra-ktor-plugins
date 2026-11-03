@@ -148,7 +148,8 @@ public class MongoDbTaskLock(
     override val concurrencyIndex: Int,
     override var lockedAt: DateTime,
 ) : DatabaseTaskLock {
-    override fun toString(): String = "MongoDbTaskLockKey(name=$name, concurrencyIndex=$concurrencyIndex, lockedAt=${lockedAt.format2()})"
+    override fun toString(): String =
+        "MongoDbTaskLockKey(name=$name, concurrencyIndex=$concurrencyIndex, lockedAt=${lockedAt.format2()})"
 }
 
 internal class MongoDbTaskLockCodec : Codec<MongoDbTaskLock> {
@@ -184,10 +185,10 @@ internal class MongoDbTaskLockCodec : Codec<MongoDbTaskLock> {
         }
         reader.readEndDocument()
 
-        if (name != null && concurrencyIndex != null && lockedAt != null) {
-            return MongoDbTaskLock(name = name, concurrencyIndex = concurrencyIndex, lockedAt = lockedAt)
+        return if (name != null && concurrencyIndex != null && lockedAt != null) {
+            MongoDbTaskLock(name = name, concurrencyIndex = concurrencyIndex, lockedAt = lockedAt)
         } else {
-            throw IllegalStateException("Missing required fields in MongoDbTaskLock document")
+            error("Missing required fields in MongoDbTaskLock document")
         }
     }
 
@@ -237,7 +238,6 @@ public class MongoDBJobLockManagerConfiguration : DatabaseTaskLockManagerConfigu
 /**
  * Add a [MongoDBLockManager]
  */
-@TaskSchedulingDsl
 public fun TaskSchedulingConfiguration.mongoDb(
     /**
      * The name of the task manager, will be used to identify the task manager when assigning tasks to it

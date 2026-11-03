@@ -28,20 +28,21 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
             .map { concurrencyIndex ->
                 application.launch {
                     logger.trace {
-                        "${application.host()}: Attempting task execution at ${executionTime.format2()} for ${task.name} - $concurrencyIndex"
+                        "${application.host()}: Attempting task execution at ${executionTime.format2()} for " +
+                            "${task.name} - $concurrencyIndex"
                     }
                     attemptExecute(task, executionTime, concurrencyIndex)?.let { key ->
                         logger.trace {
-                            "${application.host()}: Starting task execution at ${executionTime.format2()} using key $key"
+                            "${application.host()}: Starting task execution at ${executionTime.format2()} using key " +
+                                "$key"
                         }
                         task.task.invoke(application, executionTime)
                         logger.trace { "${application.host()}: Finished task execution using key $key" }
-                        key
                     } ?: run {
                         logger.debug {
-                            "${application.host()}: Denied task execution for${task.name} - $concurrencyIndex at ${executionTime.format2()}"
+                            "${application.host()}: Denied task execution for${task.name} - $concurrencyIndex at " +
+                                "${executionTime.format2()}"
                         }
-                        null
                     }
                 }
             }.joinAll()
@@ -62,7 +63,8 @@ public abstract class TaskManager<TASK_EXECUTION_TOKEN : TaskExecutionToken> : C
     ): TASK_EXECUTION_TOKEN?
 
     public companion object {
-        public fun Application.host(): String = "Host ${environment.config.property("ktor.deployment.host").getString()}"
+        public fun Application.host(): String =
+            "Host ${environment.config.property("ktor.deployment.host").getString()}"
 
         public fun DateTime.format2(): String = format(FORMAT2)
 

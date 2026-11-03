@@ -8,8 +8,8 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.log
 import io.ktor.server.response.respond
-import kotlinx.datetime.Clock.System.now
 import kotlin.reflect.KClass
+import kotlin.time.Clock.System.now
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.INFINITE
 
@@ -64,14 +64,16 @@ class RateLimitingConfiguration {
     var blackListedAgents: Set<String> = emptySet()
 
     /**
-     * The call handler for blacklisted Callers, use to define the response for blacklisted Callers, default is respond with 403
+     * The call handler for blacklisted Callers, use to define the response for blacklisted Callers, default is respond
+     * with 403
      */
     var blackListedCallerCallHandler: suspend RateLimitingConfiguration.(ApplicationCall) -> Unit = { call ->
         call.respond(HttpStatusCode.Forbidden)
     }
 
     /**
-     * The call handler for accepted calls, use to define the response for accepted calls, by default, adds appropriate X-RateLimit headers
+     * The call handler for accepted calls, use to define the response for accepted calls, by default, adds appropriate
+     * X-RateLimit headers
      */
     var callAcceptedHandler: suspend ApplicationCall.(RateLimiterResponse.NotLimited) -> Unit = {
         response.headers.append("$X_RATE_LIMIT-Remaining", "${it.remaining}")
@@ -79,7 +81,8 @@ class RateLimitingConfiguration {
     }
 
     /**
-     * The call handler for rate limited IPs, use to define the response for rate limited IPs. The default is to respond with 429 and appropriate X-RateLimit headers
+     * The call handler for rate limited IPs, use to define the response for rate limited IPs. The default is to respond
+     * with 429 and appropriate X-RateLimit headers
      */
     var rateLimitExceededHandler: suspend ApplicationCall.(RateLimiterResponse.LimitedBy) -> Unit =
         { rateLimiterResponse ->
@@ -97,7 +100,6 @@ class RateLimitingConfiguration {
      */
     var excludePaths: Set<Regex> = emptySet()
 
-    @RateLimitingDsl
     fun rateLimiter(configuration: RateLimiterConfiguration.() -> Unit) {
         rateLimiterConfiguration = RateLimiterConfiguration().apply(configuration)
     }
@@ -142,13 +144,14 @@ class RateLimitingConfiguration {
                             )
                         }
 
-                        is CallVolumeUnit.Calls ->
+                        is CallVolumeUnit.Calls -> {
                             if (callVolumeUnit.size.compareTo(1) != 0) {
                                 application.log.warn(
                                     "LeakyBucket does not support CallVolumeUnit.Calls with size " +
                                         "!= 1, 1 will be effectively used",
                                 )
                             }
+                        }
                     }
 
                     {
@@ -160,27 +163,31 @@ class RateLimitingConfiguration {
                     }
                 }
 
-                SlidingWindow::class -> (
-                    {
-                        SlidingWindow(
-                            rate = rate,
-                            capacity = capacity,
-                            callVolumeUnit = callVolumeUnit,
-                            clock = clock,
-                        )
-                    }
-                )
+                SlidingWindow::class -> {
+                    (
+                        {
+                            SlidingWindow(
+                                rate = rate,
+                                capacity = capacity,
+                                callVolumeUnit = callVolumeUnit,
+                                clock = clock,
+                            )
+                        }
+                    )
+                }
 
-                TokenBucket::class -> (
-                    {
-                        TokenBucket(
-                            rate = rate,
-                            capacity = capacity,
-                            callVolumeUnit = callVolumeUnit,
-                            clock = clock,
-                        )
-                    }
-                )
+                TokenBucket::class -> {
+                    (
+                        {
+                            TokenBucket(
+                                rate = rate,
+                                capacity = capacity,
+                                callVolumeUnit = callVolumeUnit,
+                                clock = clock,
+                            )
+                        }
+                    )
+                }
 
                 else -> {
                     error("Unsupported provider type: $type")
